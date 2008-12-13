@@ -15,6 +15,7 @@
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
 	 terminate/2, code_change/3]).
 
+-export([post_msg/3]).
 -define(SERVER, ?MODULE).
 
 -record(chatterl, {sessions, lastcall}).
@@ -71,22 +72,22 @@ init([]) ->
 handle_call(stop, _Client, State) ->
     {stop, normal, stopped, State};
 
-handle_call({login, Login, Password}, _From, State) ->
-    NewTree =  case gb_trees:is_defined(Login, State#chatterl.sessions) of
+handle_call({login, User, Password}, _From, State) ->
+    NewTree =  case gb_trees:is_defined(User, State#chatterl.sessions) of
         true ->
 		       Result = "Already have a session",
 		       State#chatterl.sessions;
         false -> 
 		       Result = "Created session",
-		       gb_trees:insert(Login, {Login, Password}, State#chatterl.sessions)
+		       gb_trees:insert(User, {User, Password}, State#chatterl.sessions)
     end,
     {reply, Result, State#chatterl{ sessions = NewTree }};
 
-handle_call({logout, Login}, _From, State) ->
-    NewTree =  case gb_trees:is_defined(Login, State#chatterl.sessions) of
+handle_call({logout, User}, _From, State) ->
+    NewTree =  case gb_trees:is_defined(User, State#chatterl.sessions) of
         true -> 
 		       Result = "Session dropped",
-		       gb_trees:delete(Login, State#chatterl.sessions);
+		       gb_trees:delete(User, State#chatterl.sessions);
         false -> 
 		       Result = "Unable to drop session.",
 		       State#chatterl.sessions
@@ -96,8 +97,8 @@ handle_call({Client, Method, Args}, _From, State) ->
     Now = calendar:datetime_to_gregorian_seconds(erlang:universaltime()),
     Response = case session_from_client(State, Client) of
         {error, Reason} -> {error, Reason};
-        {Login, Password} ->
-            try apply(chatterl_serv, Method, [Login, Password, Args])
+        {User, Password} ->
+            try apply(chatterl_serv, Method, [User, Password, Args])
             catch
                 Err:Msg ->
                     io:format("~p:~p~n", [Err, Msg]),
@@ -149,3 +150,8 @@ session_from_client(State, Client) ->
         false -> {error, {invalid_client, Client}};
         true -> gb_trees:get(Client, State#chatterl.sessions)
     end.
+
+post_msg(Client, _Pass, Args) ->
+    Message = Client ++ ": " ++Args,
+    io:format("~p~n", [Message]),
+    Message.
