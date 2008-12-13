@@ -10,7 +10,7 @@
 -behaviour(gen_server).
 
 %% API
--export([start/0,stop/0,login/2,logout/1,call/2,call/3]).
+-export([start/0,stop/0,login/2,logout/1,call/2,call/3,view_users/0]).
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
 	 terminate/2, code_change/3]).
@@ -43,6 +43,8 @@ call(Client,Method) ->
     twitterl:call(Client, Method, []).
 call(Client, Method, Args) ->
     gen_server:call({global, ?MODULE}, {Client, Method, Args}, infinity).
+view_users() ->
+    gen_server:call({global, ?MODULE}, view_users, infinity).
 %%====================================================================
 %% gen_server callbacks
 %%====================================================================
@@ -71,6 +73,9 @@ init([]) ->
 %%--------------------------------------------------------------------
 handle_call(stop, _Client, State) ->
     {stop, normal, stopped, State};
+handle_call(view_users, _Client, State) ->
+    Result = gb_trees:keys(State#chatterl.sessions),
+    {reply, Result, State};
 
 handle_call({login, User, Password}, _From, State) ->
     NewTree =  case gb_trees:is_defined(User, State#chatterl.sessions) of
