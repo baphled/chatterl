@@ -10,7 +10,7 @@
 -behaviour(gen_server).
 
 %% API
--export([start/0,stop/0,add_session/2,remove_session/1]).
+-export([start/0,stop/0,login/2,logout/1]).
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
 	 terminate/2, code_change/3]).
@@ -32,11 +32,11 @@ start() ->
 stop() ->
     gen_server:call(?MODULE, stop).
 
-add_session(Login, Password) ->
-    gen_server:call({global, ?MODULE}, {add_session, Login, Password}, infinity).
+login(Login, Password) ->
+    gen_server:call({global, ?MODULE}, {login, Login, Password}, infinity).
 
-remove_session(Login) ->
-    gen_server:call({global, ?MODULE}, {remove_session, Login}, infinity).
+logout(Login) ->
+    gen_server:call({global, ?MODULE}, {logout, Login}, infinity).
 %%====================================================================
 %% gen_server callbacks
 %%====================================================================
@@ -66,7 +66,7 @@ init([]) ->
 handle_call(stop, _Client, State) ->
     {stop, normal, stopped, State};
 
-handle_call({add_session, Login, Password}, _From, State) ->
+handle_call({login, Login, Password}, _From, State) ->
     NewTree =  case gb_trees:is_defined(Login, State#chatterl.sessions) of
         true ->
 		       Result = "Already have a session",
@@ -77,7 +77,7 @@ handle_call({add_session, Login, Password}, _From, State) ->
     end,
     {reply, Result, State#chatterl{ sessions = NewTree }};
 
-handle_call({remove_session, Login}, _From, State) ->
+handle_call({logout, Login}, _From, State) ->
     NewTree =  case gb_trees:is_defined(Login, State#chatterl.sessions) of
         true -> 
 		       Result = "Session dropped",
