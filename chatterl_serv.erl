@@ -10,7 +10,7 @@
 -behaviour(gen_server).
 
 %% API
--export([start/0,stop/0,login/2,logout/1]).
+-export([start/0,stop/0,login/2,logout/1,call/2,call/3]).
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
 	 terminate/2, code_change/3]).
@@ -37,6 +37,11 @@ login(Login, Password) ->
 
 logout(Login) ->
     gen_server:call({global, ?MODULE}, {logout, Login}, infinity).
+
+call(Client,Method) ->
+    twitterl:call(Client, Method, []).
+call(Client, Method, Args) ->
+    gen_server:call({global, ?MODULE}, {Client, Method, Args}, infinity).
 %%====================================================================
 %% gen_server callbacks
 %%====================================================================
