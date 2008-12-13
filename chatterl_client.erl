@@ -7,10 +7,8 @@
 %%%-------------------------------------------------------------------
 -module(chatterl_client).
 
--export([start/0,login/2]).
+-export([login/2]).
 
-start() ->
-    {ok, connected}.
 
 login(User,Pass) ->
     {error, not_valid}.
