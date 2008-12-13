@@ -28,6 +28,7 @@
 %% Description: Starts the server
 %%--------------------------------------------------------------------
 start() ->
+    io:format("Starting chatterl...~n"),
     gen_server:start_link({global, ?SERVER}, ?MODULE, [], []).
 
 stop() ->
@@ -39,10 +40,13 @@ login(Login, Password) ->
 logout(Login) ->
     gen_server:call({global, ?MODULE}, {logout, Login}, infinity).
 
+%% Used to make general calls to the server.
 call(Client,Method) ->
     twitterl:call(Client, Method, []).
 call(Client, Method, Args) ->
     gen_server:call({global, ?MODULE}, {Client, Method, Args}, infinity).
+
+%% View the users connected to the server
 view_users() ->
     gen_server:call({global, ?MODULE}, view_users, infinity).
 %%====================================================================
@@ -57,6 +61,7 @@ view_users() ->
 %% Description: Initiates the server
 %%--------------------------------------------------------------------
 init([]) ->
+    io:format("Initialising chatterl~n"),
     {ok, #chatterl{
        sessions = gb_trees:empty(),
        lastcall = calendar:datetime_to_gregorian_seconds(erlang:universaltime())
@@ -157,5 +162,5 @@ session_from_client(State, Client) ->
     end.
 
 post_msg(Client, _Pass, Args) ->
-    io:format("~p~p~n", [Client,Args]),
+    io:format(Client ++" says:~p~n", [Args]),
     {ok, message_sent}.
