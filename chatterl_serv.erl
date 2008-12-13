@@ -154,4 +154,4 @@ session_from_client(State, Client) ->
 post_msg(Client, _Pass, Args) ->
     Message = Client ++ ": " ++Args,
     io:format("~p~n", [Message]),
-    Message.
+    {ok, message_sent}.
