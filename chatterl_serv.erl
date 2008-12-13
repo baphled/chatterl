@@ -17,7 +17,7 @@
 
 -define(SERVER, ?MODULE).
 
--record(chatterl, {sessions}).
+-record(chatterl, {sessions, lastcall}).
 
 %%====================================================================
 %% API
@@ -50,7 +50,8 @@ remove_session(Login) ->
 %%--------------------------------------------------------------------
 init([]) ->
     {ok, #chatterl{
-       sessions = gb_trees:empty()
+       sessions = gb_trees:empty(),
+       lastcall = calendar:datetime_to_gregorian_seconds(erlang:universaltime())
       }}.
 
 %%--------------------------------------------------------------------
@@ -85,8 +86,21 @@ handle_call({remove_session, Login}, _From, State) ->
 		       Result = "Unable to drop session.",
 		       State#chatterl.sessions
     end,
-    {reply, Result, State#chatterl{ sessions = NewTree }}.
-
+    {reply, Result, State#chatterl{ sessions = NewTree }};
+handle_call({Client, Method, Args}, _From, State) ->
+    Now = calendar:datetime_to_gregorian_seconds(erlang:universaltime()),
+    Response = case session_from_client(State, Client) of
+        {error, Reason} -> {error, Reason};
+        {Login, Password} ->
+            try apply(chatterl_serv, Method, [Login, Password, Args])
+            catch
+                Err:Msg ->
+                    io:format("~p:~p~n", [Err, Msg]),
+                    {error, {Method, Args}}
+            end;
+        _ -> {error, unknown}
+    end,
+    {reply, Response, State#chatterl{ lastcall = Now }}.
 %%--------------------------------------------------------------------
 %% Function: handle_cast(Msg, State) -> {noreply, State} |
 %%                                      {noreply, State, Timeout} |
@@ -125,3 +139,8 @@ code_change(_OldVsn, State, _Extra) ->
 %%--------------------------------------------------------------------
 %%% Internal functions
 %%--------------------------------------------------------------------
+session_from_client(State, Client) ->
+    case gb_trees:is_defined(Client, State#chatterl.sessions) of
+        false -> {error, {invalid_client, Client}};
+        true -> gb_trees:get(Client, State#chatterl.sessions)
+    end.
