@@ -34,8 +34,8 @@ start() ->
 stop() ->
     gen_server:call(?MODULE, stop).
 
-login(Login, Password) ->
-    gen_server:call({global, ?MODULE}, {login, Login, Password}, infinity).
+login(Login, Pass) ->
+    gen_server:call({global, ?MODULE}, {login, Login, Pass}, infinity).
 
 logout(Login) ->
     gen_server:call({global, ?MODULE}, {logout, Login}, infinity).
@@ -82,14 +82,14 @@ handle_call(view_users, _Client, State) ->
     Result = gb_trees:keys(State#chatterl.sessions),
     {reply, Result, State};
 
-handle_call({login, User, Password}, _From, State) ->
+handle_call({login, User, Pass}, _From, State) ->
     NewTree =  case gb_trees:is_defined(User, State#chatterl.sessions) of
         true ->
 		       Result = "Already have a session",
 		       State#chatterl.sessions;
         false -> 
 		       Result = "Created session",
-		       gb_trees:insert(User, {User, Password}, State#chatterl.sessions)
+		       gb_trees:insert(User, {User, Pass}, State#chatterl.sessions)
     end,
     {reply, Result, State#chatterl{ sessions = NewTree }};
 
@@ -107,8 +107,8 @@ handle_call({Client, Method, Args}, _From, State) ->
     Now = calendar:datetime_to_gregorian_seconds(erlang:universaltime()),
     Response = case session_from_client(State, Client) of
         {error, Reason} -> {error, Reason};
-        {User, Password} ->
-            try apply(chatterl_serv, Method, [User, Password, Args])
+        {User, Pass} ->
+            try apply(chatterl_serv, Method, [User, Pass, Args])
             catch
                 Err:Msg ->
                     io:format("~p:~p~n", [Err, Msg]),
