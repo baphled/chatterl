@@ -10,14 +10,14 @@
 -define(SERVER, chatterl_groups).
 -define(CHATTERL, chatterl_serv).
 
--export([start/0,stop/0,connect/1,handle_group/1]).
+-export([start/0,stop/0,create/1,handle_group/1]).
 
 start() ->
     Pid = spawn(chatterl_groups, handle_group, [dict:new()]),
     case chatterl_serv:start() of
 	{ok, ServPid} ->
 	    io:format("Starting chatterl_serv~n");
-	{error,{_Msg,_ServPid}} ->
+	{error, {_Msg,_ServPid}} ->
 	    io:format("Serverl already started~n")
     end,
     erlang:register(?SERVER, Pid).
@@ -25,12 +25,12 @@ start() ->
 stop() ->
     ?SERVER ! shutdown.
 
-connect(Group) ->
-    ?SERVER ! {connect, Group}.
+create(Group) ->
+    ?SERVER ! {create, Group}.
 
 handle_group(Users) ->
     receive
-	{connect, Group} ->
+	{create, Group} ->
 	    Message = case chatterl_serv:create(Group, ?SERVER) of
 		{ok, GroupName} ->
 		    "Created group: "++GroupName;
