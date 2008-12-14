@@ -11,14 +11,14 @@
 -define(CHATTERL, chatterl_serv).
 
 -export([start/0,stop/0]).
--export([register_nick/2,create/1,handle_group/1]).
+-export([register_nick/2,create/1,handle_group/1,user_exists/2]).
 
 start() ->
-    Pid = spawn(chatterl_groups, handle_group, [dict:new()]),
+    Pid = spawn(chatterl_groups, handle_group, [gb_trees:empty()]),
     case chatterl_serv:start() of
-	{ok, ServPid} ->
+	{ok,ServPid} ->
 	    io:format("Starting Chatterl Group.");
-	{error, {already_started,ServPid}} ->
+	{error,{already_started,ServPid}} ->
 	    io:format("Serverl already started~n")
     end,
     erlang:register(?SERVER, Pid).
@@ -46,16 +46,31 @@ handle_group(Users) ->
 	{register, User, Group} ->
 	    case chatterl_serv:group_exists(Group) of
 		true -> 
-		    case dict:find(User, Users) of
-			   false ->  handle_group(dict:store(User, Group, Users));
-			   true -> io:format("User already registered")
+		    case user_exists(User, Users) of
+			true -> io:format("~p already registered~n",[User]);
+			false -> 
+			    io:format("Added user: ~p~n", [User]),
+			    handle_group(gb_trees:insert(User, {User,Group}, Users))
 		    end;
 		false ->
-		    io:format("Group doesn't exist ~p~n", [Group])
+		    io:format("Group doesn't exist ~p~n", [Group]);
+		{error, Error} ->
+		    io:format("Error: ~p~n", [Error])
 	    end,
 	    handle_group(Users);
 	{error, Error} ->
-	    io:format("Error: ~p~n", [Error]);
+	    io:format("Error: ~p~n", [Error]),
+	    handle_group(Users);
+	error ->
+	    io:format("Unknown error");
 	shutdown ->
 	    io:format("Shutting down...~n")
+    end.
+
+user_exists(User, Users) ->
+    case gb_trees:is_defined(User, Users) of
+	true ->
+	    true;
+	false ->
+	    false
     end.
