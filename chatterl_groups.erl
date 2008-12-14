@@ -18,7 +18,7 @@ start() ->
     case chatterl_serv:start() of
 	{ok, ServPid} ->
 	    io:format("Starting Chatterl Group.");
-	{error, {_Msg,ServPid}} ->
+	{error, {already_started,ServPid}} ->
 	    io:format("Serverl already started~n")
     end,
     erlang:register(?SERVER, Pid).
@@ -45,10 +45,17 @@ handle_group(Users) ->
 	    handle_group(Users);
 	{register, User, Group} ->
 	    case chatterl_serv:group_exists(Group) of
-		true -> handle_group(dict:store(User, Group, Users));
+		true -> 
+		    case dict:find(User, Users) of
+			   false ->  handle_group(dict:store(User, Group, Users));
+			   true -> io:format("User already registered")
+		    end;
 		false ->
 		    io:format("Group doesn't exist ~p~n", [Group])
-	    end;
+	    end,
+	    handle_group(Users);
+	{error, Error} ->
+	    io:format("Error: ~p~n", [Error]);
 	shutdown ->
 	    io:format("Shutting down...~n")
     end.
