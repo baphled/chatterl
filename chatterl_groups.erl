@@ -44,7 +44,11 @@ handle_group(Users) ->
 	    io:format("~p~n", [Message]),
 	    handle_group(Users);
 	{register, User, Group} ->
-	    handle_group(dict:store(User, Group, Users));
+	    case chatterl_serv:group_exists(Group) of
+		true -> handle_group(dict:store(User, Group, Users));
+		false ->
+		    io:format("Group doesn't exist ~p~n", [Group])
+	    end;
 	shutdown ->
 	    io:format("Shutting down...~n")
     end.
