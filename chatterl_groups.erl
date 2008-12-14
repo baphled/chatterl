@@ -11,7 +11,7 @@
 -define(CHATTERL, chatterl_serv).
 
 -export([start/0,shutdown/0,stop/1,handle_group/1]).
--export([create/1,user_connect/2,user_disconnect/1,list_users/0,user_exists/2]).
+-export([create/1,user_connect/2,user_disconnect/1,list_users/0,list_groups/0,user_exists/2]).
 
 start() ->
     Pid = spawn(chatterl_groups, handle_group, [gb_trees:empty()]),
@@ -41,6 +41,9 @@ user_disconnect(User) ->
 list_users() ->
     ?SERVER ! {list_users}.
 
+list_groups() ->
+    ?SERVER ! chatterl_serv:view_groups().
+
 handle_group(Users) ->
     receive
 	{create, Group} ->
@@ -58,7 +61,6 @@ handle_group(Users) ->
 		{ok, Result} -> io:format("~p~n", [Result]),
 				List = gb_trees:to_list(Users),
 				drop_user_from_group(Users,List,Group);
-				%drop_users(gb_trees:keys(UsersDrop), Users);
 		{error, Error} -> io:format("Error:~p~n", [Error]),
 				  Users
 	    end,
