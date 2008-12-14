@@ -11,7 +11,7 @@
 -define(CHATTERL, chatterl_serv).
 
 -export([start/0,shutdown/0,stop/1,handle_group/1]).
--export([create/1,register_nick/2,list_users/0,user_exists/2]).
+-export([create/1,register_nick/2,unregister_nick/1,list_users/0,user_exists/2]).
 
 start() ->
     Pid = spawn(chatterl_groups, handle_group, [gb_trees:empty()]),
@@ -69,9 +69,11 @@ handle_group(Users) ->
 	    handle_group(Users);
 	{unregister, User} ->   
 	    case user_exists(User, Users) of
-		true -> handle_group(gb_trees:delete(User, Users));
+		true -> handle_group(gb_trees:delete(User, Users)),
+			io:format("Unregistered ~p~n", [User]);
 		false -> io:format("Unable to unregister ~p~n", [User])
-	    end;
+	    end,
+	    handle_group(Users);
 	{list_users} ->
 	    Results = gb_trees:keys(Users),
 	    io:format("~p~n", [Results]),
@@ -80,7 +82,8 @@ handle_group(Users) ->
 	    io:format("Error: ~p~n", [Error]),
 	    handle_group(Users);
 	error ->
-	    io:format("Unknown error");
+	    io:format("Unknown error"),
+	    handle_group(Users);
 	{stop, Group} ->
 	    io:format("Shutting down ~p...~n", [Group]),
 	    case chatterl_serv:drop(Group) of
