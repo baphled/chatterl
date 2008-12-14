@@ -85,10 +85,10 @@ handle_call(view_users, _Client, State) ->
 handle_call({create, User, Group}, _From, State) ->
     NewTree =  case gb_trees:is_defined(User, State#chatterl.groups) of
         true ->
-		       Result = "Already have a session",
+		       Result = "Group already created",
 		       State#chatterl.groups;
         false -> 
-		       Result = "Created session",
+		       Result = "Created group.",
 		       gb_trees:insert(User, {User, Group}, State#chatterl.groups)
     end,
     {reply, Result, State#chatterl{ groups = NewTree }};
@@ -105,7 +105,7 @@ handle_call({drop, User}, _From, State) ->
     {reply, Result, State#chatterl{ groups = NewTree }};
 handle_call({Client, Method, Args}, _From, State) ->
     Now = calendar:datetime_to_gregorian_seconds(erlang:universaltime()),
-    Response = case session_from_client(State, Client) of
+    Response = case group_exists(State, Client) of
         {error, Reason} -> {error, Reason};
         {User, Group} ->
             try apply(chatterl_serv, Method, [User, Group, Args])
@@ -155,7 +155,7 @@ code_change(_OldVsn, State, _Extra) ->
 %%--------------------------------------------------------------------
 %%% Internal functions
 %%--------------------------------------------------------------------
-session_from_client(State, Client) ->
+group_exists(State, Client) ->
     case gb_trees:is_defined(Client, State#chatterl.groups) of
         false -> {error, {invalid_client, Client}};
         true -> gb_trees:get(Client, State#chatterl.groups)
