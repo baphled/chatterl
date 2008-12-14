@@ -11,7 +11,7 @@
 -define(CHATTERL, chatterl_serv).
 
 -export([start/0,shutdown/0,stop/1,handle_group/1]).
--export([create/1,user_connect/2,user_disconnect/1,list_users/0,list_groups/0,user_exists/2]).
+-export([create/1,user_connect/2,user_disconnect/1,list_users/0,list_groups/0]).
 
 start() ->
     Pid = spawn(chatterl_groups, handle_group, [gb_trees:empty()]),
@@ -69,7 +69,7 @@ handle_group(Users) ->
 	    case chatterl_serv:group_exists(Group) of
 		true -> 
 		    case user_exists(User, Users) of
-			true -> io:format("~p already connected~n",[User]);
+			true -> io:format("~p already connected to ~p~n",[User,Group]);
 			false -> 
 			    io:format("Connected user: ~p~n", [User]),
 			    handle_group(gb_trees:insert(User, {User,Group}, Users))
@@ -121,10 +121,19 @@ drop_users([],UsersList) ->
     UsersList.
 
 %% @private
-user_exists(User, Users) ->
-    case gb_trees:is_defined(User, Users) of
+user_exists(User,UsersTree) ->
+    case gb_trees:is_defined(User, UsersTree) of
+	true -> true;
+	false -> false
+    end.
+user_exists(User, Group, UsersTree) ->
+    case gb_trees:is_defined(User, UsersTree) of
 	true ->
-	    true;
+	    case gb_trees:lookup(User, UsersTree) of
+		{value, Group} ->
+		    true;
+		_ -> false
+	    end;
 	false ->
 	    false
     end.
