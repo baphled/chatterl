@@ -84,7 +84,7 @@ handle_call(view_groups, _Client, State) ->
 handle_call({create, Group, Desc}, _From, State) ->
     NewTree =  case gb_trees:is_defined(Group, State#chatterl.groups) of
         true ->
-		       Result = "Desc already created",
+		       Result = "Group already created",
 		       State#chatterl.groups;
         false -> 
 		       Result = "Created group.",
