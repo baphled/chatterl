@@ -11,14 +11,14 @@
 -define(CHATTERL, chatterl_serv).
 
 -export([start/0,shutdown/0,stop/1,handle_group/1]).
--export([create/1,register_nick/2,unregister_nick/1,list_users/0,user_exists/2]).
+-export([create/1,user_connect/2,user_disconnect/1,list_users/0,user_exists/2]).
 
 start() ->
     Pid = spawn(chatterl_groups, handle_group, [gb_trees:empty()]),
     case chatterl_serv:start() of
-	{ok,ServPid} ->
+	{ok,_ServPid} ->
 	    io:format("Starting Chatterl Group.~n");
-	{error,{already_started,ServPid}} ->
+	{error,{already_started,_ServPid}} ->
 	    io:format("Serverl already started~n")
     end,
     erlang:register(?SERVER, Pid).
@@ -32,11 +32,11 @@ stop(Group) ->
 create(Group) ->
     ?SERVER ! {create, Group}.
 
-register_nick(User,Group) ->
-    ?SERVER ! {register, User, Group}.
+user_connect(User,Group) ->
+    ?SERVER ! {user_connect, User, Group}.
 
-unregister_nick(User) ->
-    ?SERVER ! {unregister, User}.
+user_disconnect(User) ->
+    ?SERVER ! {user_disconnect, User}.
 
 list_users() ->
     ?SERVER ! {list_users}.
@@ -59,13 +59,13 @@ handle_group(Users) ->
 		{error, Error} -> io:format("Error:~p~n", [Error])
 	    end,
 	    handle_group(Users);
-	{register, User, Group} ->
+	{user_connect, User, Group} ->
 	    case chatterl_serv:group_exists(Group) of
 		true -> 
 		    case user_exists(User, Users) of
-			true -> io:format("~p already registered~n",[User]);
+			true -> io:format("~p already connected~n",[User]);
 			false -> 
-			    io:format("Added user: ~p~n", [User]),
+			    io:format("Connected user: ~p~n", [User]),
 			    handle_group(gb_trees:insert(User, {User,Group}, Users))
 		    end;
 		false ->
@@ -74,11 +74,11 @@ handle_group(Users) ->
 		    io:format("Error: ~p~n", [Error])
 	    end,
 	    handle_group(Users);
-	{unregister, User} ->   
+	{user_disconnect, User} ->   
 	    case user_exists(User, Users) of
 		true -> handle_group(gb_trees:delete(User, Users)),
-			io:format("Unregistered ~p~n", [User]);
-		false -> io:format("~p is not registered.~n", [User])
+			io:format("Disconnected ~p~n", [User]);
+		false -> io:format("~p is not connected.~n", [User])
 	    end,
 	    handle_group(Users);
 	{list_users} ->
