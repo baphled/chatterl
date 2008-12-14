@@ -35,6 +35,9 @@ create(Group) ->
 register_nick(User,Group) ->
     ?SERVER ! {register, User, Group}.
 
+unregister_nick(User) ->
+    ?SERVER ! {unregister, User}.
+
 list_users() ->
     ?SERVER ! {list_users}.
 
@@ -64,6 +67,11 @@ handle_group(Users) ->
 		    io:format("Error: ~p~n", [Error])
 	    end,
 	    handle_group(Users);
+	{unregister, User} ->   
+	    case user_exists(User, Users) of
+		true -> handle_group(gb_trees:delete(User, Users));
+		false -> io:format("Unable to unregister ~p~n", [User])
+	    end;
 	{list_users} ->
 	    Results = gb_trees:keys(Users),
 	    io:format("~p~n", [Results]),
@@ -84,7 +92,7 @@ handle_group(Users) ->
 	    io:format("Shutting down...~n")
     end.
 
-
+%% @private
 user_exists(User, Users) ->
     case gb_trees:is_defined(User, Users) of
 	true ->
