@@ -75,7 +75,7 @@ handle_group(Users) ->
 	    io:format("Unknown error");
 	{stop, Group} ->
 	    io:format("Shutting down ~p...~n", [Group]),
-	    case chatterl_serv:drop(?SERVER) of
+	    case chatterl_serv:drop(Group) of
 		{ok, Result} -> io:format("~p~n", [Result]);
 		{error, Error} -> io:format("Error:~p~n", [Error])
 	    end,
