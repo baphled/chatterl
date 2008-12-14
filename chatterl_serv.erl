@@ -33,11 +33,11 @@ start() ->
 stop() ->
     gen_server:call(?MODULE, stop).
 
-create(Group, Desc) ->
-    gen_server:call({global, ?MODULE}, {create, Group, Desc}, infinity).
+create(GroupPid, Name) ->
+    gen_server:call({global, ?MODULE}, {create, GroupPid, Name}, infinity).
 
-drop(Group) ->
-    gen_server:call({global, ?MODULE}, {drop, Group}, infinity).
+drop(GroupPid) ->
+    gen_server:call({global, ?MODULE}, {drop, GroupPid}, infinity).
 
 %% Used to make general calls to the server.
 call(Client,Method) ->
@@ -81,22 +81,22 @@ handle_call(view_groups, _Client, State) ->
     Result = gb_trees:keys(State#chatterl.groups),
     {reply, Result, State};
 
-handle_call({create, Group, Desc}, _From, State) ->
-    NewTree =  case gb_trees:is_defined(Group, State#chatterl.groups) of
+handle_call({create, GroupPid, Name}, _From, State) ->
+    NewTree =  case gb_trees:is_defined(GroupPid, State#chatterl.groups) of
         true ->
 		       Result = "Group already created",
 		       State#chatterl.groups;
         false -> 
 		       Result = "Created group.",
-		       gb_trees:insert(Group, {Group, Desc}, State#chatterl.groups)
+		       gb_trees:insert(GroupPid, {GroupPid, Name}, State#chatterl.groups)
     end,
     {reply, Result, State#chatterl{ groups = NewTree }};
 
-handle_call({drop, Group}, _From, State) ->
-    NewTree =  case gb_trees:is_defined(Group, State#chatterl.groups) of
+handle_call({drop, GroupPid}, _From, State) ->
+    NewTree =  case gb_trees:is_defined(GroupPid, State#chatterl.groups) of
         true -> 
 		       Result = "Session dropped",
-		       gb_trees:delete(Group, State#chatterl.groups);
+		       gb_trees:delete(GroupPid, State#chatterl.groups);
         false -> 
 		       Result = "Unable to drop session.",
 		       State#chatterl.groups
@@ -106,8 +106,8 @@ handle_call({Client, Method, Args}, _From, State) ->
     Now = calendar:datetime_to_gregorian_seconds(erlang:universaltime()),
     Response = case group_exists(State, Client) of
         {error, Reason} -> {error, Reason};
-        {Group, Desc} ->
-            try apply(chatterl_serv, Method, [Group, Desc, Args])
+        {GroupPid, Name} ->
+            try apply(chatterl_serv, Method, [GroupPid, Name, Args])
             catch
                 Err:Msg ->
                     io:format("~p:~p~n", [Err, Msg]),
