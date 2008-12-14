@@ -10,7 +10,7 @@
 -behaviour(gen_server).
 
 %% API
--export([start/0,stop/0,login/2,logout/1,call/2,call/3,view_users/0]).
+-export([start/0,stop/0,create/2,drop/1,call/2,call/3,view_users/0]).
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
 	 terminate/2, code_change/3]).
@@ -18,7 +18,7 @@
 -export([post_msg/3]).
 -define(SERVER, ?MODULE).
 
--record(chatterl, {sessions, lastcall}).
+-record(chatterl, {groups, lastcall}).
 
 %%====================================================================
 %% API
@@ -34,11 +34,11 @@ start() ->
 stop() ->
     gen_server:call(?MODULE, stop).
 
-login(Login, Pass) ->
-    gen_server:call({global, ?MODULE}, {login, Login, Pass}, infinity).
+create(User, Group) ->
+    gen_server:call({global, ?MODULE}, {create, User, Group}, infinity).
 
-logout(Login) ->
-    gen_server:call({global, ?MODULE}, {logout, Login}, infinity).
+drop(User) ->
+    gen_server:call({global, ?MODULE}, {drop, User}, infinity).
 
 %% Used to make general calls to the server.
 call(Client,Method) ->
@@ -63,7 +63,7 @@ view_users() ->
 init([]) ->
     io:format("Initialising chatterl~n"),
     {ok, #chatterl{
-       sessions = gb_trees:empty(),
+       groups = gb_trees:empty(),
        lastcall = calendar:datetime_to_gregorian_seconds(erlang:universaltime())
       }}.
 
@@ -79,36 +79,36 @@ init([]) ->
 handle_call(stop, _Client, State) ->
     {stop, normal, stopped, State};
 handle_call(view_users, _Client, State) ->
-    Result = gb_trees:keys(State#chatterl.sessions),
+    Result = gb_trees:keys(State#chatterl.groups),
     {reply, Result, State};
 
-handle_call({login, User, Pass}, _From, State) ->
-    NewTree =  case gb_trees:is_defined(User, State#chatterl.sessions) of
+handle_call({create, User, Group}, _From, State) ->
+    NewTree =  case gb_trees:is_defined(User, State#chatterl.groups) of
         true ->
 		       Result = "Already have a session",
-		       State#chatterl.sessions;
+		       State#chatterl.groups;
         false -> 
 		       Result = "Created session",
-		       gb_trees:insert(User, {User, Pass}, State#chatterl.sessions)
+		       gb_trees:insert(User, {User, Group}, State#chatterl.groups)
     end,
-    {reply, Result, State#chatterl{ sessions = NewTree }};
+    {reply, Result, State#chatterl{ groups = NewTree }};
 
-handle_call({logout, User}, _From, State) ->
-    NewTree =  case gb_trees:is_defined(User, State#chatterl.sessions) of
+handle_call({drop, User}, _From, State) ->
+    NewTree =  case gb_trees:is_defined(User, State#chatterl.groups) of
         true -> 
 		       Result = "Session dropped",
-		       gb_trees:delete(User, State#chatterl.sessions);
+		       gb_trees:delete(User, State#chatterl.groups);
         false -> 
 		       Result = "Unable to drop session.",
-		       State#chatterl.sessions
+		       State#chatterl.groups
     end,
-    {reply, Result, State#chatterl{ sessions = NewTree }};
+    {reply, Result, State#chatterl{ groups = NewTree }};
 handle_call({Client, Method, Args}, _From, State) ->
     Now = calendar:datetime_to_gregorian_seconds(erlang:universaltime()),
     Response = case session_from_client(State, Client) of
         {error, Reason} -> {error, Reason};
-        {User, Pass} ->
-            try apply(chatterl_serv, Method, [User, Pass, Args])
+        {User, Group} ->
+            try apply(chatterl_serv, Method, [User, Group, Args])
             catch
                 Err:Msg ->
                     io:format("~p:~p~n", [Err, Msg]),
@@ -156,11 +156,11 @@ code_change(_OldVsn, State, _Extra) ->
 %%% Internal functions
 %%--------------------------------------------------------------------
 session_from_client(State, Client) ->
-    case gb_trees:is_defined(Client, State#chatterl.sessions) of
+    case gb_trees:is_defined(Client, State#chatterl.groups) of
         false -> {error, {invalid_client, Client}};
-        true -> gb_trees:get(Client, State#chatterl.sessions)
+        true -> gb_trees:get(Client, State#chatterl.groups)
     end.
 
-post_msg(Client, _Pass, Args) ->
+post_msg(Client, _Group, Args) ->
     io:format(Client ++" says:~p~n", [Args]),
     {ok, message_sent}.
