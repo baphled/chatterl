@@ -10,8 +10,8 @@
 -define(SERVER, chatterl_groups).
 -define(CHATTERL, chatterl_serv).
 
--export([start/0,stop/1]).
--export([register_nick/2,create/1,list_users/0,handle_group/1,user_exists/2]).
+-export([start/0,shutdown/0,stop/1,handle_group/1]).
+-export([create/1,register_nick/2,list_users/0,user_exists/2]).
 
 start() ->
     Pid = spawn(chatterl_groups, handle_group, [gb_trees:empty()]),
