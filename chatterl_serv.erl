@@ -60,7 +60,7 @@ view_groups() ->
 %% Description: Initiates the server
 %%--------------------------------------------------------------------
 init([]) ->
-    io:format("Initialising chatterl~n"),
+    io:format("Initialising Chatterl Serv~n"),
     {ok, #chatterl{
        groups = gb_trees:empty(),
        lastcall = calendar:datetime_to_gregorian_seconds(erlang:universaltime())
