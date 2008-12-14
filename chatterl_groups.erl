@@ -11,7 +11,7 @@
 -define(CHATTERL, chatterl_serv).
 
 -export([start/0,stop/1]).
--export([register_nick/2,create/1,handle_group/1,user_exists/2]).
+-export([register_nick/2,create/1,list_users/0,handle_group/1,user_exists/2]).
 
 start() ->
     Pid = spawn(chatterl_groups, handle_group, [gb_trees:empty()]),
@@ -24,13 +24,16 @@ start() ->
     erlang:register(?SERVER, Pid).
 
 stop(Group) ->
-    ?SERVER ! {shutdown, Group}.
+    ?SERVER ! {stop, Group}.
 
 create(Group) ->
     ?SERVER ! {create, Group}.
 
 register_nick(User,Group) ->
     ?SERVER ! {register, User, Group}.
+
+list_users() ->
+    ?SERVER ! {list_users}.
 
 handle_group(Users) ->
     receive
@@ -58,15 +61,20 @@ handle_group(Users) ->
 		    io:format("Error: ~p~n", [Error])
 	    end,
 	    handle_group(Users);
+	{list_users} ->
+	    Results = gb_trees:keys(Users),
+	    io:format("~p~n", [Results]),
+	    handle_group(Users);
 	{error, Error} ->
 	    io:format("Error: ~p~n", [Error]),
 	    handle_group(Users);
 	error ->
 	    io:format("Unknown error");
-	{shutdown, Group} ->
+	{stop, Group} ->
 	    io:format("Shutting down ~p...~n", [Group]),
 	    chatterl_serv:drop(?SERVER)
     end.
+
 
 user_exists(User, Users) ->
     case gb_trees:is_defined(User, Users) of
