@@ -56,7 +56,9 @@ handle_group(Users) ->
 	    io:format("Shutting down ~p...~n", [Group]),
 	    NewUsers = case chatterl_serv:drop(Group) of
 		{ok, Result} -> io:format("~p~n", [Result]),
-				drop_users(gb_trees:keys(Users), Users);
+				List = gb_trees:to_list(Users),
+				drop_user_from_group(Users,List,Group);
+				%drop_users(gb_trees:keys(UsersDrop), Users);
 		{error, Error} -> io:format("Error:~p~n", [Error]),
 				  Users
 	    end,
@@ -98,15 +100,16 @@ handle_group(Users) ->
 	    drop_users(gb_trees:keys(Users), Users)
     end.
 
-drop_user_from_group(DropUsers,[User|Users],Group) ->
-    case gb_trees:lookup(User) of
+drop_user_from_group(UsersTree,[User|Users],Group) ->
+    NewUsers = case gb_trees:lookup(User,UsersTree) of
 	{value,Group} ->
-	    [User|DropUsers];
-        _ ->
-	    drop_user_from_group(DropUsers,Users,Group)
-    end;
-drop_user_from_group(DropUsers,[],_Group) ->
-    DropUsers.
+	    io:format("Dropped ~p from ~p~n",[User, Group]),
+	    gb_trees:delete(User, UsersTree);
+        _ -> UsersTree	    
+    end,
+    drop_user_from_group(NewUsers,Users,Group);
+drop_user_from_group(UsersTree,[],_Group) ->
+    UsersTree.
 
 drop_users([User|Users],UsersList) ->
     NewUsers = gb_trees:delete(User, UsersList),
