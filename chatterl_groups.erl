@@ -71,7 +71,7 @@ handle_group(Users) ->
 	    case user_exists(User, Users) of
 		true -> handle_group(gb_trees:delete(User, Users)),
 			io:format("Unregistered ~p~n", [User]);
-		false -> io:format("Unable to unregister ~p~n", [User])
+		false -> io:format("~p is not registered.~n", [User])
 	    end,
 	    handle_group(Users);
 	{list_users} ->
