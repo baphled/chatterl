@@ -41,7 +41,7 @@ list_users() ->
 handle_group(Users) ->
     receive
 	{create, Group} ->
-	    Message = case chatterl_serv:create(Group, ?SERVER) of
+	    Message = case chatterl_serv:create(?SERVER, Group) of
 		{ok, GroupName} ->
 		    "Created group: "++GroupName;
 		{error, Error} ->
@@ -75,7 +75,10 @@ handle_group(Users) ->
 	    io:format("Unknown error");
 	{stop, Group} ->
 	    io:format("Shutting down ~p...~n", [Group]),
-	    chatterl_serv:drop(?SERVER),
+	    case chatterl_serv:drop(?SERVER) of
+		{ok, Result} -> io:format("~p~n", [Result]);
+		{error, Error} -> io:format("Error:~p~n", [Error])
+	    end,
 	    handle_group(Users);
 	shutdown ->
 	    io:format("Shutting down...~n")
