@@ -47,8 +47,8 @@ call(Client, Method, Args) ->
     gen_server:call({global, ?MODULE}, {Client, Method, Args}, infinity).
 
 %% View the users connected to the server
-view_users() ->
-    gen_server:call({global, ?MODULE}, view_users, infinity).
+view_groups() ->
+    gen_server:call({global, ?MODULE}, view_groups, infinity).
 %%====================================================================
 %% gen_server callbacks
 %%====================================================================
@@ -78,7 +78,7 @@ init([]) ->
 %%--------------------------------------------------------------------
 handle_call(stop, _Client, State) ->
     {stop, normal, stopped, State};
-handle_call(view_users, _Client, State) ->
+handle_call(view_groups, _Client, State) ->
     Result = gb_trees:keys(State#chatterl.groups),
     {reply, Result, State};
 
