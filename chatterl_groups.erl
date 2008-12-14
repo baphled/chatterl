@@ -16,7 +16,7 @@ start() ->
     Pid = spawn(chatterl_groups, handle_group, [dict:new()]),
     case chatterl_serv:start() of
 	{ok, ServPid} ->
-	    io:format("Starting Chatterl Group");
+	    io:format("Starting Chatterl Group.");
 	{error, {_Msg,ServPid}} ->
 	    io:format("Serverl already started~n")
     end,
