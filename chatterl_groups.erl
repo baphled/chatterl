@@ -24,7 +24,7 @@ start() ->
     erlang:register(?SERVER, Pid).
 
 shutdown() ->
-    ?SERVER ! {shutdown}.
+    ?SERVER ! shutdown.
 
 stop(Group) ->
     ?SERVER ! {stop, Group}.
@@ -41,7 +41,7 @@ list_users() ->
 handle_group(Users) ->
     receive
 	{create, Group} ->
-	    Message = case chatterl_serv:create(?SERVER, Group) of
+	    Message = case chatterl_serv:create(Group, ?SERVER) of
 		{ok, GroupName} ->
 		    "Created group: "++GroupName;
 		{error, Error} ->
