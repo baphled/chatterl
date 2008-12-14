@@ -104,10 +104,10 @@ handle_call({create, GroupPid, Name}, _From, State) ->
 handle_call({drop, GroupPid}, _From, State) ->
     NewTree =  case gb_trees:is_defined(GroupPid, State#chatterl.groups) of
         true -> 
-		       Result = "Session dropped",
+		       Result = {ok, "Group dropped"},
 		       gb_trees:delete(GroupPid, State#chatterl.groups);
         false -> 
-		       Result = "Unable to drop session.",
+		       Result = {error, "Unable to drop group."},
 		       State#chatterl.groups
     end,
     {reply, Result, State#chatterl{ groups = NewTree }};

@@ -10,7 +10,7 @@
 -define(SERVER, chatterl_groups).
 -define(CHATTERL, chatterl_serv).
 
--export([start/0,stop/0]).
+-export([start/0,stop/1]).
 -export([register_nick/2,create/1,handle_group/1,user_exists/2]).
 
 start() ->
@@ -23,8 +23,8 @@ start() ->
     end,
     erlang:register(?SERVER, Pid).
 
-stop() ->
-    ?SERVER ! shutdown.
+stop(Group) ->
+    ?SERVER ! {shutdown, Group}.
 
 create(Group) ->
     ?SERVER ! {create, Group}.
@@ -63,8 +63,9 @@ handle_group(Users) ->
 	    handle_group(Users);
 	error ->
 	    io:format("Unknown error");
-	shutdown ->
-	    io:format("Shutting down...~n")
+	{shutdown, Group} ->
+	    io:format("Shutting down ~p...~n", [Group]),
+	    chatterl_serv:drop(?SERVER)
     end.
 
 user_exists(User, Users) ->
