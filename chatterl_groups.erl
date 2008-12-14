@@ -52,6 +52,13 @@ handle_group(Users) ->
 	    end,
 	    io:format("~p~n", [Message]),
 	    handle_group(Users);
+	{stop, Group} ->
+	    io:format("Shutting down ~p...~n", [Group]),
+	    case chatterl_serv:drop(Group) of
+		{ok, Result} -> io:format("~p~n", [Result]);
+		{error, Error} -> io:format("Error:~p~n", [Error])
+	    end,
+	    handle_group(Users);
 	{register, User, Group} ->
 	    case chatterl_serv:group_exists(Group) of
 		true -> 
@@ -83,13 +90,6 @@ handle_group(Users) ->
 	    handle_group(Users);
 	error ->
 	    io:format("Unknown error"),
-	    handle_group(Users);
-	{stop, Group} ->
-	    io:format("Shutting down ~p...~n", [Group]),
-	    case chatterl_serv:drop(Group) of
-		{ok, Result} -> io:format("~p~n", [Result]);
-		{error, Error} -> io:format("Error:~p~n", [Error])
-	    end,
 	    handle_group(Users);
 	shutdown ->
 	    io:format("Shutting down...~n")
