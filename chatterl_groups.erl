@@ -54,11 +54,13 @@ handle_group(Users) ->
 	    handle_group(Users);
 	{stop, Group} ->
 	    io:format("Shutting down ~p...~n", [Group]),
-	    case chatterl_serv:drop(Group) of
-		{ok, Result} -> io:format("~p~n", [Result]);
-		{error, Error} -> io:format("Error:~p~n", [Error])
+	    NewUsers = case chatterl_serv:drop(Group) of
+		{ok, Result} -> io:format("~p~n", [Result]),
+				drop_users(gb_trees:keys(Users), Users);
+		{error, Error} -> io:format("Error:~p~n", [Error]),
+				  Users
 	    end,
-	    handle_group(Users);
+	    handle_group(NewUsers);
 	{user_connect, User, Group} ->
 	    case chatterl_serv:group_exists(Group) of
 		true -> 
@@ -92,8 +94,16 @@ handle_group(Users) ->
 	    io:format("Unknown error"),
 	    handle_group(Users);
 	shutdown ->
-	    io:format("Shutting down...~n")
+	    io:format("Shutting down...~n"),
+	    drop_users(gb_trees:keys(Users), Users)
     end.
+
+drop_users([User|Users],UsersList) ->
+    NewUsers = gb_trees:delete(User, UsersList),
+    io:format("Delete: ~p~n", [User]),
+    drop_users(Users, NewUsers);
+drop_users([],UsersList) ->
+    UsersList.
 
 %% @private
 user_exists(User, Users) ->
