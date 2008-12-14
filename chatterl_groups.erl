@@ -17,11 +17,14 @@ start() ->
     Pid = spawn(chatterl_groups, handle_group, [gb_trees:empty()]),
     case chatterl_serv:start() of
 	{ok,ServPid} ->
-	    io:format("Starting Chatterl Group.");
+	    io:format("Starting Chatterl Group.~n");
 	{error,{already_started,ServPid}} ->
 	    io:format("Serverl already started~n")
     end,
     erlang:register(?SERVER, Pid).
+
+shutdown() ->
+    ?SERVER ! {shutdown}.
 
 stop(Group) ->
     ?SERVER ! {stop, Group}.
@@ -72,7 +75,10 @@ handle_group(Users) ->
 	    io:format("Unknown error");
 	{stop, Group} ->
 	    io:format("Shutting down ~p...~n", [Group]),
-	    chatterl_serv:drop(?SERVER)
+	    chatterl_serv:drop(?SERVER),
+	    handle_group(Users);
+	shutdown ->
+	    io:format("Shutting down...~n")
     end.
 
 
