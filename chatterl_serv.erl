@@ -84,10 +84,10 @@ handle_call(view_groups, _Client, State) ->
 handle_call({create, GroupPid, Name}, _From, State) ->
     NewTree =  case gb_trees:is_defined(GroupPid, State#chatterl.groups) of
         true ->
-		       Result = "Group already created",
+		       Result = {ok,"Group already created"},
 		       State#chatterl.groups;
         false -> 
-		       Result = "Created group.",
+		       Result = {error,"Created group."},
 		       gb_trees:insert(GroupPid, {GroupPid, Name}, State#chatterl.groups)
     end,
     {reply, Result, State#chatterl{ groups = NewTree }};
