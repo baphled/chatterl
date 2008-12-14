@@ -98,6 +98,16 @@ handle_group(Users) ->
 	    drop_users(gb_trees:keys(Users), Users)
     end.
 
+drop_user_from_group(DropUsers,[User|Users],Group) ->
+    case gb_trees:lookup(User) of
+	{value,Group} ->
+	    [User|DropUsers];
+        _ ->
+	    drop_user_from_group(DropUsers,Users,Group)
+    end;
+drop_user_from_group(DropUsers,[],_Group) ->
+    DropUsers.
+
 drop_users([User|Users],UsersList) ->
     NewUsers = gb_trees:delete(User, UsersList),
     io:format("Delete: ~p~n", [User]),
