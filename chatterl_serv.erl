@@ -31,7 +31,7 @@ start() ->
     gen_server:start_link({global, ?SERVER}, ?MODULE, [], []).
 
 stop() ->
-    gen_server:call(?MODULE, stop).
+    gen_server:call({global, ?MODULE}, stop, infinity).
 
 create(GroupPid, Name) ->
     gen_server:call({global, ?MODULE}, {create, GroupPid, Name}, infinity).
