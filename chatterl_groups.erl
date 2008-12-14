@@ -31,12 +31,13 @@ connect(Group) ->
 handle_group(Users) ->
     receive
 	{connect, Group} ->
-	    case chatterl_serv:create(Group, ?SERVER) of
-		{ok, Msg} ->
-		    io:format("Created group: ~p~n", [Msg]);
+	    Message = case chatterl_serv:create(Group, ?SERVER) of
+		{ok, GroupName} ->
+		    "Created group: "++GroupName;
 		{error, Error} ->
-		    io:format("Error: ~p~n", [Error])
+		    "Error: " ++ Error
 	    end,
+	    io:format("~p~n", [Message]),
 	    handle_group(Users);
 	shutdown ->
 	    io:format("Shutting down...~n")
