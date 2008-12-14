@@ -10,7 +10,8 @@
 -define(SERVER, chatterl_groups).
 -define(CHATTERL, chatterl_serv).
 
--export([start/0,stop/0,create/1,handle_group/1]).
+-export([start/0,stop/0]).
+-export([register_nick/2,create/1,handle_group/1]).
 
 start() ->
     Pid = spawn(chatterl_groups, handle_group, [dict:new()]),
@@ -28,6 +29,9 @@ stop() ->
 create(Group) ->
     ?SERVER ! {create, Group}.
 
+register_nick(User,Group) ->
+    ?SERVER ! {register, User, Group}.
+
 handle_group(Users) ->
     receive
 	{create, Group} ->
@@ -39,6 +43,8 @@ handle_group(Users) ->
 	    end,
 	    io:format("~p~n", [Message]),
 	    handle_group(Users);
+	{register, User, Group} ->
+	    handle_group(dict:store(User, Group, Users));
 	shutdown ->
 	    io:format("Shutting down...~n")
     end.
