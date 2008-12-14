@@ -10,12 +10,11 @@
 -behaviour(gen_server).
 
 %% API
--export([start/0,stop/0,create/2,drop/1,call/2,call/3,view_users/0]).
+-export([start/0,stop/0,create/2,drop/1,call/2,call/3,view_groups/0]).
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
 	 terminate/2, code_change/3]).
 
--export([post_msg/3]).
 -define(SERVER, ?MODULE).
 
 -record(chatterl, {groups, lastcall}).
