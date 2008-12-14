@@ -10,7 +10,7 @@
 -define(SERVER, chatterl_groups).
 -define(CHATTERL, chatterl_serv).
 
--export([start/0,connect/1,loop/1]).
+-export([start/0,stop/0,connect/1,loop/1]).
 
 start() ->
     Pid = spawn(chatterl_groups, loop, [dict:new()]),
@@ -22,6 +22,9 @@ start() ->
     end,
     erlang:register(?SERVER, Pid).
 
+stop() ->
+    ?SERVER ! shutdown.
+
 connect(Group) ->
     ?SERVER ! {connect, Group}.
 
@@ -29,5 +32,7 @@ loop(Users) ->
     receive
 	{connect, Group} ->
 	    chatterl_serv:create(Group, ?SERVER),
-	    loop(Users)
+	    loop(Users);
+	shutdown ->
+	    io:format("Shutting down...~n")
     end.
