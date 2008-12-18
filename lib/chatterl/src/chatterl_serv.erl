@@ -61,7 +61,10 @@ init([]) ->
     io:format("Initialising Chatterl Serv~n"),
     {ok, #chatterl{
        groups = gb_trees:empty(),
-       users - gb_trees:empty()
+       users = gb_trees:empty()
+       },
+     #users{
+       users = gb_trees:empty()
       }}.
 
 %%--------------------------------------------------------------------
@@ -77,7 +80,7 @@ handle_call(list_groups, _Client, State) ->
     Result = gb_trees:keys(State#chatterl.groups),
     {reply, Result, State};
 handle_call({connect,User}, _From, State) ->
-    Reply = gb_trees:lookup(User, State#users.name),
+    Reply = gb_trees:lookup(User, State#chatterl.users),
     {reply, Reply, State};
 handle_call({create, Group, Description}, _From, State) ->
     NewTree =  case gb_trees:is_defined(Group, State#chatterl.groups) of
