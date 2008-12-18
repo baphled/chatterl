@@ -98,24 +98,23 @@ handle_call({user_disconnect, User}, _From, State) ->
     end,
     {reply, Reply, State#groups{ users = NewUsers }};
 handle_call({user_connect, User, Group}, _From, State) ->
-    {Reply,NewTree} = case chatterl_serv:group_exists(Group) of
+    NewTree = case chatterl_serv:group_exists(Group) of
 	true -> 
 	    case user_exists(User, State#groups.users) of
 		true -> 
-		    %State#groups.users,
-		    {" already connected to a group, ", State#groups.users};
+		    io:format("~p already connected to a group, ~p~n", [User, Group]), 
+		    State#groups.users;
 		
-		false -> 
-		    %gb_trees:insert(User, {User,Group}, State#groups.users),
-		    {" connected to : ",
-		      gb_trees:insert(User, {User,Group}, State#groups.users)}
+		false ->
+		    io:format("~p connected to: ~p~n", [User, Group]),
+		    gb_trees:insert(User, {User,Group}, State#groups.users)
 	    end;
 	false ->
-	    {", group doesn't exist:" ,State#groups.users};
+	    io:format("~p, group doesn't exists: ~p~n", [User, Group]),
+	    State#groups.users;
 	{error, Error} ->
 	    {error, Error}
     end,
-    io:format("~p~p~p~n", [User,Reply,Group]),
     {reply, ok, State#groups{ users = NewTree }};
 handle_call({update_users,Group}, _From, State) ->
     io:format("Updating users~n"),
