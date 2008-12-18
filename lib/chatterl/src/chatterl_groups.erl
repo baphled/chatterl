@@ -186,14 +186,3 @@ user_exists(User,UsersTree) ->
 	true -> true;
 	false -> false
     end.
-user_exists(User, Group, UsersTree) ->
-    case gb_trees:is_defined(User, UsersTree) of
-	true ->
-	    case gb_trees:lookup(User, UsersTree) of
-		{value, Group} ->
-		    true;
-		_ -> false
-	    end;
-	false ->
-	    false
-    end.
