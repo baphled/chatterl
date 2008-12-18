@@ -51,7 +51,7 @@ create(Group) ->
     {ok, Message}.
 stop(Group) ->
     io:format("Shutting down ~p...~n", [Group]),
-    case gen_server:call({global, 'chatterl_serv'}, {create, Group}) of
+    case gen_server:call({global, 'chatterl_serv'}, {drop, Group}) of
 	{ok, _Result} -> gen_server:call({?SERVER, ?MODULE}, {update_users, Group});
         {error, Error} -> io:format("Error:~p~n", [Error])
     end.
