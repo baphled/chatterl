@@ -1,107 +1,167 @@
 %%%-------------------------------------------------------------------
-%%% File    : chatterl_groups.erl
-%%% Author  : Yomi Akindayini <yomi@boodah.net>
+%%% File    : chatterl_groups_new.erl
+%%% Author  : Yomi Akindayini <yomi@boodh.net>
 %%% Description : Handle chatterl's group system
 %%%
-%%% Created : 14 Dec 2008 by Yomi Akindayini <yomi@boodah.net>
+%%% Created : 18 Dec 2008 by Yomi Akindayini <yomi@boodah.net>
 %%%-------------------------------------------------------------------
 -module(chatterl_groups).
 
--define(SERVER, chatterl_groups).
--define(CHATTERL, chatterl_serv).
+-behaviour(gen_server).
+-define(SERVER, ?MODULE).
+%% API
+-export([start/0,shutdown/0,list_users/0,user_connect/2,user_disconnect/1,create/1,stop/1]).
 
--export([start/0,shutdown/0,stop/1,handle_group/1]).
--export([create/1,user_connect/2,user_disconnect/1,list_users/0,list_groups/0]).
+%% gen_server callbacks
+-export([init/1, handle_call/3, handle_cast/2, handle_info/2,
+	 terminate/2, code_change/3]).
 
+-record(groups, {users}).
+
+%%====================================================================
+%% API
+%%====================================================================
+%%--------------------------------------------------------------------
+%% Function: start_link() -> {ok,Pid} | ignore | {error,Error}
+%% Description: Starts the server
+%%--------------------------------------------------------------------
 start() ->
-    Pid = spawn(chatterl_groups, handle_group, [gb_trees:empty()]),
-    case chatterl_serv:start() of
-	{ok,_ServPid} ->
-	    io:format("Starting Chatterl Group.~n");
-	{error,{already_started,_ServPid}} ->
-	    io:format("Serverl already started~n")
-    end,
-    erlang:register(?SERVER, Pid).
+    gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
 
 shutdown() ->
-    ?SERVER ! shutdown.
-
-stop(Group) ->
-    ?SERVER ! {stop, Group}.
-
-create(Group) ->
-    ?SERVER ! {create, Group}.
-
-user_connect(User,Group) ->
-    ?SERVER ! {user_connect, User, Group}.
-
-user_disconnect(User) ->
-    ?SERVER ! {user_disconnect, User}.
+    gen_server:call({global, ?MODULE}, shutdown, infinity).
 
 list_users() ->
-    ?SERVER ! {list_users}.
+    gen_server:call({global, ?MODULE}, {list_users}, infinity).
 
-list_groups() ->
-    ?SERVER ! chatterl_serv:view_groups().
+user_connect(User,Group) ->
+    gen_server:call({global, ?MODULE}, {user_connect, User, Group}, infinity).
 
-handle_group(Users) ->
-    receive
-	{create, Group} ->
-	    Message = case chatterl_serv:create(Group, ?SERVER) of
-		{ok, GroupName} ->
-		    "Created group: "++GroupName;
-		{error, Error} ->
-		    "Error: " ++ Error
-	    end,
-	    io:format("~p~n", [Message]),
-	    handle_group(Users);
-	{stop, Group} ->
-	    io:format("Shutting down ~p...~n", [Group]),
-	    NewUsers = case chatterl_serv:drop(Group) of
-		{ok, Result} -> io:format("~p~n", [Result]),
-				List = gb_trees:to_list(Users),
-				drop_user_from_group(Users,List,Group);
-		{error, Error} -> io:format("Error:~p~n", [Error]),
-				  Users
-	    end,
-	    handle_group(NewUsers);
-	{user_connect, User, Group} ->
-	    case chatterl_serv:group_exists(Group) of
+user_disconnect(User) ->
+    gen_server:call({global, ?MODULE}, {user_disconnect, User}, infinity).
+
+create(Group) ->
+    gen_server:call({global, ?MODULE}, {create, Group}, infinity).
+stop(Group) ->
+    gen_server:call({global, ?MODULE}, {stop, Group}, infinity).
+
+%%====================================================================
+%% gen_server callbacks
+%%====================================================================
+
+%%--------------------------------------------------------------------
+%% Function: init(Args) -> {ok, State} |
+%%                         {ok, State, Timeout} |
+%%                         ignore               |
+%%                         {stop, Reason}
+%% Description: Initiates the server
+%%--------------------------------------------------------------------
+init([]) ->
+    {ok, #groups{users = gb_trees:empty()}}.
+
+%%--------------------------------------------------------------------
+%% Function: %% handle_call(Request, From, State) -> {reply, Reply, State} |
+%%                                      {reply, Reply, State, Timeout} |
+%%                                      {noreply, State} |
+%%                                      {noreply, State, Timeout} |
+%%                                      {stop, Reason, Reply, State} |
+%%                                      {stop, Reason, State}
+%% Description: Handling call messages
+%%--------------------------------------------------------------------
+handle_call(shutdown, _From, State) ->
+    io:format("Shutting down...~n"),
+    %Users = State#groups.users,
+    Reply = drop_users(gb_trees:keys(State#groups.users), State#groups.users),
+    {reply, Reply, State};
+handle_call({list_users}, _From, State) ->
+    Reply = gb_trees:keys(State#groups.users),
+    {reply, Reply, State};
+handle_call({user_disconnect, User}, _From, State) ->
+    NewUsers = case user_exists(User, State#groups.users) of
+	true ->
+		       Reply = "Disconnected: ",
+		       gb_trees:delete(User, State#groups.users);
+	false -> 
+		       Reply = "is not connected.",
+		       State#groups.users
+    end,
+    {reply, Reply, State#groups{ users = NewUsers }};
+handle_call({user_connect, User, Group}, _From, State) ->
+    {Reply,NewTree} = case chatterl_serv:group_exists(Group) of
+	true -> 
+	    case user_exists(User, State#groups.users) of
 		true -> 
-		    case user_exists(User, Users) of
-			true -> io:format("~p already connected to ~p~n",[User,Group]);
-			false -> 
-			    io:format("Connected user: ~p~n", [User]),
-			    handle_group(gb_trees:insert(User, {User,Group}, Users))
-		    end;
-		false ->
-		    io:format("Group doesn't exist ~p~n", [Group]);
-		{error, Error} ->
-		    io:format("Error: ~p~n", [Error])
-	    end,
-	    handle_group(Users);
-	{user_disconnect, User} ->   
-	    case user_exists(User, Users) of
-		true -> handle_group(gb_trees:delete(User, Users)),
-			io:format("Disconnected ~p~n", [User]);
-		false -> io:format("~p is not connected.~n", [User])
-	    end,
-	    handle_group(Users);
-	{list_users} ->
-	    Results = gb_trees:keys(Users),
-	    io:format("~p~n", [Results]),
-	    handle_group(Users);
+		    %State#groups.users,
+		    {User ++" already connected to " ++Group ++"~n", State#groups.users};
+		
+		false -> 
+		    %gb_trees:insert(User, {User,Group}, State#groups.users),
+		    {"Connected user: " ++User ++"~n",
+		      gb_trees:insert(User, {User,Group}, State#groups.users)}
+	    end;
+	false ->
+	    {"Group doesn't exist ~p" ++ Group ++"~n",State#groups.users};
 	{error, Error} ->
-	    io:format("Error: ~p~n", [Error]),
-	    handle_group(Users);
-	error ->
-	    io:format("Unknown error"),
-	    handle_group(Users);
-	shutdown ->
-	    io:format("Shutting down...~n"),
-	    drop_users(gb_trees:keys(Users), Users)
-    end.
+	    {error, Error}
+    end,
+    {reply, Reply, State#groups{ users = NewTree }};
+handle_call({stop, Group}, _From, State) ->
+    io:format("Shutting down ~p...~n", [Group]),
+    NewUsers = case chatterl_serv:drop(Group) of
+	{ok, Result} -> 
+		       io:format("~p~n", [Result]),
+		       List = gb_trees:to_list(State#groups.users),
+		       drop_user_from_group(State#groups.users,List,Group);
+        {error, Error} -> io:format("Error:~p~n", [Error]),
+			  State#groups.users
+    end,
+    {reply, NewUsers, State};
+handle_call({create, Group}, _From, State) ->
+     Message = case chatterl_serv:create(Group, ?SERVER) of
+	{ok, GroupName} ->
+	    "Created group: "++GroupName;
+	{error, Error} ->
+	    "Error: " ++ Error
+     end,
+     {reply, Message, State}.
+%%--------------------------------------------------------------------
+%% Function: handle_cast(Msg, State) -> {noreply, State} |
+%%                                      {noreply, State, Timeout} |
+%%                                      {stop, Reason, State}
+%% Description: Handling cast messages
+%%--------------------------------------------------------------------
+handle_cast(_Msg, State) ->
+    {noreply, State}.
 
+%%--------------------------------------------------------------------
+%% Function: handle_info(Info, State) -> {noreply, State} |
+%%                                       {noreply, State, Timeout} |
+%%                                       {stop, Reason, State}
+%% Description: Handling all non call/cast messages
+%%--------------------------------------------------------------------
+handle_info(_Info, State) ->
+    {noreply, State}.
+
+%%--------------------------------------------------------------------
+%% Function: terminate(Reason, State) -> void()
+%% Description: This function is called by a gen_server when it is about to
+%% terminate. It should be the opposite of Module:init/1 and do any necessary
+%% cleaning up. When it returns, the gen_server terminates with Reason.
+%% The return value is ignored.
+%%--------------------------------------------------------------------
+terminate(_Reason, _State) ->
+    ok.
+
+%%--------------------------------------------------------------------
+%% Func: code_change(OldVsn, State, Extra) -> {ok, NewState}
+%% Description: Convert process state when code is changed
+%%--------------------------------------------------------------------
+code_change(_OldVsn, State, _Extra) ->
+    {ok, State}.
+
+%%--------------------------------------------------------------------
+%%% Internal functions
+%%--------------------------------------------------------------------
 drop_user_from_group(UsersTree,[User|Users],Group) ->
     NewUsers = case gb_trees:lookup(User,UsersTree) of
 	{value,Group} ->
