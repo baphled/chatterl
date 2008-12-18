@@ -32,7 +32,7 @@ shutdown() ->
     gen_server:call({global, ?MODULE}, shutdown, infinity).
 
 list_users() ->
-    gen_server:call({global, ?MODULE}, {list_users}, infinity).
+    gen_server:call({global, ?MODULE}, list_users, infinity).
 
 user_connect(User,Group) ->
     gen_server:call({global, ?MODULE}, {user_connect, User, Group}, infinity).
@@ -51,7 +51,7 @@ create(Group) ->
     {ok, Message}.
 stop(Group) ->
     io:format("Shutting down ~p...~n", [Group]),
-    case gen_server:call({?SERVER, 'chatterl_serv'}, {create, Group}) of
+    case gen_server:call({global, 'chatterl_serv'}, {create, Group}) of
 	{ok, _Result} -> gen_server:call({?SERVER, ?MODULE}, {update_users, Group});
         {error, Error} -> io:format("Error:~p~n", [Error])
     end.
@@ -85,7 +85,7 @@ handle_call(shutdown, _From, State) ->
     %Users = State#groups.users,
     Reply = drop_users(gb_trees:keys(State#groups.users), State#groups.users),
     {reply, Reply, State};
-handle_call({list_users}, _From, State) ->
+handle_call(list_users, _From, State) ->
     Reply = gb_trees:keys(State#groups.users),
     {reply, Reply, State};
 handle_call({user_disconnect, User}, _From, State) ->
