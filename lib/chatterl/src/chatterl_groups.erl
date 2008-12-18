@@ -71,7 +71,12 @@ list_groups() ->
 %%--------------------------------------------------------------------
 init([]) ->
     io:format("Initialising ~p...~n", [?MODULE]),
-    {ok, #groups{users = gb_trees:empty()}}.
+    {ok, 
+     #groups{
+      users = gb_trees:empty(),
+      name = "",
+      description = ""}
+    }.
 
 %%--------------------------------------------------------------------
 %% Function: %% handle_call(Request, From, State) -> {reply, Reply, State} |
@@ -99,23 +104,20 @@ handle_call({leave_group, User}, _From, State) ->
     end,
     {reply, Reply, State#groups{ users = NewUsers }};
 handle_call({join_group, User, Group}, _From, State) ->
-    NewTree = case chatterl_serv:group_exists(Group) of
+    NewTree = case user_exists(User, State#groups.users) of
 	true -> 
-	    case user_exists(User, State#groups.users) of
-		true -> 
-		    io:format("~p already connected to a group, ~p~n", [User, Group]), 
-		    State#groups.users;
-		
+		      io:format("~p already connect, ~p~n", [User, Group]), 
+		      State#groups.users;
 		false ->
-		    io:format("~p connected to: ~p~n", [User, Group]),
-		    gb_trees:insert(User, {User,Group}, State#groups.users)
-	    end;
-	false ->
-	    io:format("~p, group doesn't exists: ~p~n", [User, Group]),
-	    State#groups.users;
-	{error, Error} ->
-	    {error, Error}
-    end,
+		      case gb_trees:is_defined(Group, State#groups.name) of
+			  true ->
+			      io:format("~p connected to: ~p~n", [User, Group]),
+			      gb_trees:insert(User, {User,Group}, State#groups.users);
+			  false ->
+			      io:format("~p does not exist.", [Group]),
+			      State#groups.users
+		      end
+	      end,
     {reply, ok, State#groups{ users = NewTree }};
 handle_call({update_users,Group}, _From, State) ->
     io:format("Updating users~n"),

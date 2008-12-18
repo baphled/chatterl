@@ -168,3 +168,4 @@ group_exists(State, Client) ->
         true -> gb_trees:get(Client, State#chatterl.groups)
     end.
 
+
