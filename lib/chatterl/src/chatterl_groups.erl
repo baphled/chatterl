@@ -31,11 +31,6 @@ start() ->
 stop() ->
     gen_server:call({global, ?MODULE}, stop, infinity).
 
-list_users() ->
-    gen_server:call({global, 'chatterl_serv'}, list_users, infinity).
-
-list_groups() ->
-    gen_server:call({global, 'chatterl_serv'}, list_groups, infinity).
 join_group(User,Group) ->
     gen_server:call({global, ?MODULE}, {join_group, User, Group}, infinity).
 
@@ -58,6 +53,11 @@ drop(Group) ->
         {error, Error} -> io:format("Error:~p~n", [Error])
     end.
 
+%% Calls to chatterl_serv
+list_users() ->
+    gen_server:call({global, 'chatterl_serv'}, list_users, infinity).
+list_groups() ->
+    gen_server:call({global, 'chatterl_serv'}, list_groups, infinity).
 %%====================================================================
 %% gen_server callbacks
 %%====================================================================
