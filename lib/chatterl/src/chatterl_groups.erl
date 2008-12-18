@@ -41,9 +41,20 @@ user_disconnect(User) ->
     gen_server:call({global, ?MODULE}, {user_disconnect, User}, infinity).
 
 create(Group) ->
-    gen_server:call({global, ?MODULE}, {create, Group}, infinity).
+    Node = 'chatterl_serv',
+    Message = case gen_server:call({global, 'chatterl_serv'}, {create, Group, "default"}) of
+	{ok, GroupName} ->
+	    "Created group: "++GroupName;
+	{error, Error} ->
+	    "Error: " ++ Error
+     end,
+    {ok, Message}.
 stop(Group) ->
-    gen_server:call({global, ?MODULE}, {stop, Group}, infinity).
+    io:format("Shutting down ~p...~n", [Group]),
+    case gen_server:call({?SERVER, 'chatterl_serv'}, {create, Group}) of
+	{ok, _Result} -> gen_server:call({?SERVER, ?MODULE}, {update_users, Group});
+        {error, Error} -> io:format("Error:~p~n", [Error])
+    end.
 
 %%====================================================================
 %% gen_server callbacks
@@ -57,6 +68,7 @@ stop(Group) ->
 %% Description: Initiates the server
 %%--------------------------------------------------------------------
 init([]) ->
+    io:format("Initialising ~p...~n", [?MODULE]),
     {ok, #groups{users = gb_trees:empty()}}.
 
 %%--------------------------------------------------------------------
@@ -105,25 +117,11 @@ handle_call({user_connect, User, Group}, _From, State) ->
 	    {error, Error}
     end,
     {reply, Reply, State#groups{ users = NewTree }};
-handle_call({stop, Group}, _From, State) ->
-    io:format("Shutting down ~p...~n", [Group]),
-    NewUsers = case chatterl_serv:drop(Group) of
-	{ok, Result} -> 
-		       io:format("~p~n", [Result]),
-		       List = gb_trees:to_list(State#groups.users),
-		       drop_user_from_group(State#groups.users,List,Group);
-        {error, Error} -> io:format("Error:~p~n", [Error]),
-			  State#groups.users
-    end,
-    {reply, NewUsers, State};
-handle_call({create, Group}, _From, State) ->
-     Message = case chatterl_serv:create(Group, ?SERVER) of
-	{ok, GroupName} ->
-	    "Created group: "++GroupName;
-	{error, Error} ->
-	    "Error: " ++ Error
-     end,
-     {reply, Message, State}.
+handle_call({update_users,Group}, _From, State) ->
+    io:format("Updating users~n"),
+    List = gb_trees:to_list(State#groups.users),
+    drop_user_from_group(State#groups.users,List,Group).
+
 %%--------------------------------------------------------------------
 %% Function: handle_cast(Msg, State) -> {noreply, State} |
 %%                                      {noreply, State, Timeout} |
