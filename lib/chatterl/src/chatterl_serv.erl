@@ -62,10 +62,7 @@ init([]) ->
     {ok, #chatterl{
        groups = gb_trees:empty(),
        users = gb_trees:empty()
-       },
-     #users{
-       users = gb_trees:empty()
-      }}.
+       }}.
 
 %%--------------------------------------------------------------------
 %% Function: %% handle_call(Request, From, State) -> {reply, Reply, State} |
