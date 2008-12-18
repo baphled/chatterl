@@ -103,19 +103,20 @@ handle_call({user_connect, User, Group}, _From, State) ->
 	    case user_exists(User, State#groups.users) of
 		true -> 
 		    %State#groups.users,
-		    {User ++" already connected to " ++Group ++"~n", State#groups.users};
+		    {" already connected to a group, ", State#groups.users};
 		
 		false -> 
 		    %gb_trees:insert(User, {User,Group}, State#groups.users),
-		    {"Connected user: " ++User ++"~n",
+		    {" connected to : ",
 		      gb_trees:insert(User, {User,Group}, State#groups.users)}
 	    end;
 	false ->
-	    {"Group doesn't exist ~p" ++ Group ++"~n",State#groups.users};
+	    {", group doesn't exist:" ,State#groups.users};
 	{error, Error} ->
 	    {error, Error}
     end,
-    {reply, Reply, State#groups{ users = NewTree }};
+    io:format("~p~p~p~n", [User,Reply,Group]),
+    {reply, ok, State#groups{ users = NewTree }};
 handle_call({update_users,Group}, _From, State) ->
     io:format("Updating users~n"),
     List = gb_trees:to_list(State#groups.users),
