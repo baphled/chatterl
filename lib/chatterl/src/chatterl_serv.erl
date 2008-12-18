@@ -9,7 +9,7 @@
 -behaviour(gen_server).
 
 %% API
--export([start/0,stop/0,connect/1,create/2,drop/1,list_groups/0,group_exists/1]).
+-export([start/0,stop/0,connect/1,create/2,drop/1,list_users/0,list_groups/0,group_exists/1]).
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
 	 terminate/2, code_change/3]).
@@ -44,6 +44,8 @@ group_exists(Group) ->
     gen_server:call({global, ?MODULE}, {group_exists, Group}, infinity).
 
 %% View the users connected to the server
+list_users() ->
+    gen_server:call({global, ?MODULE}, list_users, infinity).
 list_groups() ->
     gen_server:call({global, ?MODULE}, list_groups, infinity).
 %%====================================================================
@@ -75,6 +77,9 @@ init([]) ->
 %%--------------------------------------------------------------------
 handle_call(list_groups, _Client, State) ->
     Result = gb_trees:keys(State#chatterl.groups),
+    {reply, Result, State};
+handle_call(list_users, _Fron, State) ->
+    Reply = gb_trees:keys(State#chatterl.users),
     {reply, Result, State};
 handle_call({connect,User}, _From, State) ->
     Reply = case gb_trees:lookup(User, State#chatterl.users) of
