@@ -1,9 +1,9 @@
 %% This is the application resource file (.app file) for the chatterl,
 %% application.
 {application, chatterl, 
-  [{description, "Your Desc HERE"},
+  [{description, "Erlang based chat system."},
    {vsn, "0.1.0"},
-   {modules, [chatterl_app,
+   {modules, [chatterl_app, chatterl_groups, chatterl_serv,
               chatterl_sup]},
    {registered,[chatterl_sup]},
    {applications, [kernel, stdlib]},

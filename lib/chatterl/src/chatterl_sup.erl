@@ -58,10 +58,12 @@ init([]) ->
     Shutdown = 2000,
     Type = worker,
 
-    AChild = {'AName', {'AModule', start_link, []},
-              Restart, Shutdown, Type, ['AModule']},
-
-    {ok, {SupFlags, [AChild]}}.
+    AChild = {'AName', {chatterl_serv, start_link, []},
+              Restart, Shutdown, Type, [chatterl_serv]},
+    
+    AChild2 = {'AName', {chatterl_groups, start_link, []},
+              Restart, Shutdown, Type, [chatterl_groups]},
+    {ok, {SupFlags, [AChild]}, [AChild2]}.
 
 %%%===================================================================
 %%% Internal functions
