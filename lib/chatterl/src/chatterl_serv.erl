@@ -76,26 +76,18 @@ init([]) ->
 %%                                      {stop, Reason, State}
 %% Description: Handling call messages
 %%--------------------------------------------------------------------
-handle_call(stop, _Client, State) ->
-    {stop, normal, stopped, State};
-handle_call({group_exists, Group}, _Client, State) ->
-    Response = case gb_trees:is_defined(Group, State#chatterl.groups) of
-	true -> true;
-	false -> false
-    end,
-    {reply, Response, State};
 handle_call(list_groups, _Client, State) ->
     Result = gb_trees:keys(State#chatterl.groups),
     {reply, Result, State};
 
-handle_call({create, Group, GroupPid}, _From, State) ->
+handle_call({create, Group, Description}, _From, State) ->
     NewTree =  case gb_trees:is_defined(Group, State#chatterl.groups) of
         true ->
 		       Result = {error, "Group already created"},
 		       State#chatterl.groups;
         false -> 
 		       Result = {ok, Group},
-		       gb_trees:insert(Group, {Group, GroupPid}, State#chatterl.groups)
+		       gb_trees:insert(Group, {Group, Description}, State#chatterl.groups)
     end,
     {reply, Result, State#chatterl{ groups = NewTree }};
 
@@ -108,20 +100,7 @@ handle_call({drop, Group}, _From, State) ->
 		       Result = {error, "Unable to drop group."},
 		       State#chatterl.groups
     end,
-    {reply, Result, State#chatterl{ groups = NewTree }};
-handle_call({Client, Method, Args}, _From, State) ->
-    Response = case group_exists(State, Client) of
-        {error, Reason} -> {error, Reason};
-        {Group, GroupPid} ->
-            try apply(chatterl_serv, Method, [Group, GroupPid, Args])
-            catch
-                Err:Msg ->
-                    io:format("~p:~p~n", [Err, Msg]),
-                    {error, {Method, Args}}
-            end;
-        _ -> {error, unknown}
-    end,
-    {reply, Response, State}.
+    {reply, Result, State#chatterl{ groups = NewTree }}.
 %%--------------------------------------------------------------------
 %% Function: handle_cast(Msg, State) -> {noreply, State} |
 %%                                      {noreply, State, Timeout} |
