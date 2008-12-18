@@ -37,10 +37,15 @@ join_group(User,Group) ->
 leave_group(User) ->
     gen_server:call({global, ?MODULE}, {leave_group, User}, infinity).
 
+%% Need to add group and its description to the group record
 create(Group,Desc) ->
     Message = case gen_server:call({global, 'chatterl_serv'}, {create, Group, Desc}) of
 	{ok, GroupName} ->
-	    "Created group: "++GroupName;
+            case gen_server:call({global, ?MODULE}, {create, Group, Desc}) of
+		true -> "Created group: "++GroupName;
+		false -> gen_server:call({global, 'chatterl_serv'}, {create, Group}),
+			 "Unable to create group"
+	    end;
 	{error, Error} ->
 	    "Error: " ++ Error
      end,
@@ -92,7 +97,8 @@ handle_call(stop, _From, State) ->
     %Users = State#groups.users,
     Reply = drop_users(gb_trees:keys(State#groups.users), State#groups.users),
     {reply, Reply, State};
-
+handle_call({create, Group, Description}, _From, State) ->
+    {reply, ok, State#groups{ name = Group, description = Description }};
 handle_call({leave_group, User}, _From, State) ->
     NewUsers = case user_exists(User, State#groups.users) of
 	true ->
