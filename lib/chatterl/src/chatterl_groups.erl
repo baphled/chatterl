@@ -41,7 +41,6 @@ user_disconnect(User) ->
     gen_server:call({global, ?MODULE}, {user_disconnect, User}, infinity).
 
 create(Group,Desc) ->
-    Node = 'chatterl_serv',
     Message = case gen_server:call({global, 'chatterl_serv'}, {create, Group, Desc}) of
 	{ok, GroupName} ->
 	    "Created group: "++GroupName;
@@ -50,7 +49,7 @@ create(Group,Desc) ->
      end,
     {ok, Message}.
 stop(Group) ->
-    io:format("Shutting down ~p...~n", [Group]),
+    io:format("dropping ~p group...~n", [Group]),
     case gen_server:call({global, 'chatterl_serv'}, {drop, Group}) of
 	{ok, _Result} -> gen_server:call({global, ?MODULE}, {update_users, Group});
         {error, Error} -> io:format("Error:~p~n", [Error])
