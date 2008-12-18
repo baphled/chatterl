@@ -9,7 +9,7 @@
 -behaviour(gen_server).
 
 %% API
--export([start/0,stop/0,connect/1,create/2,drop/1,list_users/0,list_groups/0,group_exists/1]).
+-export([start/0,stop/0,connect/1,disconnect/1,create/2,drop/1,list_users/0,list_groups/0,group_exists/1]).
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
 	 terminate/2, code_change/3]).
@@ -34,6 +34,9 @@ stop() ->
 
 connect(User) ->
     gen_server:call({global, ?MODULE}, {connect,User}, infinity).
+
+disconnect(User) ->
+    gen_server:call({global, ?MODULE}, {disconnect,User}, infinity).
 
 create(Group, Description) ->
     gen_server:call({global, ?MODULE}, {create, Group, Description}, infinity).
@@ -90,6 +93,16 @@ handle_call({connect,User}, _From, State) ->
 			 State#chatterl.users}
 	    end,
     {reply, Reply, State#chatterl{ users = NewTree }};
+handle_call({disconnect, User}, _From, State) ->
+     NewTree =  case gb_trees:is_defined(User, State#chatterl.users) of
+        true -> 
+		       Result = {ok, "User dropped"},
+		       gb_trees:delete(User, State#chatterl.users);
+        false -> 
+		       Result = {error, "Unable to drop group."},
+		       State#chatterl.users
+    end,
+    {reply, Result, State#chatterl{ users = NewTree }};
 handle_call({create, Group, Description}, _From, State) ->
     NewTree =  case gb_trees:is_defined(Group, State#chatterl.groups) of
         true ->
