@@ -48,6 +48,7 @@ create(Group,Desc) ->
 	    "Error: " ++ Error
      end,
     {ok, Message}.
+
 stop(Group) ->
     io:format("dropping ~p group...~n", [Group]),
     case gen_server:call({global, 'chatterl_serv'}, {drop, Group}) of
@@ -161,6 +162,7 @@ code_change(_OldVsn, State, _Extra) ->
 %%--------------------------------------------------------------------
 %%% Internal functions
 %%--------------------------------------------------------------------
+%% @private
 drop_user_from_group(UsersTree,[User|Users],Group) ->
     NewUsers = case gb_trees:lookup(User,UsersTree) of
 	{value,Group} ->
@@ -171,7 +173,7 @@ drop_user_from_group(UsersTree,[User|Users],Group) ->
     drop_user_from_group(NewUsers,Users,Group);
 drop_user_from_group(UsersTree,[],_Group) ->
     UsersTree.
-
+%% @private
 drop_users([User|Users],UsersList) ->
     NewUsers = gb_trees:delete(User, UsersList),
     io:format("Delete: ~p~n", [User]),

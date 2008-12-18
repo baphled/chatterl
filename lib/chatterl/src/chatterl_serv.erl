@@ -41,7 +41,7 @@ drop(Group) ->
 
 %% Used to make general calls to the server.
 call(Client,Method) ->
-    twitterl:call(Client, Method, []).
+    call(Client, Method, []).
 call(Client, Method, Args) ->
     gen_server:call({global, ?MODULE}, {Client, Method, Args}, infinity).
 
