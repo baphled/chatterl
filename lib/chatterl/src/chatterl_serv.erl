@@ -30,8 +30,8 @@ start() ->
 stop() ->
     gen_server:call({global, ?MODULE}, stop, infinity).
 
-create(Group, GroupPid) ->
-    gen_server:call({global, ?MODULE}, {create, Group, GroupPid}, infinity).
+create(Group, Description) ->
+    gen_server:call({global, ?MODULE}, {create, Group, Description}, infinity).
 
 drop(Group) ->
     gen_server:call({global, ?MODULE}, {drop, Group}, infinity).
