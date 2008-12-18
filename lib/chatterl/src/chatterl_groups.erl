@@ -26,7 +26,7 @@
 %% Description: Starts the server
 %%--------------------------------------------------------------------
 start() ->
-    gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
+    gen_server:start_link({global, ?SERVER}, ?MODULE, [], []).
 
 shutdown() ->
     gen_server:call({global, ?MODULE}, shutdown, infinity).
