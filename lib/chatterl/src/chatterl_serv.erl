@@ -9,13 +9,14 @@
 -behaviour(gen_server).
 
 %% API
--export([start/0,stop/0,create/2,drop/1,list_groups/0,group_exists/1]).
+-export([start/0,stop/0,connect/1,create/2,drop/1,list_groups/0,group_exists/1]).
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
 	 terminate/2, code_change/3]).
 
 -define(SERVER, ?MODULE).
 -include("chatterl.hrl").
+
 %%====================================================================
 %% API
 %%====================================================================
@@ -29,6 +30,9 @@ start() ->
 
 stop() ->
     gen_server:call({global, ?MODULE}, stop, infinity).
+
+connect(User) ->
+    gen_server:call({global, ?MODULE}, {connect,User}, infinity).
 
 create(Group, Description) ->
     gen_server:call({global, ?MODULE}, {create, Group, Description}, infinity).
@@ -56,7 +60,8 @@ list_groups() ->
 init([]) ->
     io:format("Initialising Chatterl Serv~n"),
     {ok, #chatterl{
-       groups = gb_trees:empty()
+       groups = gb_trees:empty(),
+       users - gb_trees:empty()
       }}.
 
 %%--------------------------------------------------------------------
@@ -71,7 +76,9 @@ init([]) ->
 handle_call(list_groups, _Client, State) ->
     Result = gb_trees:keys(State#chatterl.groups),
     {reply, Result, State};
-
+handle_call({connect,User}, _From, State) ->
+    Reply = gb_trees:lookup(User, State#users.name),
+    {reply, Reply, State};
 handle_call({create, Group, Description}, _From, State) ->
     NewTree =  case gb_trees:is_defined(Group, State#chatterl.groups) of
         true ->

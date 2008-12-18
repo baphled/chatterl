@@ -90,6 +90,7 @@ handle_call(stop, _From, State) ->
 handle_call(list_users, _From, State) ->
     Reply = gb_trees:keys(State#groups.users),
     {reply, Reply, State};
+
 handle_call({leave_group, User}, _From, State) ->
     NewUsers = case user_exists(User, State#groups.users) of
 	true ->
