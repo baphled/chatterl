@@ -32,7 +32,7 @@ stop() ->
     gen_server:call({global, ?MODULE}, stop, infinity).
 
 list_users() ->
-    gen_server:call({global, ?MODULE}, list_users, infinity).
+    gen_server:call({global, 'chatterl_serv'}, list_users, infinity).
 
 list_groups() ->
     gen_server:call({global, 'chatterl_serv'}, list_groups, infinity).
@@ -86,9 +86,6 @@ handle_call(stop, _From, State) ->
     io:format("Shutting down...~n"),
     %Users = State#groups.users,
     Reply = drop_users(gb_trees:keys(State#groups.users), State#groups.users),
-    {reply, Reply, State};
-handle_call(list_users, _From, State) ->
-    Reply = gb_trees:keys(State#groups.users),
     {reply, Reply, State};
 
 handle_call({leave_group, User}, _From, State) ->
