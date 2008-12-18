@@ -29,6 +29,7 @@ start() ->
     gen_server:start_link({global, ?SERVER}, ?MODULE, [], []).
 
 stop() ->
+    io:format("Stopping chatterl...~n"),
     gen_server:call({global, ?MODULE}, stop, infinity).
 
 connect(User) ->
