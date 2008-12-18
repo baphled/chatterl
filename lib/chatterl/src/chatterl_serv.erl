@@ -76,11 +76,11 @@ init([]) ->
 %% Description: Handling call messages
 %%--------------------------------------------------------------------
 handle_call(list_groups, _Client, State) ->
-    Result = gb_trees:keys(State#chatterl.groups),
-    {reply, Result, State};
+    Reply = gb_trees:keys(State#chatterl.groups),
+    {reply, Reply, State};
 handle_call(list_users, _Fron, State) ->
     Reply = gb_trees:keys(State#chatterl.users),
-    {reply, Result, State};
+    {reply, Reply, State};
 handle_call({connect,User}, _From, State) ->
     Reply = case gb_trees:lookup(User, State#chatterl.users) of
 		none -> gb_trees:insert(User, {User}, State#chatterl.users);
