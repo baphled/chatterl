@@ -8,16 +8,17 @@
 -module(chatterl_groups).
 
 -behaviour(gen_server).
--define(SERVER, ?MODULE).
-%% API
+
 -export([start/0,shutdown/0,list_groups/0,list_users/0,user_connect/2,user_disconnect/1,create/2,stop/1]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
 	 terminate/2, code_change/3]).
 
--record(groups, {name, description, users}).
+-define(SERVER, ?MODULE).
+-include("chatterl.hrl").
 
+%% API
 %%====================================================================
 %% API
 %%====================================================================

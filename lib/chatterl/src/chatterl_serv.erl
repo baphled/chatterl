@@ -16,9 +16,7 @@
 	 terminate/2, code_change/3]).
 
 -define(SERVER, ?MODULE).
-
--record(chatterl, {groups, lastcall, users}).
-
+-include("chatterl.hrl").
 %%====================================================================
 %% API
 %%====================================================================
@@ -66,8 +64,7 @@ list_groups() ->
 init([]) ->
     io:format("Initialising Chatterl Serv~n"),
     {ok, #chatterl{
-       groups = gb_trees:empty(),
-       lastcall = calendar:datetime_to_gregorian_seconds(erlang:universaltime())
+       groups = gb_trees:empty()
       }}.
 
 %%--------------------------------------------------------------------
@@ -113,7 +110,6 @@ handle_call({drop, Group}, _From, State) ->
     end,
     {reply, Result, State#chatterl{ groups = NewTree }};
 handle_call({Client, Method, Args}, _From, State) ->
-    Now = calendar:datetime_to_gregorian_seconds(erlang:universaltime()),
     Response = case group_exists(State, Client) of
         {error, Reason} -> {error, Reason};
         {Group, GroupPid} ->
@@ -125,7 +121,7 @@ handle_call({Client, Method, Args}, _From, State) ->
             end;
         _ -> {error, unknown}
     end,
-    {reply, Response, State#chatterl{ lastcall = Now }}.
+    {reply, Response, State}.
 %%--------------------------------------------------------------------
 %% Function: handle_cast(Msg, State) -> {noreply, State} |
 %%                                      {noreply, State, Timeout} |
