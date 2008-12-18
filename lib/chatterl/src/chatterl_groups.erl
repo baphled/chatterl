@@ -6,7 +6,6 @@
 %%% Created : 18 Dec 2008 by Yomi Akindayini <yomi@boodah.net>
 %%%-------------------------------------------------------------------
 -module(chatterl_groups).
-
 -behaviour(gen_server).
 
 -export([start/0,stop/0,list_groups/0,list_users/0,user_connect/2,user_disconnect/1,create/2,drop/1]).

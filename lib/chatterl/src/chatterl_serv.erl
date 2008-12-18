@@ -6,11 +6,10 @@
 %%% Created : 13 Dec 2008 by Yomi Akindayini <yomi@boodah.net>
 %%%-------------------------------------------------------------------
 -module(chatterl_serv).
-
 -behaviour(gen_server).
 
 %% API
--export([start/0,stop/0,create/2,drop/1,call/2,call/3,list_groups/0,group_exists/1]).
+-export([start/0,stop/0,create/2,drop/1,list_groups/0,group_exists/1]).
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
 	 terminate/2, code_change/3]).
