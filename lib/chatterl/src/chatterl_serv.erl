@@ -37,13 +37,6 @@ create(Group, GroupPid) ->
 drop(Group) ->
     gen_server:call({global, ?MODULE}, {drop, Group}, infinity).
 
-%% Used to make general calls to the server.
-call(Client,Method) ->
-    call(Client, Method, []).
-
-call(Client, Method, Args) ->
-    gen_server:call({global, ?MODULE}, {Client, Method, Args}, infinity).
-
 group_exists(Group) ->
     gen_server:call({global, ?MODULE}, {group_exists, Group}, infinity).
 
