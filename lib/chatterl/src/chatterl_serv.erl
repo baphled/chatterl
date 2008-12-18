@@ -17,7 +17,7 @@
 
 -define(SERVER, ?MODULE).
 
--record(chatterl, {groups, lastcall}).
+-record(chatterl, {groups, lastcall, users}).
 
 %%====================================================================
 %% API
