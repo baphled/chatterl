@@ -8,7 +8,8 @@
 -module(chatterl_groups).
 -behaviour(gen_server).
 
--export([start/0,stop/0,list_groups/0,list_users/0,user_connect/2,user_disconnect/1,create/2,drop/1]).
+%% API
+-export([start/0,stop/0,list_groups/0,list_users/0,join_group/2,leave_group/1,create/2,drop/1]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -35,11 +36,11 @@ list_users() ->
 
 list_groups() ->
     gen_server:call({global, 'chatterl_serv'}, list_groups, infinity).
-user_connect(User,Group) ->
-    gen_server:call({global, ?MODULE}, {user_connect, User, Group}, infinity).
+join_group(User,Group) ->
+    gen_server:call({global, ?MODULE}, {join_group, User, Group}, infinity).
 
-user_disconnect(User) ->
-    gen_server:call({global, ?MODULE}, {user_disconnect, User}, infinity).
+leave_group(User) ->
+    gen_server:call({global, ?MODULE}, {leave_group, User}, infinity).
 
 create(Group,Desc) ->
     Message = case gen_server:call({global, 'chatterl_serv'}, {create, Group, Desc}) of
@@ -89,7 +90,7 @@ handle_call(stop, _From, State) ->
 handle_call(list_users, _From, State) ->
     Reply = gb_trees:keys(State#groups.users),
     {reply, Reply, State};
-handle_call({user_disconnect, User}, _From, State) ->
+handle_call({leave_group, User}, _From, State) ->
     NewUsers = case user_exists(User, State#groups.users) of
 	true ->
 		       Reply = "Disconnected: ",
@@ -99,7 +100,7 @@ handle_call({user_disconnect, User}, _From, State) ->
 		       State#groups.users
     end,
     {reply, Reply, State#groups{ users = NewUsers }};
-handle_call({user_connect, User, Group}, _From, State) ->
+handle_call({join_group, User, Group}, _From, State) ->
     NewTree = case chatterl_serv:group_exists(Group) of
 	true -> 
 	    case user_exists(User, State#groups.users) of
