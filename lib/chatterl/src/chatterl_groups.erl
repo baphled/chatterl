@@ -119,7 +119,8 @@ handle_call({user_connect, User, Group}, _From, State) ->
 handle_call({update_users,Group}, _From, State) ->
     io:format("Updating users~n"),
     List = gb_trees:to_list(State#groups.users),
-    drop_user_from_group(State#groups.users,List,Group).
+    NewTree = drop_user_from_group(State#groups.users,List,Group),
+    {reply, ok, State#groups{users = NewTree} }.
 
 %%--------------------------------------------------------------------
 %% Function: handle_cast(Msg, State) -> {noreply, State} |
