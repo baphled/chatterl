@@ -82,11 +82,13 @@ handle_call(list_users, _Fron, State) ->
     Reply = gb_trees:keys(State#chatterl.users),
     {reply, Reply, State};
 handle_call({connect,User}, _From, State) ->
-    Reply = case gb_trees:lookup(User, State#chatterl.users) of
-		none -> gb_trees:insert(User, {User}, State#chatterl.users);
-		_ -> {error, "Unable to connect."}
+    {Reply, NewTree} = case gb_trees:is_defined(User, State#chatterl.users) of
+		false-> {{ok, connected},
+			gb_trees:insert(User, {User}, State#chatterl.users)};
+		true -> {{error, "Unable to connect."},
+			 State#chatterl.users}
 	    end,
-    {reply, Reply, State};
+    {reply, Reply, State#chatterl{ users = NewTree }};
 handle_call({create, Group, Description}, _From, State) ->
     NewTree =  case gb_trees:is_defined(Group, State#chatterl.groups) of
         true ->
