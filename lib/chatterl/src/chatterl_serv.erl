@@ -10,7 +10,7 @@
 -behaviour(gen_server).
 
 %% API
--export([start/0,stop/0,create/2,drop/1,call/2,call/3,view_groups/0,group_exists/1]).
+-export([start/0,stop/0,create/2,drop/1,call/2,call/3,list_groups/0,group_exists/1]).
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
 	 terminate/2, code_change/3]).
@@ -42,6 +42,7 @@ drop(Group) ->
 %% Used to make general calls to the server.
 call(Client,Method) ->
     call(Client, Method, []).
+
 call(Client, Method, Args) ->
     gen_server:call({global, ?MODULE}, {Client, Method, Args}, infinity).
 
@@ -49,8 +50,8 @@ group_exists(Group) ->
     gen_server:call({global, ?MODULE}, {group_exists, Group}, infinity).
 
 %% View the users connected to the server
-view_groups() ->
-    gen_server:call({global, ?MODULE}, view_groups, infinity).
+list_groups() ->
+    gen_server:call({global, ?MODULE}, list_groups, infinity).
 %%====================================================================
 %% gen_server callbacks
 %%====================================================================
@@ -86,7 +87,7 @@ handle_call({group_exists, Group}, _Client, State) ->
 	false -> false
     end,
     {reply, Response, State};
-handle_call(view_groups, _Client, State) ->
+handle_call(list_groups, _Client, State) ->
     Result = gb_trees:keys(State#chatterl.groups),
     {reply, Result, State};
 

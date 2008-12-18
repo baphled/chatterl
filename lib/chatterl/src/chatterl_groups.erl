@@ -10,7 +10,7 @@
 -behaviour(gen_server).
 -define(SERVER, ?MODULE).
 %% API
--export([start/0,shutdown/0,list_users/0,user_connect/2,user_disconnect/1,create/2,stop/1]).
+-export([start/0,shutdown/0,list_groups/0,list_users/0,user_connect/2,user_disconnect/1,create/2,stop/1]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -34,6 +34,8 @@ shutdown() ->
 list_users() ->
     gen_server:call({global, ?MODULE}, list_users, infinity).
 
+list_groups() ->
+    gen_server:call({global, 'chatterl_serv'}, list_groups, infinity).
 user_connect(User,Group) ->
     gen_server:call({global, ?MODULE}, {user_connect, User, Group}, infinity).
 
