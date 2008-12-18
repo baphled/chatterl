@@ -42,8 +42,8 @@ create(Group,Desc) ->
     Message = case gen_server:call({global, 'chatterl_serv'}, {create, Group, Desc}) of
 	{ok, GroupName} ->
             case gen_server:call({global, ?MODULE}, {create, Group, Desc}) of
-		true -> "Created group: "++GroupName;
-		false -> gen_server:call({global, 'chatterl_serv'}, {create, Group}),
+		ok -> "Created group: "++GroupName;
+		_ -> gen_server:call({global, 'chatterl_serv'}, {create, Group}),
 			 "Unable to create group"
 	    end;
 	{error, Error} ->
