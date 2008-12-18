@@ -58,12 +58,13 @@ init([]) ->
     Shutdown = 2000,
     Type = worker,
 
-    AChild = {'AName', {chatterl_serv, start_link, []},
+    Server = {'Server', {chatterl_serv, start, []},
               Restart, Shutdown, Type, [chatterl_serv]},
-    
-    AChild2 = {'AName', {chatterl_groups, start_link, []},
+
+    Groups = {'Groups', {chatterl_groups, start, []},
               Restart, Shutdown, Type, [chatterl_groups]},
-    {ok, {SupFlags, [AChild]}, [AChild2]}.
+
+    {ok, {SupFlags, [Server, Groups]}}.
 
 %%%===================================================================
 %%% Internal functions
