@@ -9,7 +9,7 @@
 
 -behaviour(gen_server).
 
--export([start/0,shutdown/0,list_groups/0,list_users/0,user_connect/2,user_disconnect/1,create/2,stop/1]).
+-export([start/0,stop/0,list_groups/0,list_users/0,user_connect/2,user_disconnect/1,create/2,drop/1]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -28,8 +28,8 @@
 start() ->
     gen_server:start_link({global, ?SERVER}, ?MODULE, [], []).
 
-shutdown() ->
-    gen_server:call({global, ?MODULE}, shutdown, infinity).
+stop() ->
+    gen_server:call({global, ?MODULE}, stop, infinity).
 
 list_users() ->
     gen_server:call({global, ?MODULE}, list_users, infinity).
@@ -51,7 +51,7 @@ create(Group,Desc) ->
      end,
     {ok, Message}.
 
-stop(Group) ->
+drop(Group) ->
     io:format("dropping ~p group...~n", [Group]),
     case gen_server:call({global, 'chatterl_serv'}, {drop, Group}) of
 	{ok, _Result} -> gen_server:call({global, ?MODULE}, {update_users, Group});
@@ -82,7 +82,7 @@ init([]) ->
 %%                                      {stop, Reason, State}
 %% Description: Handling call messages
 %%--------------------------------------------------------------------
-handle_call(shutdown, _From, State) ->
+handle_call(stop, _From, State) ->
     io:format("Shutting down...~n"),
     %Users = State#groups.users,
     Reply = drop_users(gb_trees:keys(State#groups.users), State#groups.users),
