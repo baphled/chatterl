@@ -9,7 +9,7 @@
 -behaviour(gen_server).
 
 %% API
--export([start/0,stop/0,list_groups/0,list_users/0,join_group/2,leave_group/1,create/2,drop/1]).
+-export([start/0,stop/0,list_groups/0,list_users/0]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -115,6 +115,18 @@ code_change(_OldVsn, State, _Extra) ->
 %%--------------------------------------------------------------------
 %%% Internal functions
 %%--------------------------------------------------------------------
+%% @private
+drop_user_from_group(UsersTree,[User|Users],Group) ->
+    NewUsers = case gb_trees:lookup(User,UsersTree) of
+  {value,Group} ->
+      io:format("Dropped ~p from ~p~n",[User, Group]),
+      gb_trees:delete(User, UsersTree);
+        _ -> UsersTree      
+    end,
+    drop_user_from_group(NewUsers,Users,Group);
+drop_user_from_group(UsersTree,[],_Group) ->
+    UsersTree.
+
 %% @private
 drop_users([User|Users],UsersList) ->
     NewUsers = gb_trees:delete(User, UsersList),
