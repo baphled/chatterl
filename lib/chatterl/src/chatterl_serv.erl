@@ -45,7 +45,7 @@ create(Group, Description) ->
 		{error, Error} ->
 		    {error, Error};
 		GroupPid -> 
-		    gen_server:call({global, ?MODULE}, {update_pids, Group,GroupPid}, infinity)
+		    gen_server:call({global, ?MODULE}, {add_pid, Group,GroupPid}, infinity)
 	    end;
 	_ -> io:format("Unable to spawn new group: Group~n")
     end.
@@ -120,7 +120,7 @@ handle_call({create, Group, _Description}, _From, State) ->
 	    Result = {ok, Group}
     end,
     {reply, Result, State};
-handle_call({update_pids, Group, GroupPid}, _From, State) ->
+handle_call({add_pid, Group, GroupPid}, _From, State) ->
     {Reply,NewTree} = case gb_trees:is_defined(Group, State#chatterl.groups) of
 		  true ->
 		      {{error, "Updating groups"},
