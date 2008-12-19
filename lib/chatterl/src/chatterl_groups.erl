@@ -57,7 +57,7 @@ init([Name,Desc]) ->
     process_flag(trap_exit, true),
     io:format("Initialising ~p...~n", [Name]),
     {ok, 
-     #groups{
+     #group{
       users = gb_trees:empty(),
       name = Name,
       description = Desc}
@@ -74,18 +74,18 @@ init([Name,Desc]) ->
 %%--------------------------------------------------------------------
 handle_call(stop, _From, State) ->
     io:format("Shutting down...~n"),
-    %Users = State#groups.users,
-    Reply = drop_users(gb_trees:keys(State#groups.users), State#groups.users),
+    %Users = State#group.users,
+    Reply = drop_users(gb_trees:keys(State#group.users), State#group.users),
     {reply, Reply, State};
 handle_call(name, _From, State) ->
-    {reply, State#groups.name, State};
+    {reply, State#group.name, State};
 handle_call(description, _From, State) ->
-    {reply, State#groups.description, State};
+    {reply, State#group.description, State};
 handle_call({update_users,Group}, _From, State) ->
     io:format("Updating users~n"),
-    List = gb_trees:to_list(State#groups.users),
-    NewTree = drop_user_from_group(State#groups.users,List,Group),
-    {reply, ok, State#groups{users = NewTree} }.
+    List = gb_trees:to_list(State#group.users),
+    NewTree = drop_user_from_group(State#group.users,List,Group),
+    {reply, ok, State#group{users = NewTree} }.
 
 %%--------------------------------------------------------------------
 %% Function: handle_cast(Msg, State) -> {noreply, State} |
@@ -115,7 +115,7 @@ handle_info(_Info, State) ->
 %% The return value is ignored.
 %%--------------------------------------------------------------------
 terminate(normal, _State) ->
-    io:format("Shutting down Chatterl Groups...~n"),
+    io:format("Shutting down Chatterl Group...~n"),
     ok.
 
 %%--------------------------------------------------------------------
