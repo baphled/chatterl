@@ -31,33 +31,6 @@ start() ->
 stop() ->
     gen_server:call({global, ?MODULE}, stop, infinity).
 
-join_group(User,Group) ->
-    gen_server:call({global, ?MODULE}, {join_group, User, Group}, infinity).
-
-leave_group(User) ->
-    gen_server:call({global, ?MODULE}, {leave_group, User}, infinity).
-
-%% Need to add group and its description to the group record
-create(Group,Desc) ->
-    Message = case gen_server:call({global, 'chatterl_serv'}, {create, Group, Desc}) of
-	{ok, GroupName} ->
-            case gen_server:call({global, ?MODULE}, {create, Group, Desc}) of
-		ok -> "Created group: "++GroupName;
-		_ -> gen_server:call({global, 'chatterl_serv'}, {create, Group}),
-			 "Unable to create group"
-	    end;
-	{error, Error} ->
-	    "Error: " ++ Error
-     end,
-    {ok, Message}.
-
-drop(Group) ->
-    io:format("dropping ~p group...~n", [Group]),
-    case gen_server:call({global, 'chatterl_serv'}, {drop, Group}) of
-	{ok, _Result} -> gen_server:call({global, ?MODULE}, {update_users, Group});
-        {error, Error} -> io:format("Error:~p~n", [Error])
-    end.
-
 %% Calls to chatterl_serv
 list_users() ->
     gen_server:call({global, 'chatterl_serv'}, list_users, infinity).
@@ -97,34 +70,6 @@ handle_call(stop, _From, State) ->
     %Users = State#groups.users,
     Reply = drop_users(gb_trees:keys(State#groups.users), State#groups.users),
     {reply, Reply, State};
-handle_call({create, Group, Description}, _From, State) ->
-    {reply, ok, State#groups{ name = Group, description = Description }};
-handle_call({leave_group, User}, _From, State) ->
-    NewUsers = case user_exists(User, State#groups.users) of
-	true ->
-		       Reply = "Disconnected: ",
-		       gb_trees:delete(User, State#groups.users);
-	false -> 
-		       Reply = "is not connected.",
-		       State#groups.users
-    end,
-    {reply, Reply, State#groups{ users = NewUsers }};
-handle_call({join_group, User, Group}, _From, State) ->
-    NewTree = case user_exists(User, State#groups.users) of
-	true -> 
-		      io:format("~p already connect, ~p~n", [User, Group]), 
-		      State#groups.users;
-		false ->
-		      case gb_trees:is_defined(Group, State#groups.name) of
-			  true ->
-			      io:format("~p connected to: ~p~n", [User, Group]),
-			      gb_trees:insert(User, {User,Group}, State#groups.users);
-			  false ->
-			      io:format("~p does not exist.", [Group]),
-			      State#groups.users
-		      end
-	      end,
-    {reply, ok, State#groups{ users = NewTree }};
 handle_call({update_users,Group}, _From, State) ->
     io:format("Updating users~n"),
     List = gb_trees:to_list(State#groups.users),
@@ -170,17 +115,6 @@ code_change(_OldVsn, State, _Extra) ->
 %%--------------------------------------------------------------------
 %%% Internal functions
 %%--------------------------------------------------------------------
-%% @private
-drop_user_from_group(UsersTree,[User|Users],Group) ->
-    NewUsers = case gb_trees:lookup(User,UsersTree) of
-	{value,Group} ->
-	    io:format("Dropped ~p from ~p~n",[User, Group]),
-	    gb_trees:delete(User, UsersTree);
-        _ -> UsersTree	    
-    end,
-    drop_user_from_group(NewUsers,Users,Group);
-drop_user_from_group(UsersTree,[],_Group) ->
-    UsersTree.
 %% @private
 drop_users([User|Users],UsersList) ->
     NewUsers = gb_trees:delete(User, UsersList),

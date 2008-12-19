@@ -61,10 +61,7 @@ init([]) ->
     Server = {'Server', {chatterl_serv, start, []},
               Restart, Shutdown, Type, [chatterl_serv]},
 
-    Groups = {'Groups', {chatterl_groups, start, []},
-              Restart, Shutdown, Type, [chatterl_groups]},
-
-    {ok, {SupFlags, [Server, Groups]}}.
+    {ok, {SupFlags, [Server]}}.
 
 %%%===================================================================
 %%% Internal functions
