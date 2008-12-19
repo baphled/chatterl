@@ -42,10 +42,10 @@ create(Group, Description) ->
     case gen_server:call({global, ?MODULE}, {create, Group, Description}, infinity) of
 	{ok, Group} ->
 	    case spawn_link(fun()-> chatterl_groups:start(Group, Description) end) of
-		{ok, GroupPid} -> 
-		    gen_server:call({global, ?MODULE}, update_groups, GroupPid);
 		{error, Error} ->
-		    {error, Error}
+		    {error, Error};
+		GroupPid -> 
+		    gen_server:call({global, ?MODULE}, {update_groups, GroupPid}, infinity)
 	    end;
 	_ -> io:format("Unable to spawn new group: Group~n")
     end.
@@ -112,7 +112,7 @@ handle_call({disconnect, User}, _From, State) ->
 		       State#chatterl.users
     end,
     {reply, Result, State#chatterl{ users = NewTree }};
-handle_call({create, Group, Description}, _From, State) ->
+handle_call({create, Group, _Description}, _From, State) ->
     case gb_trees:is_defined(Group, State#chatterl.groups) of
         true ->
 	    Result = {error, "Group already created"};

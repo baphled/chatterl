@@ -26,12 +26,7 @@
 %% Description: Starts the server
 %%--------------------------------------------------------------------
 start(Name,Desc) ->
-    case gen_server:start_link({global, ?SERVER}, ?MODULE, [Name,Desc], []) of
-	{ok, Pid} ->
-	    {ok, Pid};
-	_ -> {error, "Group already exists"}
-    end.
-    
+    gen_server:start_link({global, ?SERVER}, ?MODULE, [Name,Desc], []).
 
 stop() ->
     gen_server:call({global, ?MODULE}, stop, infinity).
