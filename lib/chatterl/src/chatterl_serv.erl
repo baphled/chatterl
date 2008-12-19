@@ -47,7 +47,7 @@ create(Group, Description) ->
 		GroupPid -> 
 		    gen_server:call({global, ?MODULE}, {add_pid, Group,GroupPid}, infinity)
 	    end;
-	_ -> io:format("Unable to spawn new group: Group~n")
+	_ -> io:format("Unable create group: ~p~n", [Group])
     end.
 
 drop(Group) ->
@@ -149,14 +149,6 @@ handle_call({remove_pid, Group}, _From, State) ->
 			State#chatterl.groups}
     end,
     {reply, Reply, State#chatterl{ groups = NewTree }};
-handle_call({drop, Group}, _From, State) ->
-    Result =  case gb_trees:is_defined(Group, State#chatterl.groups) of
-        true -> 
-		       {ok, "Group dropped"};
-        false -> 
-		       {error, "Unable to drop group."}
-    end,
-    {reply, Result, State};
 handle_call({group_exists,Group}, _From, State) ->
     Reply = gb_trees:is_defined(Group, State#chatterl.groups),
     {reply, Reply, State}.
