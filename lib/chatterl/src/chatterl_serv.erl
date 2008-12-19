@@ -54,7 +54,7 @@ drop(Group) ->
     case group_exists(Group) of
 	     true -> 
 		 case gen_server:call({global, ?MODULE}, {remove_pid, Group}, infinity) of
-		     {value, Pid} ->
+		     {value, {_Group,Pid}} ->
 			 unlink(Pid);
 		     {error, Error} ->
 			 {error, Error}
