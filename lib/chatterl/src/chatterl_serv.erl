@@ -113,15 +113,15 @@ handle_call({disconnect, User}, _From, State) ->
     end,
     {reply, Result, State#chatterl{ users = NewTree }};
 handle_call({create, Group, Description}, _From, State) ->
-    NewTree =  case gb_trees:is_defined(Group, State#chatterl.groups) of
+    case gb_trees:is_defined(Group, State#chatterl.groups) of
         true ->
 		       Result = {error, "Group already created"},
-		       State#chatterl.groups;
+		       %State#chatterl.groups;
         false -> 
 		       Result = {ok, Group},
-		       gb_trees:insert(Group, {Group, Description}, State#chatterl.groups)
+		       %gb_trees:insert(Group, {Group, Description}, State#chatterl.groups)
     end,
-    {reply, Result, State#chatterl{ groups = NewTree }};
+    {reply, Result, State};
 
 handle_call({drop, Group}, _From, State) ->
     NewTree =  case gb_trees:is_defined(Group, State#chatterl.groups) of
