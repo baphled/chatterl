@@ -130,6 +130,16 @@ handle_call({add_pid, Group, GroupPid}, _From, State) ->
 		      gb_trees:insert(Group, {Group, GroupPid}, State#chatterl.groups)}
     end,
     {reply, Reply, State#chatterl{ groups = NewTree }};
+handle_call({remove_pid, Group}, _From, State) ->
+    {Reply, NewTree} = case gb_trees:is_defined(Group, State#chatterl.groups) of
+	true ->
+			{{ok, {"removed group:",Group}},
+			gb_trees:delete(Group, State#chatterl.groups)};
+        false ->
+			{{error, {"can not find",Group}},
+			State#chatterl.groups}
+    end,
+    {reply, Reply, State#chatterl{ groups = NewTree }};
 handle_call({drop, Group}, _From, State) ->
     NewTree =  case gb_trees:is_defined(Group, State#chatterl.groups) of
         true -> 
