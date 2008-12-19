@@ -81,10 +81,8 @@ handle_call(stop, _From, State) ->
     Reply = drop_users(gb_trees:keys(State#groups.users), State#groups.users),
     {reply, Reply, State};
 handle_call(name, _From, State) ->
-    io:format("Group name: ~p~n", [State#groups.name]),
     {reply, State#groups.name, State};
 handle_call(description, _From, State) ->
-    io:format("Group name: ~p~n", [State#groups.description]),
     {reply, State#groups.description, State};
 handle_call({update_users,Group}, _From, State) ->
     io:format("Updating users~n"),
