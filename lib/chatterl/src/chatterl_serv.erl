@@ -118,7 +118,7 @@ handle_call({create, Group, Description}, _From, State) ->
 		       Result = {error, "Group already created"},
 		       %State#chatterl.groups;
         false -> 
-		       Result = {ok, Group},
+		       Result = {ok, Group}
 		       %gb_trees:insert(Group, {Group, Description}, State#chatterl.groups)
     end,
     {reply, Result, State};
