@@ -9,7 +9,7 @@
 -behaviour(gen_server).
 
 %% API
--export([start/0,stop/0,connect/1,disconnect/1,create/2,drop/1,list_users/0,test/1]).
+-export([start/0,stop/0,connect/1,disconnect/1,create/2,drop/1,list_users/0]).
 %% Group specific
 -export([group_description/1,list_groups/0,group_exists/1]).
 %% gen_server callbacks
@@ -39,8 +39,7 @@ connect(User) ->
 
 disconnect(User) ->
     gen_server:call({global, ?MODULE}, {disconnect,User}, infinity).
-test(Group) ->
-    gen_server:call({global, ?MODULE}, {get_group, Group}, infinity).
+
 group_description(Group) ->
     case gen_server:call({global, ?MODULE}, {get_group, Group}, infinity) of
 	{Name, GroupPid} -> 
@@ -50,13 +49,15 @@ group_description(Group) ->
 	    end;
 	_ -> {error, "Can not find group."}
     end.
+
 create(Group, Description) ->
     case gen_server:call({global, ?MODULE}, {create, Group, Description}, infinity) of
 	{ok, Group} ->
-	    case spawn_link(fun()-> catch chatterl_groups:start(Group, Description) end) of
+	    case spawn(fun()-> chatterl_groups:start(Group, Description) end) of
 		{error, Error} ->
 		    {error, Error};
 		GroupPid -> 
+		    link(GroupPid),
 		    gen_server:call({global, ?MODULE}, {add_pid, Group,GroupPid}, infinity)
 	    end;
 	_ -> io:format("Unable create group: ~p~n", [Group])
@@ -80,6 +81,7 @@ group_exists(Group) ->
 %% View the users connected to the server
 list_users() ->
     gen_server:call({global, ?MODULE}, list_users, infinity).
+
 list_groups() ->
     gen_server:call({global, ?MODULE}, list_groups, infinity).
 %%====================================================================

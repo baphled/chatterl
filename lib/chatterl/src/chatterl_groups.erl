@@ -102,8 +102,10 @@ handle_cast(_Msg, State) ->
 %%                                       {stop, Reason, State}
 %% Description: Handling all non call/cast messages
 %%--------------------------------------------------------------------
+handle_info({'EXIT', Pid, Reason}, State) ->
+    {exit, {Reason, Pid}, State};
 handle_info(_Info, State) ->
-    {noreply, State}.
+    {unknown, State}.
 
 %%--------------------------------------------------------------------
 %% Function: terminate(Reason, State) -> void()
@@ -112,8 +114,8 @@ handle_info(_Info, State) ->
 %% cleaning up. When it returns, the gen_server terminates with Reason.
 %% The return value is ignored.
 %%--------------------------------------------------------------------
-terminate(Reason, _State) ->
-    io:format("Shutting down Chatterl Groups: ~p...~n", [Reason]),
+terminate(normal, _State) ->
+    io:format("Shutting down Chatterl Groups...~n"),
     ok.
 
 %%--------------------------------------------------------------------
