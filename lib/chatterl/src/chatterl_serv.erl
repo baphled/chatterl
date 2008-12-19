@@ -51,7 +51,16 @@ create(Group, Description) ->
     end.
 
 drop(Group) ->
-    gen_server:call({global, ?MODULE}, {drop, Group}, infinity).
+    case group_exists(Group) of
+	     true -> 
+		 case gen_server:call({global, ?MODULE}, {remove_pid, Group}, infinity) of
+		     {value, Pid} ->
+			 unlink(Pid);
+		     {error, Error} ->
+			 {error, Error}
+		 end;
+	     false -> {error, "Group not valid"}
+    end.
 
 group_exists(Group) ->
     gen_server:call({global, ?MODULE}, {group_exists, Group}, infinity).
@@ -91,7 +100,7 @@ init([]) ->
 handle_call(list_groups, _Client, State) ->
     Reply =  gb_trees:values(State#chatterl.groups),
     {reply, Reply, State};
-handle_call(list_users, _Fron, State) ->
+handle_call(list_users, _From, State) ->
     Reply = gb_trees:keys(State#chatterl.users),
     {reply, Reply, State};
 handle_call({connect,User}, _From, State) ->
@@ -133,7 +142,7 @@ handle_call({add_pid, Group, GroupPid}, _From, State) ->
 handle_call({remove_pid, Group}, _From, State) ->
     {Reply, NewTree} = case gb_trees:is_defined(Group, State#chatterl.groups) of
 	true ->
-			{{ok, {"removed group:",Group}},
+			{gb_trees:lookup(Group, State#chatterl.groups),
 			gb_trees:delete(Group, State#chatterl.groups)};
         false ->
 			{{error, {"can not find",Group}},
@@ -147,7 +156,10 @@ handle_call({drop, Group}, _From, State) ->
         false -> 
 		       {error, "Unable to drop group."}
     end,
-    {reply, Result, State}.
+    {reply, Result, State};
+handle_call({group_exists,Group}, _From, State) ->
+    Reply = gb_trees:is_defined(Group, State#chatterl.groups),
+    {reply, Reply, State}.
 %%--------------------------------------------------------------------
 %% Function: handle_cast(Msg, State) -> {noreply, State} |
 %%                                      {noreply, State, Timeout} |
@@ -186,10 +198,5 @@ code_change(_OldVsn, State, _Extra) ->
 %%--------------------------------------------------------------------
 %%% Internal functions
 %%--------------------------------------------------------------------
-group_exists(State, Client) ->
-    case gb_trees:is_defined(Client, State#chatterl.groups) of
-        false -> {error, {invalid_client, Client}};
-        true -> gb_trees:get(Client, State#chatterl.groups)
-    end.
 
 
