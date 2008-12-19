@@ -89,7 +89,7 @@ init([]) ->
 %% Description: Handling call messages
 %%--------------------------------------------------------------------
 handle_call(list_groups, _Client, State) ->
-    Reply = gb_trees:keys(State#chatterl.groups),
+    Reply =  gb_trees:values(State#chatterl.groups),
     {reply, Reply, State};
 handle_call(list_users, _Fron, State) ->
     Reply = gb_trees:keys(State#chatterl.users),
@@ -116,10 +116,8 @@ handle_call({create, Group, _Description}, _From, State) ->
     case gb_trees:is_defined(Group, State#chatterl.groups) of
         true ->
 	    Result = {error, "Group already created"};
-						%State#chatterl.groups;
 	false -> 
 	    Result = {ok, Group}
-						%gb_trees:insert(Group, {Group, Description}, State#chatterl.groups)
     end,
     {reply, Result, State};
 handle_call({update_groups, Group, GroupPid}, _From, State) ->
@@ -128,7 +126,7 @@ handle_call({update_groups, Group, GroupPid}, _From, State) ->
 		      {{error, "Updating groups"},
 		      State#chatterl.groups};
 		  false ->
-		      {{ok, "Updated groups"},
+		      {{ok, "Added group"},
 		      gb_trees:insert(Group, {Group, GroupPid}, State#chatterl.groups)}
     end,
     {reply, Reply, State#chatterl{ groups = NewTree }};
