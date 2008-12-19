@@ -141,15 +141,13 @@ handle_call({remove_pid, Group}, _From, State) ->
     end,
     {reply, Reply, State#chatterl{ groups = NewTree }};
 handle_call({drop, Group}, _From, State) ->
-    NewTree =  case gb_trees:is_defined(Group, State#chatterl.groups) of
+    Result =  case gb_trees:is_defined(Group, State#chatterl.groups) of
         true -> 
-		       Result = {ok, "Group dropped"},
-		       gb_trees:delete(Group, State#chatterl.groups);
+		       {ok, "Group dropped"};
         false -> 
-		       Result = {error, "Unable to drop group."},
-		       State#chatterl.groups
+		       {error, "Unable to drop group."}
     end,
-    {reply, Result, State#chatterl{ groups = NewTree }}.
+    {reply, Result, State}.
 %%--------------------------------------------------------------------
 %% Function: handle_cast(Msg, State) -> {noreply, State} |
 %%                                      {noreply, State, Timeout} |
