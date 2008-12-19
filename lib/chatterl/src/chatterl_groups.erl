@@ -54,7 +54,7 @@ list_groups() ->
 %% Description: Initiates the server
 %%--------------------------------------------------------------------
 init([Name,Desc]) ->
-    %process_flag(trap_exit, true),
+    process_flag(trap_exit, true),
     io:format("Initialising ~p...~n", [Name]),
     {ok, 
      #groups{

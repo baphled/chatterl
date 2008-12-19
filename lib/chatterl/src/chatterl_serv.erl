@@ -45,7 +45,7 @@ group_description(Group) ->
     case gen_server:call({global, ?MODULE}, {get_group, Group}, infinity) of
 	{Name, GroupPid} -> 
 	    case is_pid(GroupPid) of
-		true -> gen_server:call(GroupPid, name);
+		true -> gen_server:call(GroupPid, description);
 		_ -> {error, {"Unable to find pid for ~",[Name]}}
 	    end;
 	_ -> {error, "Can not find group."}
@@ -53,7 +53,7 @@ group_description(Group) ->
 create(Group, Description) ->
     case gen_server:call({global, ?MODULE}, {create, Group, Description}, infinity) of
 	{ok, Group} ->
-	    case spawn_link(fun()-> chatterl_groups:start(Group, Description) end) of
+	    case spawn_link(fun()-> catch chatterl_groups:start(Group, Description) end) of
 		{error, Error} ->
 		    {error, Error};
 		GroupPid -> 
