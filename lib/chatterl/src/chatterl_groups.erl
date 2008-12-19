@@ -74,7 +74,6 @@ init([Name,Desc]) ->
 %%--------------------------------------------------------------------
 handle_call(stop, _From, State) ->
     io:format("Shutting down...~n"),
-    %Users = State#group.users,
     Reply = drop_users(gb_trees:keys(State#group.users), State#group.users),
     {reply, Reply, State};
 handle_call(name, _From, State) ->
@@ -102,8 +101,6 @@ handle_cast(_Msg, State) ->
 %%                                       {stop, Reason, State}
 %% Description: Handling all non call/cast messages
 %%--------------------------------------------------------------------
-handle_info({'EXIT', Pid, Reason}, State) ->
-    {exit, {Reason, Pid}, State};
 handle_info(_Info, State) ->
     {unknown, State}.
 
