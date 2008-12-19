@@ -41,8 +41,12 @@ disconnect(User) ->
 create(Group, Description) ->
     case gen_server:call({global, ?MODULE}, {create, Group, Description}, infinity) of
 	{ok, Group} ->
-	    spawn_link(fun()->
-			       chatterl_groups:start(Group, Description) end);
+	    case spawn_link(fun()-> chatterl_groups:start(Group, Description) end) of
+		{ok, GroupPid} -> 
+		    gen_server:call({global, ?MODULE}, update_groups, GroupPid);
+		{error, Error} ->
+		    {error, Error}
+	    end;
 	_ -> io:format("Unable to spawn new group: Group~n")
     end.
 

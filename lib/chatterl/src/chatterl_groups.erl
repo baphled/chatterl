@@ -28,7 +28,7 @@
 start(Name,Desc) ->
     case gen_server:start_link({global, ?SERVER}, ?MODULE, [Name,Desc], []) of
 	{ok, Pid} ->
-	    Pid;
+	    {ok, Pid};
 	_ -> {error, "Group already exists"}
     end.
     
