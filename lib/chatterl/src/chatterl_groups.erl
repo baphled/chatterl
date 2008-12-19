@@ -9,7 +9,7 @@
 -behaviour(gen_server).
 
 %% API
--export([start/2,stop/0,list_groups/0,list_users/0]).
+-export([start/2,stop/0,name/0,list_groups/0,list_users/0]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -26,10 +26,18 @@
 %% Description: Starts the server
 %%--------------------------------------------------------------------
 start(Name,Desc) ->
-    gen_server:start_link({global, ?SERVER}, ?MODULE, [Name,Desc], []).
+    case gen_server:start_link({global, ?SERVER}, ?MODULE, [Name,Desc], []) of
+	{ok, Pid} ->
+	    Pid;
+	_ -> {error, "Group already exists"}
+    end.
+    
 
 stop() ->
     gen_server:call({global, ?MODULE}, stop, infinity).
+
+name() ->
+    gen_server:call({global, ?SERVER}, name, infinity).
 
 %% Calls to chatterl_serv
 list_users() ->
@@ -70,6 +78,9 @@ handle_call(stop, _From, State) ->
     %Users = State#groups.users,
     Reply = drop_users(gb_trees:keys(State#groups.users), State#groups.users),
     {reply, Reply, State};
+handle_call(name, _From, State) ->
+    io:format("Group name: ~p~n", [State#groups.name]),
+    {reply, State#groups.name, State};
 handle_call({update_users,Group}, _From, State) ->
     io:format("Updating users~n"),
     List = gb_trees:to_list(State#groups.users),
