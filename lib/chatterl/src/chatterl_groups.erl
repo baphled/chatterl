@@ -9,7 +9,7 @@
 -behaviour(gen_server).
 
 %% API
--export([start/2,stop/0,name/0,list_groups/0,list_users/0]).
+-export([start/2,stop/0,name/0,description/0,list_groups/0,list_users/0]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -38,6 +38,8 @@ stop() ->
 
 name() ->
     gen_server:call({global, ?SERVER}, name, infinity).
+description() ->
+    gen_server:call({global, ?SERVER}, description, infinity).
 
 %% Calls to chatterl_serv
 list_users() ->
@@ -81,6 +83,9 @@ handle_call(stop, _From, State) ->
 handle_call(name, _From, State) ->
     io:format("Group name: ~p~n", [State#groups.name]),
     {reply, State#groups.name, State};
+handle_call(description, _From, State) ->
+    io:format("Group name: ~p~n", [State#groups.description]),
+    {reply, State#groups.description, State};
 handle_call({update_users,Group}, _From, State) ->
     io:format("Updating users~n"),
     List = gb_trees:to_list(State#groups.users),
