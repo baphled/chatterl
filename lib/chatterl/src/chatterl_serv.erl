@@ -9,7 +9,7 @@
 -behaviour(gen_server).
 
 %% API
--export([start/0,stop/0,connect/1,disconnect/1,create/2,drop/1,list_users/0].
+-export([start/0,stop/0,connect/1,disconnect/1,create/2,drop/1,list_users/0]).
 %% Group specific
 -export([group_description/1,list_groups/0,group_exists/1]).
 %% gen_server callbacks
