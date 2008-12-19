@@ -43,7 +43,11 @@ test(Group) ->
     gen_server:call({global, ?MODULE}, {get_group, Group}, infinity).
 group_description(Group) ->
     case gen_server:call({global, ?MODULE}, {get_group, Group}, infinity) of
-	{_Name, GroupPid} -> gen_server:call(GroupPid, description);
+	{Name, GroupPid} -> 
+	    case is_pid(GroupPid) of
+		true -> gen_server:call(GroupPid, name);
+		_ -> {error, {"Unable to find pid for ~",[Name]}}
+	    end;
 	_ -> {error, "Can not find group."}
     end.
 create(Group, Description) ->
@@ -142,7 +146,8 @@ handle_call({create, Group, _Description}, _From, State) ->
     end,
     {reply, Result, State};
 handle_call({add_pid, Group, GroupPid}, _From, State) ->
-    {Reply,NewTree} = case gb_trees:is_defined(Group, State#chatterl.groups) of
+    {Reply,NewTree} = case gb_trees:is_defined(Group, State#chatterl.groups) 
+			  andalso is_pid(GroupPid) of
 		  true ->
 		      {{error, "Updating groups"},
 		      State#chatterl.groups};

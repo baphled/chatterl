@@ -26,15 +26,16 @@
 %% Description: Starts the server
 %%--------------------------------------------------------------------
 start(Name,Desc) ->
-    gen_server:start_link({global, ?SERVER}, ?MODULE, [Name,Desc], []).
+    gen_server:start_link({local, ?SERVER}, ?MODULE, [Name,Desc], []).
 
 stop() ->
-    gen_server:call({global, ?MODULE}, stop, infinity).
+    gen_server:call({local, ?MODULE}, stop, infinity).
 
 name() ->
-    gen_server:call({global, ?SERVER}, name, infinity).
+    gen_server:call({local, ?SERVER}, name, infinity).
+
 description() ->
-    gen_server:call({global, ?SERVER}, description, infinity).
+    gen_server:call({local, ?SERVER}, description, infinity).
 
 %% Calls to chatterl_serv
 list_users() ->
@@ -53,7 +54,7 @@ list_groups() ->
 %% Description: Initiates the server
 %%--------------------------------------------------------------------
 init([Name,Desc]) ->
-    process_flag(trap_exit, true),
+    %process_flag(trap_exit, true),
     io:format("Initialising ~p...~n", [Name]),
     {ok, 
      #groups{
@@ -111,8 +112,8 @@ handle_info(_Info, State) ->
 %% cleaning up. When it returns, the gen_server terminates with Reason.
 %% The return value is ignored.
 %%--------------------------------------------------------------------
-terminate(_Reason, _State) ->
-    io:format("Shutting down Chatterl Groups...~n"),
+terminate(Reason, _State) ->
+    io:format("Shutting down Chatterl Groups: ~p...~n", [Reason]),
     ok.
 
 %%--------------------------------------------------------------------
