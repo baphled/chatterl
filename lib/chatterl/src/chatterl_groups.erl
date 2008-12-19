@@ -26,21 +26,21 @@
 %% Description: Starts the server
 %%--------------------------------------------------------------------
 start(Name,Desc) ->
-    gen_server:start_link({global, ?SERVER}, ?MODULE, [Name,Desc], []).
+    gen_server:start_link({local, ?SERVER}, ?MODULE, [Name,Desc], []).
 
 stop() ->
-    gen_server:call({global, ?MODULE}, stop, infinity).
+    gen_server:call({local, ?MODULE}, stop, infinity).
 
 name() ->
-    gen_server:call({global, ?SERVER}, name, infinity).
+    gen_server:call({local, ?SERVER}, name, infinity).
 description() ->
-    gen_server:call({global, ?SERVER}, description, infinity).
+    gen_server:call({local, ?SERVER}, description, infinity).
 
 %% Calls to chatterl_serv
 list_users() ->
-    gen_server:call({global, 'chatterl_serv'}, list_users, infinity).
+    gen_server:call('chatterl_serv', list_users, infinity).
 list_groups() ->
-    gen_server:call({global, 'chatterl_serv'}, list_groups, infinity).
+    gen_server:call('chatterl_serv', list_groups, infinity).
 %%====================================================================
 %% gen_server callbacks
 %%====================================================================
