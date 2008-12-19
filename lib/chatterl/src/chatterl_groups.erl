@@ -9,7 +9,7 @@
 -behaviour(gen_server).
 
 %% API
--export([start/0,stop/0,list_groups/0,list_users/0]).
+-export([start/2,stop/0,list_groups/0,list_users/0]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -25,8 +25,8 @@
 %% Function: start_link() -> {ok,Pid} | ignore | {error,Error}
 %% Description: Starts the server
 %%--------------------------------------------------------------------
-start() ->
-    gen_server:start_link({global, ?SERVER}, ?MODULE, [], []).
+start(Name,Desc) ->
+    gen_server:start_link({global, ?SERVER}, ?MODULE, [Name,Desc], []).
 
 stop() ->
     gen_server:call({global, ?MODULE}, stop, infinity).
@@ -47,13 +47,13 @@ list_groups() ->
 %%                         {stop, Reason}
 %% Description: Initiates the server
 %%--------------------------------------------------------------------
-init([]) ->
+init([Name,Desc]) ->
     io:format("Initialising ~p...~n", [?MODULE]),
     {ok, 
      #groups{
       users = gb_trees:empty(),
-      name = "",
-      description = ""}
+      name = Name,
+      description = Desc}
     }.
 
 %%--------------------------------------------------------------------
