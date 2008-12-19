@@ -9,7 +9,9 @@
 -behaviour(gen_server).
 
 %% API
--export([start/0,stop/0,connect/1,disconnect/1,create/2,drop/1,list_users/0,list_groups/0,group_exists/1]).
+-export([start/0,stop/0,connect/1,disconnect/1,create/2,drop/1,list_users/0].
+%% Group specific
+-export([group_description/1,list_groups/0,group_exists/1]).
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
 	 terminate/2, code_change/3]).
@@ -37,7 +39,11 @@ connect(User) ->
 
 disconnect(User) ->
     gen_server:call({global, ?MODULE}, {disconnect,User}, infinity).
-
+group_description(Group) ->
+    case group_exists(Group) of
+	{_Group, GroupPid} -> gen_server:call(GroupPid, description, infinity);
+	_ -> {error, "Can not find group."}
+    end.
 create(Group, Description) ->
     case gen_server:call({global, ?MODULE}, {create, Group, Description}, infinity) of
 	{ok, Group} ->
@@ -82,6 +88,7 @@ list_groups() ->
 %% Description: Initiates the server
 %%--------------------------------------------------------------------
 init([]) ->
+    process_flag(trap_exit, true),
     io:format("Initialising Chatterl Serv~n"),
     {ok, #chatterl{
        groups = gb_trees:empty(),
