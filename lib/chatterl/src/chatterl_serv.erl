@@ -53,11 +53,10 @@ group_description(Group) ->
 create(Group, Description) ->
     case gen_server:call({global, ?MODULE}, {create, Group, Description}, infinity) of
 	{ok, Group} ->
-	    case spawn(fun()-> chatterl_groups:start(Group, Description) end) of
+	    case spawn_link(fun()-> chatterl_groups:start(Group, Description) end) of
 		{error, Error} ->
 		    {error, Error};
 		GroupPid -> 
-		    link(GroupPid),
 		    gen_server:call({global, ?MODULE}, {add_pid, Group,GroupPid}, infinity)
 	    end;
 	_ -> io:format("Unable create group: ~p~n", [Group])
@@ -148,15 +147,19 @@ handle_call({create, Group, _Description}, _From, State) ->
     end,
     {reply, Result, State};
 handle_call({add_pid, Group, GroupPid}, _From, State) ->
-    {Reply,NewTree} = case gb_trees:is_defined(Group, State#chatterl.groups) 
-			  andalso is_pid(GroupPid) of
-		  true ->
-		      {{error, "Updating groups"},
-		      State#chatterl.groups};
-		  false ->
-		      {{ok, {"Added group:", Group}},
-		      gb_trees:insert(Group, {Group, GroupPid}, State#chatterl.groups)}
-    end,
+    {Reply,NewTree} = 
+	case gb_trees:is_defined(Group, State#chatterl.groups) of
+	    true ->
+		{{error, "Groups already created"},
+		 State#chatterl.groups};
+	    false ->
+		case erlang:is_process_alive(GroupPid) of
+		    true -> {{ok, {"Creating: ~p...", Group}},
+			     gb_trees:insert(Group, {Group, GroupPid}, State#chatterl.groups)};
+		    false -> {{error, "Unable to add group"},
+			      State#chatterl.groups}
+		end
+	end,
     {reply, Reply, State#chatterl{ groups = NewTree }};
 handle_call({remove_pid, Group}, _From, State) ->
     {Reply, NewTree} = case gb_trees:is_defined(Group, State#chatterl.groups) of
