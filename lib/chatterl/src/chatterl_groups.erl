@@ -58,7 +58,7 @@ list_groups() ->
 %% Description: Initiates the server
 %%--------------------------------------------------------------------
 init([Name,Desc]) ->
-    io:format("Initialising ~p...~n", [?MODULE]),
+    io:format("Initialising ~p...~n", [Name]),
     {ok, 
      #groups{
       users = gb_trees:empty(),

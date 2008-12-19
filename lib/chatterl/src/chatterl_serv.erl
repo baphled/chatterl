@@ -25,7 +25,7 @@
 %% Description: Starts the server
 %%--------------------------------------------------------------------
 start() ->
-    io:format("Starting chatterl...~n"),
+    io:format("Starting chatterl server...~n"),
     gen_server:start_link({global, ?SERVER}, ?MODULE, [], []).
 
 stop() ->
@@ -39,7 +39,12 @@ disconnect(User) ->
     gen_server:call({global, ?MODULE}, {disconnect,User}, infinity).
 
 create(Group, Description) ->
-    gen_server:call({global, ?MODULE}, {create, Group, Description}, infinity).
+    case gen_server:call({global, ?MODULE}, {create, Group, Description}, infinity) of
+	{ok, Group} ->
+	    spawn_link(fun()->
+			       chatterl_groups:start(Group, Description) end);
+	_ -> io:format("Unable to spawn new group: Group~n")
+    end.
 
 drop(Group) ->
     gen_server:call({global, ?MODULE}, {drop, Group}, infinity).
