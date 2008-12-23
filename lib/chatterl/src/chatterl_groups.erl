@@ -9,7 +9,7 @@
 -behaviour(gen_server).
 
 %% API
--export([start/2,stop/0,name/0,description/0,list_groups/0,list_users/0]).
+-export([start/0,stop/0,list_groups/0,list_users/0]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -31,11 +31,6 @@ start() ->
 stop() ->
     gen_server:call({local, ?MODULE}, stop, infinity).
 
-%% Calls to chatterl_serv
-list_users() ->
-    gen_server:call({global,'chatterl_serv'}, list_users, infinity).
-list_groups() ->
-    gen_server:call({global, 'chatterl_serv'}, list_groups, infinity).
 %%====================================================================
 %% gen_server callbacks
 %%====================================================================
@@ -47,13 +42,13 @@ list_groups() ->
 %%                         {stop, Reason}
 %% Description: Initiates the server
 %%--------------------------------------------------------------------
-init([Name,Desc]) ->
+init(_) ->
     process_flag(trap_exit, true),
-    io:format("Initialising ~p...~n", [Name]),
+    io:format("Initialising chatterl group handler...~n"),
     {ok,
      #group{
       users = gb_trees:empty(),
-      rooms = gb_trees:empty()}.
+      rooms = gb_trees:empty()}}.
 
 %%--------------------------------------------------------------------
 %% Function: %% handle_call(Request, From, State) -> {reply, Reply, State} |
