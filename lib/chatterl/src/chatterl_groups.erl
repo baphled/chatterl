@@ -31,6 +31,8 @@ start() ->
 stop() ->
     gen_server:call({local, ?MODULE}, stop, infinity).
 
+create(Group, Description) ->
+    gen_server:call({global, ?MODULE}, {create, Group, Description}, stop, infinity).
 %%====================================================================
 %% gen_server callbacks
 %%====================================================================
@@ -63,6 +65,14 @@ handle_call(stop, _From, State) ->
     io:format("Shutting down...~n"),
     Reply = drop_users(gb_trees:keys(State#group.users), State#group.users),
     {reply, Reply, State};
+handle_call({create, Group, Description}, _From, State) ->
+    {Reply, NewTree} =
+	case gb_trees:is_defined(Group, State#group.rooms) of
+	    true -> {{already_exists, Group},
+		     State#group.rooms};
+	    false -> {ok, gb_trees:insert(Group, {Group, Description}, State#group.rooms)}
+	end,
+    {reply, Reply, State#group{rooms = NewTree}};
 handle_call(list_groups, _From, State) ->
     {reply, State#group.rooms, State};
 handle_call({update_users,Group}, _From, State) ->
