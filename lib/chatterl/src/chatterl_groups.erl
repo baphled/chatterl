@@ -25,17 +25,11 @@
 %% Function: start_link() -> {ok,Pid} | ignore | {error,Error}
 %% Description: Starts the server
 %%--------------------------------------------------------------------
-start(Name,Desc) ->
-    gen_server:start_link({local, ?SERVER}, ?MODULE, [Name,Desc], []).
+start() ->
+    gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
 
 stop() ->
     gen_server:call({local, ?MODULE}, stop, infinity).
-
-name() ->
-    gen_server:call({local, ?SERVER}, name, infinity).
-
-description() ->
-    gen_server:call({local, ?SERVER}, description, infinity).
 
 %% Calls to chatterl_serv
 list_users() ->
@@ -56,12 +50,10 @@ list_groups() ->
 init([Name,Desc]) ->
     process_flag(trap_exit, true),
     io:format("Initialising ~p...~n", [Name]),
-    {ok, 
+    {ok,
      #group{
       users = gb_trees:empty(),
-      name = Name,
-      description = Desc}
-    }.
+      rooms = gb_trees:empty()}.
 
 %%--------------------------------------------------------------------
 %% Function: %% handle_call(Request, From, State) -> {reply, Reply, State} |
@@ -76,10 +68,8 @@ handle_call(stop, _From, State) ->
     io:format("Shutting down...~n"),
     Reply = drop_users(gb_trees:keys(State#group.users), State#group.users),
     {reply, Reply, State};
-handle_call(name, _From, State) ->
-    {reply, State#group.name, State};
-handle_call(description, _From, State) ->
-    {reply, State#group.description, State};
+handle_call(list_groups, _From, State) ->
+    {reply, State#group.rooms, State};
 handle_call({update_users,Group}, _From, State) ->
     io:format("Updating users~n"),
     List = gb_trees:to_list(State#group.users),

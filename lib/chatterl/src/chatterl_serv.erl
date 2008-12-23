@@ -53,7 +53,7 @@ group_description(Group) ->
 create(Group, Description) ->
     case gen_server:call({global, ?MODULE}, {create, Group, Description}, infinity) of
 	{ok, Group} ->
-	    case spawn_link(fun()-> chatterl_groups:start(Group, Description) end) of
+	    case proc_lib:spawn_link(chatterl_groups, start, [Group, Description]) of
 		{error, Error} ->
 		    {error, Error};
 		GroupPid -> 
