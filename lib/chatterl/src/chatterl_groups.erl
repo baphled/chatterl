@@ -9,7 +9,7 @@
 -behaviour(gen_server).
 
 %% API
--export([start/0,stop/0]).
+-export([start/0,stop/0,create/2]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -26,13 +26,13 @@
 %% Description: Starts the server
 %%--------------------------------------------------------------------
 start() ->
-    gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
+    gen_server:start_link({global, ?SERVER}, ?MODULE, [], []).
 
 stop() ->
-    gen_server:call({local, ?MODULE}, stop, infinity).
+    gen_server:call({global, ?MODULE}, stop, infinity).
 
 create(Group, Description) ->
-    gen_server:call({global, ?MODULE}, {create, Group, Description}, stop, infinity).
+    gen_server:call({global, ?MODULE}, {create, Group, Description}, infinity).
 %%====================================================================
 %% gen_server callbacks
 %%====================================================================
