@@ -33,6 +33,9 @@ stop() ->
 
 create(Group, Description) ->
     gen_server:call({global, ?MODULE}, {create, Group, Description}, infinity).
+
+list() ->
+    gen_server:call({global, ?MODULE}, list_groups, infinity).
 %%====================================================================
 %% gen_server callbacks
 %%====================================================================
