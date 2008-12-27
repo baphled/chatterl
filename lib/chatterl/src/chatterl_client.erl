@@ -31,8 +31,8 @@ start(User) ->
 stop(User) ->
     gen_server:call({global, User}, stop, infinity).
 
-join(User,Group) ->
-    gen_server:call({global, chatterl_serv}, {join, Group, User}, infinity).
+join(Group, User) ->
+    chatterl_serv:join(Group, User).
 %%====================================================================
 %% gen_server callbacks
 %%====================================================================
