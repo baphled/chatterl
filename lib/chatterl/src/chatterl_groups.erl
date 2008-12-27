@@ -49,7 +49,7 @@ list() ->
 %%--------------------------------------------------------------------
 init(_) ->
     process_flag(trap_exit, true),
-    io:format("Initialising chatterl group handler...~n"),
+    io:format("Initialising ~p...~n", [?MODULE]),
     {ok,
      #group{
       users = gb_trees:empty(),
@@ -66,8 +66,7 @@ init(_) ->
 %%--------------------------------------------------------------------
 handle_call(stop, _From, State) ->
     io:format("Shutting down...~n"),
-    Reply = drop_users(gb_trees:keys(State#group.rooms), State#group.rooms),
-    {reply, Reply, State};
+    {reply, ok, State};
 handle_call({create, Group, Description}, _From, State) ->
     {Reply, NewTree} =
 	case gb_trees:is_defined(Group, State#group.rooms) of
@@ -78,13 +77,7 @@ handle_call({create, Group, Description}, _From, State) ->
     {reply, Reply, State#group{rooms = NewTree}};
 handle_call(list_groups, _From, State) ->
     Reply = gb_trees:keys(State#group.rooms),
-    {reply, Reply, State};
-handle_call({update_users,Group}, _From, State) ->
-    io:format("Updating users~n"),
-    List = gb_trees:to_list(State#group.users),
-    NewTree = drop_user_from_group(State#group.users,List,Group),
-    {reply, ok, State#group{users = NewTree} }.
-
+    {reply, Reply, State}.
 %%--------------------------------------------------------------------
 %% Function: handle_cast(Msg, State) -> {noreply, State} |
 %%                                      {noreply, State, Timeout} |
@@ -125,28 +118,3 @@ code_change(_OldVsn, State, _Extra) ->
 %%% Internal functions
 %%--------------------------------------------------------------------
 %% @private
-drop_user_from_group(UsersTree,[User|Users],Group) ->
-    NewUsers = case gb_trees:lookup(User,UsersTree) of
-  {value,Group} ->
-      io:format("Dropped ~p from ~p~n",[User, Group]),
-      gb_trees:delete(User, UsersTree);
-        _ -> UsersTree      
-    end,
-    drop_user_from_group(NewUsers,Users,Group);
-drop_user_from_group(UsersTree,[],_Group) ->
-    UsersTree.
-
-%% @private
-drop_users([User|Users],UsersList) ->
-    NewUsers = gb_trees:delete(User, UsersList),
-    io:format("Delete: ~p~n", [User]),
-    drop_users(Users, NewUsers);
-drop_users([],UsersList) ->
-    UsersList.
-
-%% @private
-user_exists(User,UsersTree) ->
-    case gb_trees:is_defined(User, UsersTree) of
-	true -> true;
-	false -> false
-    end.
