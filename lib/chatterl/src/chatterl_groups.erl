@@ -52,8 +52,9 @@ init([Name,Description]) ->
     io:format("Initialising ~p...~n", [Name]),
     {ok,
      #group{
-      users = gb_trees:empty(),
-      rooms = [Name,Description]}}.
+       name = Name,
+       description = Description,
+       users = gb_trees:empty()}}.
 
 %%--------------------------------------------------------------------
 %% Function: %% handle_call(Request, From, State) -> {reply, Reply, State} |
@@ -66,18 +67,7 @@ init([Name,Description]) ->
 %%--------------------------------------------------------------------
 handle_call(stop, _From, State) ->
     io:format("Shutting down...~n"),
-    {reply, ok, State};
-handle_call({create, Group, Description}, _From, State) ->
-    {Reply, NewTree} =
-	case gb_trees:is_defined(Group, State#group.rooms) of
-	    true -> {{already_exists, Group},
-		     State#group.rooms};
-	    false -> {ok, gb_trees:insert(Group, {Group, Description}, State#group.rooms)}
-	end,
-    {reply, Reply, State#group{rooms = NewTree}};
-handle_call(list_groups, _From, State) ->
-    Reply = gb_trees:keys(State#group.rooms),
-    {reply, Reply, State}.
+    {reply, ok, State}.
 %%--------------------------------------------------------------------
 %% Function: handle_cast(Msg, State) -> {noreply, State} |
 %%                                      {noreply, State, Timeout} |
@@ -103,8 +93,8 @@ handle_info(_Info, State) ->
 %% cleaning up. When it returns, the gen_server terminates with Reason.
 %% The return value is ignored.
 %%--------------------------------------------------------------------
-terminate(normal, _State) ->
-    io:format("Shutting down Chatterl Group...~n"),
+terminate(normal, State) ->
+    io:format("Shutting down Chatterl group:~p...~n", State#group.name),
     ok.
 
 %%--------------------------------------------------------------------
