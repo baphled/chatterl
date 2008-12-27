@@ -66,8 +66,7 @@ init([Name,Description]) ->
 %% Description: Handling call messages
 %%--------------------------------------------------------------------
 handle_call(stop, _From, State) ->
-    io:format("Shutting down...~n"),
-    {reply, ok, State};
+    {stop, normal, stopped, State};
 handle_call(description, _From, State) ->
     Result = State#group.description,
     Reply = {description, Result},
@@ -97,9 +96,8 @@ handle_info(_Info, State) ->
 %% cleaning up. When it returns, the gen_server terminates with Reason.
 %% The return value is ignored.
 %%--------------------------------------------------------------------
-terminate(normal, State) ->
-    io:format("Shutting down Chatterl group:~p...~n", State#group.name),
-    ok.
+terminate(_Reason, State) ->
+    {shutdown, State#group.name}.
 
 %%--------------------------------------------------------------------
 %% Func: code_change(OldVsn, State, Extra) -> {ok, NewState}
