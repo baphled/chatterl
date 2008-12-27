@@ -54,6 +54,7 @@ init([Name,Description]) ->
      #group{
        name = Name,
        description = Description,
+       messages = gb_trees:empty(),
        users = gb_trees:empty()}}.
 
 %%--------------------------------------------------------------------
