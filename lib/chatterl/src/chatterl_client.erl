@@ -8,7 +8,12 @@
 -module(chatterl_client).
 
 -export([login/2]).
-
+-import(chatterl_serv).
 
 login(User,Pass) ->
-    {error, not_valid}.
+    case connect(User) of
+	{error, Error} ->
+	    io:format("~p~n", [Error]);
+	{ok, Message} ->
+	    io:format("~p logged in.~n", [User])
+    end.
