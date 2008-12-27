@@ -66,7 +66,7 @@ init(_) ->
 %%--------------------------------------------------------------------
 handle_call(stop, _From, State) ->
     io:format("Shutting down...~n"),
-    Reply = drop_users(gb_trees:keys(State#group.users), State#group.users),
+    Reply = drop_users(gb_trees:keys(State#group.rooms), State#group.rooms),
     {reply, Reply, State};
 handle_call({create, Group, Description}, _From, State) ->
     {Reply, NewTree} =
@@ -77,7 +77,8 @@ handle_call({create, Group, Description}, _From, State) ->
 	end,
     {reply, Reply, State#group{rooms = NewTree}};
 handle_call(list_groups, _From, State) ->
-    {reply, State#group.rooms, State};
+    Reply = gb_trees:keys(State#group.rooms),
+    {reply, Reply, State};
 handle_call({update_users,Group}, _From, State) ->
     io:format("Updating users~n"),
     List = gb_trees:to_list(State#group.users),
