@@ -179,6 +179,7 @@ handle_call({add_pid, Group, GroupPid}, _From, State) ->
 	    false ->
 		case erlang:is_process_alive(GroupPid) of
 		    true -> {{ok, "Created group..."},
+			     link(GroupPid),
 			     gb_trees:insert(Group, {Group, GroupPid}, State#chatterl.groups)};
 		    false -> {{error, "Unable to add group"},
 			      State#chatterl.groups}
@@ -227,7 +228,7 @@ handle_info(_Info, State) ->
 %% The return value is ignored.
 %%--------------------------------------------------------------------
 terminate(_Reason, _State) ->
-    gen_server:call({global, chatterl_groups} stop, infinity),
+    %% Here we need to loop through each of our processes send a stop message
     ok.
 
 %%--------------------------------------------------------------------
