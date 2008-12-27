@@ -10,7 +10,7 @@
 -behaviour(gen_server).
 
 %% API
--export([start/1]).
+-export([start/1,stop/0]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -28,13 +28,8 @@
 start(User) ->
     gen_server:start_link({global, User}, ?MODULE, [User], []).
 
-login(User) ->
-    case chatterl_serv:connect(User) of
-	{error, Error} ->
-	    io:format("~p~n", [Error]);
-	{ok, Message} ->
-	    io:format("~p is ~p.~n", [User, Message])
-    end.
+stop() ->
+    gen_server:call({global, ?MODULE}, stop, infinity).
 %%====================================================================
 %% gen_server callbacks
 %%====================================================================
@@ -94,9 +89,9 @@ handle_info(_Info, State) ->
 %% cleaning up. When it returns, the gen_server terminates with Reason.
 %% The return value is ignored.
 %%--------------------------------------------------------------------
-terminate(_Reason, _State) ->
+terminate(Reason, _State) ->
+    io:format("~p shutting down...", [Reason]),
     ok.
-
 %%--------------------------------------------------------------------
 %% Func: code_change(OldVsn, State, Extra) -> {ok, NewState}
 %% Description: Convert process state when code is changed

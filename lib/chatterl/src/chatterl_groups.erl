@@ -29,7 +29,9 @@ start(Name,Description) ->
     gen_server:start_link({global, Name}, ?MODULE, [Name,Description], []).
 
 stop() ->
-    gen_server:call({global, ?MODULE}, stop, infinity).
+    gen_server:call({global, ?MODULE}, stop, infinity),
+    Group = gen_server:call({global, ?MODULE}, name, infinity),
+    gen_server:call({global, chatterl_client}, {stop, Group}, infinity).
 
 create(Group, Description) ->
     gen_server:call({global, ?MODULE}, {create, Group, Description}, infinity).
@@ -68,6 +70,10 @@ init([Name,Description]) ->
 %%--------------------------------------------------------------------
 handle_call(stop, _From, State) ->
     {stop, normal, stopped, State};
+handle_call(name, _From, State) ->
+    Result = State#group.name,
+    Reply = {name, Result},
+    {reply, Reply, State};
 handle_call(description, _From, State) ->
     Result = State#group.description,
     Reply = {description, Result},
