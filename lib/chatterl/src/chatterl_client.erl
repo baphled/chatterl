@@ -32,7 +32,7 @@ stop() ->
     gen_server:call({global, ?MODULE}, stop, infinity).
 
 join(Group) ->
-    gen_server:call({global, ?MODULE}, {join, Group} infinity).
+    gen_server:call({global, ?MODULE}, {join, Group}, infinity).
 %%====================================================================
 %% gen_server callbacks
 %%====================================================================
