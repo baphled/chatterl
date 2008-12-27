@@ -10,7 +10,7 @@
 -behaviour(gen_server).
 
 %% API
--export([start/1,stop/0]).
+-export([start/1,stop/1,join/2]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -28,11 +28,11 @@
 start(User) ->
     gen_server:start_link({global, User}, ?MODULE, [User], []).
 
-stop() ->
-    gen_server:call({global, ?MODULE}, stop, infinity).
+stop(User) ->
+    gen_server:call({global, User}, stop, infinity).
 
-join(Group) ->
-    gen_server:call({global, ?MODULE}, {join, Group}, infinity).
+join(User,Group) ->
+    gen_server:call({global, chatterl_serv}, {join, Group, User}, infinity).
 %%====================================================================
 %% gen_server callbacks
 %%====================================================================
@@ -45,6 +45,7 @@ join(Group) ->
 %% Description: Initiates the server
 %%--------------------------------------------------------------------
 init([User]) ->
+    process_flag(trap_exit, true),
     case gen_server:call({global, chatterl_serv}, {connect, User}, infinity) of
 	{error, Error} ->
 	    io:format("~p~n", [Error]),
@@ -92,8 +93,9 @@ handle_info(_Info, State) ->
 %% cleaning up. When it returns, the gen_server terminates with Reason.
 %% The return value is ignored.
 %%--------------------------------------------------------------------
-terminate(Reason, _State) ->
-    io:format("~p shutting down...", [Reason]),
+terminate(_Reason, State) ->
+    gen_server:call({global, chatterl_serv}, {disconnect,State#user.name}, infinity),
+    io:format("~p is disconnecting...", [State#user.name]),
     ok.
 %%--------------------------------------------------------------------
 %% Func: code_change(OldVsn, State, Extra) -> {ok, NewState}
