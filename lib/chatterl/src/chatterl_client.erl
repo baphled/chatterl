@@ -10,13 +10,13 @@
 -behaviour(gen_server).
 
 %% API
--export([start/1,stop/1,join/2]).
+-export([start/1,stop/0,join/1]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
 	 terminate/2, code_change/3]).
 
--record(user, {name, ip}).
+-record(user, {name, groups}).
 
 %%====================================================================
 %% API
@@ -26,13 +26,13 @@
 %% Description: Starts the server
 %%--------------------------------------------------------------------
 start(User) ->
-    gen_server:start_link({global, User}, ?MODULE, [User], []).
+    gen_server:start_link({local, ?MODULE}, ?MODULE, [User], []).
 
-stop(User) ->
-    gen_server:call({global, User}, stop, infinity).
+stop() ->
+    gen_server:call({local, ?MODULE}, stop, infinity).
 
-join(Group, User) ->
-    chatterl_serv:join(Group, User).
+join(Group) ->
+    gen_server:call({local, ?MODULE}, {join, Group}, infinity).
 %%====================================================================
 %% gen_server callbacks
 %%====================================================================
@@ -52,7 +52,7 @@ init([User]) ->
 	    {stop, Error};
 	{ok, Message} ->
 	    io:format("~p is ~p.~n", [User, Message]),
-	    {ok, #user{name = User}}
+	    {ok, #user{name = User, groups = gb_trees:empty()}}
     end.
 
 %%--------------------------------------------------------------------
@@ -65,8 +65,9 @@ init([User]) ->
 %% Description: Handling call messages
 %%--------------------------------------------------------------------
 handle_call(get_name, _From, State) ->
-    Reply = State#user.name,
-    {reply, Reply, State}.
+    {reply, State#user.name, State};
+handle_call({join, Group}, _From, State) ->
+    chatterl_serv:join(Group, State#user.name).
 
 %%--------------------------------------------------------------------
 %% Function: handle_cast(Msg, State) -> {noreply, State} |
