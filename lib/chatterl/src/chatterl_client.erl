@@ -7,13 +7,12 @@
 %%%-------------------------------------------------------------------
 -module(chatterl_client).
 
--export([login/2]).
--import(chatterl_serv).
+-export([login/1]).
 
-login(User,Pass) ->
-    case connect(User) of
+login(User) ->
+    case chatterl_serv:connect(User) of
 	{error, Error} ->
 	    io:format("~p~n", [Error]);
 	{ok, Message} ->
-	    io:format("~p logged in.~n", [User])
+	    io:format("~p is ~p.~n", [User, Message])
     end.

@@ -146,7 +146,7 @@ handle_call(list_users, _From, State) ->
     {reply, Reply, State};
 handle_call({connect,User}, _From, State) ->
     {Reply, NewTree} = case gb_trees:is_defined(User, State#chatterl.users) of
-		false-> {{ok, connected},
+		false-> {{ok, "connected"},
 			gb_trees:insert(User, {User}, State#chatterl.users)};
 		true -> {{error, "Unable to connect."},
 			 State#chatterl.users}
