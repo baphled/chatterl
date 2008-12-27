@@ -67,7 +67,11 @@ init([Name,Description]) ->
 %%--------------------------------------------------------------------
 handle_call(stop, _From, State) ->
     io:format("Shutting down...~n"),
-    {reply, ok, State}.
+    {reply, ok, State};
+handle_call(description, _From, State) ->
+    Result = State#group.description,
+    Reply = {description, Result},
+    {reply, Reply, State}.
 %%--------------------------------------------------------------------
 %% Function: handle_cast(Msg, State) -> {noreply, State} |
 %%                                      {noreply, State, Timeout} |
