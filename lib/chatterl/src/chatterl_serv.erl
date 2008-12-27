@@ -9,7 +9,7 @@
 -behaviour(gen_server).
 
 %% API
--export([start/0,stop/0,connect/1,disconnect/1,create/2,drop/1,list_users/0]).
+-export([start/0,stop/0,connect/1,disconnect/1,create/2,drop/1,join/2,list_users/0]).
 %% Group specific
 -export([group_description/1,list_groups/0,group_exists/1]).
 %% User specific
@@ -77,6 +77,24 @@ drop(Group) ->
 		 end;
 	     false -> {error, "Group not valid"}
     end.
+join(Group, User) ->
+    case gen_server:call({global, ?MODULE}, {user_exists, User}, infinity) of
+	true ->
+	    case gen_server:call({global, ?MODULE}, {group_exists, Group}, infinity) of
+		true ->
+		    case gen_server:call({global, ?MODULE}, {get_group, Group}, infinity) of
+			{Group,Pid} ->
+			    gen_server:call(Pid, {join, User});
+			{error, Error} ->
+			    {error, Error}
+		    end;
+		false ->
+		    {error, "Group doesn't exist"}
+	    end;
+	false ->
+	    {error, "User doesn't exist"}
+    end.
+	    
 user_exists(User) ->
      gen_server:call({global, ?MODULE}, {user_exists, User}, infinity).
 
