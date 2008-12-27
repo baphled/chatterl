@@ -53,10 +53,10 @@ group_description(Group) ->
 create(Group, Description) ->
     case gen_server:call({global, ?MODULE}, {create, Group, Description}, infinity) of
 	{ok, Group} ->
-	    case proc_lib:spawn_link(chatterl_groups, start, [Group, Description]) of
+	    case chatterl_groups:start(Group, Description) of
 		{error, Error} ->
 		    {error, Error};
-		GroupPid -> 
+		{ok,GroupPid} -> 
 		    gen_server:call({global, ?MODULE}, {add_pid, Group,GroupPid}, infinity)
 	    end;
 	_ -> io:format("Unable create group: ~p~n", [Group])
