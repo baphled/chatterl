@@ -29,9 +29,9 @@ start(Name,Description) ->
     gen_server:start_link({global, Name}, ?MODULE, [Name,Description], []).
 
 stop() ->
-    gen_server:call({global, ?MODULE}, stop, infinity),
     Group = gen_server:call({global, ?MODULE}, name, infinity),
-    gen_server:call({global, chatterl_client}, {stop, Group}, infinity).
+    gen_server:call({global, chatterl_client}, {stop, Group}, infinity),
+    gen_server:call({global, ?MODULE}, stop, infinity).
 
 create(Group, Description) ->
     gen_server:call({global, ?MODULE}, {create, Group, Description}, infinity).
@@ -113,6 +113,7 @@ handle_info(_Info, State) ->
 %% The return value is ignored.
 %%--------------------------------------------------------------------
 terminate(_Reason, State) ->
+    io:format("Shutting down ~p~n", [State#group.name]),
     {shutdown, State#group.name}.
 
 %%--------------------------------------------------------------------
