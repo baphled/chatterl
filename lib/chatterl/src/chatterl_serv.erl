@@ -76,8 +76,6 @@ drop(Group) ->
 	     false -> {error, "Group not valid"}
     end.
 
-join(User, Group) ->
-    
 group_exists(Group) ->
     gen_server:call({global, ?MODULE}, {group_exists, Group}, infinity).
 
@@ -175,12 +173,12 @@ handle_call({remove_pid, Group}, _From, State) ->
 			State#chatterl.groups}
     end,
     {reply, Reply, State#chatterl{ groups = NewTree }};
-handle_call({group_exists,Group}, _From, State) ->
-    Reply = gb_trees:is_defined(Group, State#chatterl.groups),
-    {reply, Reply, State};
-handle_call({user_exists,User}, _From, State) ->
+handle_call({user_exists, User}, _From, State) ->
     Reply = gb_trees:is_defined(User, State#chatterl.users),
     {reply, Reply, State};
+handle_call({group_exists,Group}, _From, State) ->
+    Reply = gb_trees:is_defined(Group, State#chatterl.groups),
+    {reply, Reply, State}.
 %%--------------------------------------------------------------------
 %% Function: handle_cast(Msg, State) -> {noreply, State} |
 %%                                      {noreply, State, Timeout} |
