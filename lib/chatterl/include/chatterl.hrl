@@ -9,6 +9,6 @@
 %% Records for chatterl_serv, will track the total users & groups.
 -record(chatterl, {groups, users}).
 %% Records associated with groups
--record(group, {name, description, users}).
+-record(group, {name, description, messages , users}).
 %% Records associated with users
 -record(users, {name, ip}).

@@ -71,7 +71,16 @@ handle_call(stop, _From, State) ->
 handle_call(description, _From, State) ->
     Result = State#group.description,
     Reply = {description, Result},
-    {reply, Reply, State}.
+    {reply, Reply, State};
+handle_call({join, User}, _From, State) ->
+    {Reply, NewTree} =
+	case gb_trees:is_defined(User, State#group.users) of
+	    true ->
+		{{error, "Already joined"}, State};
+	    false ->
+		{{ok, "User added"}, gb_trees:insert(User, User, State#group.users)}
+	end,
+    {reply, Reply, State#group{ users=NewTree }}.
 %%--------------------------------------------------------------------
 %% Function: handle_cast(Msg, State) -> {noreply, State} |
 %%                                      {noreply, State, Timeout} |
