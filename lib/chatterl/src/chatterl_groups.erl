@@ -92,7 +92,8 @@ handle_call({drop, User}, From, State) ->
 		 gb_trees:delete(User, State#group.users)};
 	    false ->
 		{{error, "Not connected"}, State}
-	end.
+	end,
+    {reply, Reply, State#group{users=NewTree}}.
 %%--------------------------------------------------------------------
 %% Function: handle_cast(Msg, State) -> {noreply, State} |
 %%                                      {noreply, State, Timeout} |
