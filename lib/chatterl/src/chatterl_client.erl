@@ -10,7 +10,7 @@
 -behaviour(gen_server).
 
 %% API
--export([start/1,stop/0,join/1,drop/1,name/0]).
+-export([start/1,stop/0,join/1,drop/1,name/0,connected_to/0]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -40,6 +40,9 @@ stop() ->
 name() ->
     gen_server:call(chatterl_client, client_name, infinity).
 
+connected_to() ->
+    gen_server:call(chatterl_client, groups, infinity).
+
 join(Group) ->
     case gen_server:call({global, chatterl_serv}, {get_group, Group}, infinity) of
 	{error, Error} ->
@@ -65,7 +68,7 @@ drop(Group) ->
 	{GroupName, GroupPid} ->
 	    case gen_server:call(chatterl_client, client_name, infinity) of
 		{name, Name} ->
-		    case gen_server:call({GroupPid, {drop, Name}}, infinity) of
+		    case gen_server:call(GroupPid, {drop, Name}, infinity) of
 			{ok, Msg} ->
 			    gen_server:call(chatterl_client, {remove_pid, GroupName}, infinity),
 			    {ok, Msg};
@@ -114,9 +117,12 @@ init([User]) ->
 handle_call(client_name, _From, State) ->
     Reply = {name, State#user.name},
     {reply, Reply, State};
-handle_call({add_pid, Group, Pid}, _From, State) ->
-    Reply = gb_trees:insert(Group, {Group, Pid}, State#user.groups),
+handle_call(groups, _From, State) ->
+    Reply = gb_trees:values(State#user.groups),
     {reply, Reply, State};
+handle_call({add_pid, Group, Pid}, _From, State) ->
+    NewTree = gb_trees:insert(Group, {Group, Pid}, State#user.groups),
+    {reply, ok, State#user{groups = NewTree}};
 handle_call({remove_pid, Group}, _From, State) ->
     Reply = gb_trees:delete(Group, State#user.groups),
     {reply, Reply, State}.
