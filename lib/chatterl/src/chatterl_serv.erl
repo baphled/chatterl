@@ -194,7 +194,7 @@ handle_call({user_lookup, User}, _From, State) ->
 		 true ->
 		     case gb_trees:lookup(User, State#chatterl.users) of
 			 {value, {_UserName, UserPid, UserPidRef}} ->
-			     {ok,UserPid};
+			     {ok,UserName,UserPid};
 		 false ->
 		     {error, "Cannot find user!"}
 	     end,
