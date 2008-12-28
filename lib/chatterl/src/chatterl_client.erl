@@ -10,13 +10,13 @@
 -behaviour(gen_server).
 
 %% API
--export([start/1,stop/0,join/1,name/0]).
+-export([start/1,stop/0,join/1,,drop/1,name/0]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
 	 terminate/2, code_change/3]).
 
--record(user, {name, ip}).
+-record(user, {name, ip, groups}).
 
 %%====================================================================
 %% API
@@ -29,6 +29,12 @@ start(User) ->
     gen_server:start_link({local, ?MODULE}, ?MODULE, [User], []).
 
 stop() ->
+    case gen_server:call(chatter_client, client_name, infinity) of
+	{name, Name} ->
+	    gen_server:call({global, chatterl_serv}, {disconnect, Name}, infinity);
+	_ ->
+	    io:format("Unable to disconnect from server~n")
+    end,
     gen_server:call({local, ?MODULE}, stop, infinity).
 
 name() ->
@@ -38,14 +44,40 @@ join(Group) ->
     case gen_server:call({global, chatterl_serv}, {get_group, Group}, infinity) of
 	{error, Error} ->
 	    {error, Error};
-	{_GroupName,GroupPid} ->
+	{GroupName,GroupPid} ->
 	    case gen_server:call(chatterl_client, client_name, infinity) of
-		{name, Name} -> gen_server:call(GroupPid, {join, Name}, infinity);
-		_ -> {error, "Unable to connect"}
+		{name, Name} -> 
+		    case gen_server:call(GroupPid, {join, Name}, infinity) of
+			{ok, Msg} ->
+			    gen_server:call(chatterl_client, {add_pid, GroupName, GroupPid}, infinity),
+			    {ok, Msg};
+			_ -> {error, "Unable to connect!"}
+		    end;
+		_ -> 
+		    {error, "Unable to connect"}
 	    end;
 	false ->
 	    {error, "Group doesn't exist"}
     end.
+
+drop(Group) ->
+    case gen_server:call({global, chatterl_serv}, {get_group, Group}, infinity) of
+	{GroupName, GroupPid} ->
+	    case gen_server:call(chatterl_client, client_name, infinity) of
+		{name, Name} ->
+		    case gen_server:call({GroupPid, {drop, Name}}, infinity) of
+			{ok, Msg} ->
+			    gen_server:call(chatterl_client, {remove_pid, GroupName}, infinity),
+			    {ok, Msg};
+			_ -> {error, "Unable to disconnect!"}
+		    end;
+		_ ->
+		    {error, "Unable to disconnect!"}
+	    end;
+	false ->
+	    {error, "Group doesn't exist"}
+    end.
+		    
 %%====================================================================
 %% gen_server callbacks
 %%====================================================================
@@ -65,7 +97,9 @@ init([User]) ->
 	    {stop, Error};
 	{ok, Message} ->
 	    io:format("~p is ~p.~n", [User, Message]),
-	    {ok, #user{name = User}}
+	    {ok, #user{
+	       name = User,
+	      groups = gb_trees:empty()}}
     end.
 
 %%--------------------------------------------------------------------
@@ -80,8 +114,11 @@ init([User]) ->
 handle_call(client_name, _From, State) ->
     Reply = {name, State#user.name},
     {reply, Reply, State};
-handle_call({join, Group}, _From, State) ->
-    Reply = chatterl_serv:join(Group, State#user.name),
+handle_call({add_pid, Group, Pid}, _From, State) ->
+    Reply = gb_trees:insert(Group, {Group, Pid}, State#user.groups),
+    {reply, Reply, State};
+handle_call({remove_pid, Group}, _From, State) ->
+    Reply = gb_trees:delete(Group, State#user.groups),
     {reply, Reply, State}.
 
 %%--------------------------------------------------------------------

@@ -9,9 +9,9 @@
 -behaviour(gen_server).
 
 %% API
--export([start/0,stop/0,connect/1,disconnect/1,create/2,drop/1,list_users/0,list_users/1]).
+-export([start/0,stop/0,connect/1,disconnect/1,create/2,drop/1,list_users/0]).
 %% Group specific
--export([group_description/1,list_groups/0,group_exists/1]).
+-export([group_description/1,list_groups/0,group_exists/1,list_users/1]).
 %% User specific
 -export([user_exists/1]).
 %% gen_server callbacks
@@ -89,7 +89,10 @@ list_users() ->
     gen_server:call({global, ?MODULE}, list_users, infinity).
 
 list_users(Group) ->
-    gen_server:call({global, Group}, list_users, infinity).
+    case group_exists(Group) of
+	true -> gen_server:call({global, Group}, list_users, infinity);
+	false -> {error, "Group doesn't exist!"}
+    end.
 
 list_groups() ->
     gen_server:call({global, ?MODULE}, list_groups, infinity).
