@@ -1,9 +1,9 @@
 %%%-------------------------------------------------------------------
 %%% File    : chatterl_client.erl
-%%% Author  :  <>
-%%% Description : 
+%%% Author  : Yomi Colledge <yomi@boodah.net>
+%%% Description : Basic client for chat system
 %%%
-%%% Created : 27 Dec 2008 by  <>
+%%% Created : 27 Dec 2008 by Yomi Colledge <yomi@boodah.net>
 %%%-------------------------------------------------------------------
 -module(chatterl_client).
 
@@ -16,7 +16,7 @@
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
 	 terminate/2, code_change/3]).
 
--record(user, {name, groups}).
+-record(user, {name, ip}).
 
 %%====================================================================
 %% API
@@ -52,7 +52,7 @@ init([User]) ->
 	    {stop, Error};
 	{ok, Message} ->
 	    io:format("~p is ~p.~n", [User, Message]),
-	    {ok, #user{name = User, groups = gb_trees:empty()}}
+	    {ok, #user{name = User}}
     end.
 
 %%--------------------------------------------------------------------
@@ -67,7 +67,8 @@ init([User]) ->
 handle_call(get_name, _From, State) ->
     {reply, State#user.name, State};
 handle_call({join, Group}, _From, State) ->
-    chatterl_serv:join(Group, State#user.name).
+    Reply = chatterl_serv:join(Group, State#user.name),
+    {reply, Reply, State}.
 
 %%--------------------------------------------------------------------
 %% Function: handle_cast(Msg, State) -> {noreply, State} |
