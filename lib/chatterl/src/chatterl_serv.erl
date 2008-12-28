@@ -192,7 +192,9 @@ handle_call({remove_pid, Group}, _From, State) ->
 handle_call({user_lookup, User}, _From, State) ->
     Reply = case gb_trees:is_defined(User, State#chatterl.users) of
 		 true ->
-		     gb_trees:lookup(User, State#chatterl.users);
+		     case gb_trees:lookup(User, State#chatterl.users) of
+			 {value, {_UserName, UserPid, UserPidRef}} ->
+			     {ok,UserPid};
 		 false ->
 		     {error, "Cannot find user!"}
 	     end,
