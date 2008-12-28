@@ -10,7 +10,8 @@
 -behaviour(gen_server).
 
 %% API
--export([start/1,stop/0,join/1,drop/1,name/0,connected_to/0,list_groups/0,send_msg/2]).
+-export([start/1,stop/0,join/1,drop/1,name/0,connected_to/0,list_groups/0]).
+-export([private_msg/2,send_msg/2]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -99,8 +100,8 @@ send_msg(Group,Msg) ->
     end.
 
 private_msg(User,Msg) ->
-    case gen_server:call({global, chatterl_serv}, user_exists, infinity) of
-	true ->
+    case gen_server:call({global, chatterl_serv}, {user_lookup, User}, infinity) of
+	{ok,UserPid} ->
 	    case gen_server:call(UserPid, {receive_msg, Msg}, infinity) of
 		ok ->
 		    {ok, msg_sent};

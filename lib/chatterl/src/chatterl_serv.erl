@@ -137,10 +137,10 @@ handle_call({get_group, Group}, _From, State) ->
 handle_call(list_users, _From, State) ->
     Reply = gb_trees:keys(State#chatterl.users),
     {reply, Reply, State};
-handle_call({connect,User}, _From, State) ->
+handle_call({connect,User}, From, State) ->
     {Reply, NewTree} = case gb_trees:is_defined(User, State#chatterl.users) of
 		false-> {{ok, "connected"},
-			gb_trees:insert(User, {User}, State#chatterl.users)};
+			gb_trees:insert(User, {User,From}, State#chatterl.users)};
 		true -> {{error, "Unable to connect."},
 			 State#chatterl.users}
 	    end,
@@ -189,6 +189,14 @@ handle_call({remove_pid, Group}, _From, State) ->
 			State#chatterl.groups}
     end,
     {reply, Reply, State#chatterl{ groups = NewTree }};
+handle_call({user_lookup, User}, _From, State) ->
+    Reply = case gb_trees:is_defined(User, State#chatterl.users) of
+		 true ->
+		     gb_trees:lookup(User, State#chatterl.users);
+		 false ->
+		     {error, "Cannot find user!"}
+	     end,
+    {reply, Reply, State};
 handle_call({user_exists, User}, _From, State) ->
     Reply = gb_trees:is_defined(User, State#chatterl.users),
     {reply, Reply, State};
