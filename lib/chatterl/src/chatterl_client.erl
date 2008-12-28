@@ -97,6 +97,17 @@ send_msg(Group,Msg) ->
 		    {error, Error}
 	    end
     end.
+
+private_msg(User,Msg) ->
+    case gen_server:call({global, chatterl_serv}, user_exists, infinity) of
+	true ->
+	    case gen_server:call(UserPid, {receive_msg, Msg}, infinity) of
+		ok ->
+		    {ok, msg_sent};
+		_ ->{error, "Unable to send message!"}
+	    end;
+	false -> {error, "User doesn't exist!"}
+    end.
 %%====================================================================
 %% gen_server callbacks
 %%====================================================================
@@ -141,7 +152,11 @@ handle_call({add_group, Group, Pid}, _From, State) ->
     {reply, ok, State#user{groups = NewTree}};
 handle_call({drop_group, Group}, _From, State) ->
     NewTree = gb_trees:delete(Group, State#user.groups),
-    {reply, ok, State#user{groups = NewTree}}.
+    {reply, ok, State#user{groups = NewTree}};
+handle_call({receive_msg, Msg}, From, State) ->
+    User = user_lookup(From),
+    io:format("Received msg from:~p: ~p~n", [From,Msg]),
+    {reply, ok, State}.
     
 
 %%--------------------------------------------------------------------
@@ -185,3 +200,5 @@ code_change(_OldVsn, State, _Extra) ->
 %%--------------------------------------------------------------------
 
 
+user_lookup(ClientPid) ->
+    "erm".
