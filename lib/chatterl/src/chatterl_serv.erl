@@ -127,7 +127,7 @@ handle_call(list_groups, _Client, State) ->
 handle_call({get_group, Group}, _From, State) ->
     Reply = case gb_trees:lookup(Group, State#chatterl.groups) of
 		{value, Value} -> Value;
-		_ -> false
+	        _ -> false
 	    end,
     {reply, Reply, State};
 handle_call(list_users, _From, State) ->
