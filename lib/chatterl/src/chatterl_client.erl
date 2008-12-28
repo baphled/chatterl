@@ -124,8 +124,8 @@ handle_call({add_pid, Group, Pid}, _From, State) ->
     NewTree = gb_trees:insert(Group, {Group, Pid}, State#user.groups),
     {reply, ok, State#user{groups = NewTree}};
 handle_call({remove_pid, Group}, _From, State) ->
-    Reply = gb_trees:delete(Group, State#user.groups),
-    {reply, Reply, State}.
+    NewTree = gb_trees:delete(Group, State#user.groups),
+    {reply, ok, State#user{groups = NewTree}}.
 
 %%--------------------------------------------------------------------
 %% Function: handle_cast(Msg, State) -> {noreply, State} |
