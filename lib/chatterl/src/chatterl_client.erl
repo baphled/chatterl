@@ -32,17 +32,16 @@ stop() ->
     gen_server:call({local, ?MODULE}, stop, infinity).
 
 name() ->
-    gen_server:call({local,?MODULE}, get_name, infinity).
+    gen_server:call(chatterl_client, client_name, infinity).
 
 join(Group) ->
-    User = gen_server:call({local,?MODULE}, get_name, infinity),
-    case gen_server:call({global, ?MODULE}, {group_exists, Group}, infinity) of
-	true ->
-	    case gen_server:call({global, ?MODULE}, {get_group, Group}, infinity) of
-		{Group,Pid} ->
-		    gen_server:call(Pid, {join, User});
-		{error, Error} ->
-		    {error, Error}
+    case gen_server:call({global, chatterl_serv}, {get_group, Group}, infinity) of
+	{error, Error} ->
+	    {error, Error};
+	{_GroupName,GroupPid} ->
+	    case gen_server:call(chatterl_client, client_name, infinity) of
+		{name, Name} -> gen_server:call(GroupPid, {join, Name}, infinity);
+		_ -> {error, "Unable to connect"}
 	    end;
 	false ->
 	    {error, "Group doesn't exist"}
@@ -78,8 +77,8 @@ init([User]) ->
 %%                                      {stop, Reason, State}
 %% Description: Handling call messages
 %%--------------------------------------------------------------------
-handle_call(get_name, _From, State) ->
-    Reply = State#user.name,
+handle_call(client_name, _From, State) ->
+    Reply = {name, State#user.name},
     {reply, Reply, State};
 handle_call({join, Group}, _From, State) ->
     Reply = chatterl_serv:join(Group, State#user.name),

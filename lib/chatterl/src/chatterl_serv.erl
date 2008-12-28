@@ -13,7 +13,7 @@
 %% Group specific
 -export([group_description/1,list_groups/0,group_exists/1]).
 %% User specific
--export([join/2,user_exists/1]).
+-export([user_exists/1]).
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
 	 terminate/2, code_change/3]).
@@ -77,23 +77,6 @@ drop(Group) ->
 		 end;
 	     false -> {error, "Group not valid"}
     end.
-join(Group, User) ->
-    case gen_server:call({global, ?MODULE}, {user_exists, User}, infinity) of
-	true ->
-	    case gen_server:call({global, ?MODULE}, {group_exists, Group}, infinity) of
-		true ->
-		    case gen_server:call({global, ?MODULE}, {get_group, Group}, infinity) of
-			{Group,Pid} ->
-			    gen_server:call(Pid, {join, User});
-			{error, Error} ->
-			    {error, Error}
-		    end;
-		false ->
-		    {error, "Group doesn't exist"}
-	    end;
-	false ->
-	    {error, "User doesn't exist"}
-    end.
 	    
 user_exists(User) ->
      gen_server:call({global, ?MODULE}, {user_exists, User}, infinity).
@@ -142,7 +125,10 @@ handle_call(list_groups, _Client, State) ->
     Reply =  gb_trees:values(State#chatterl.groups),
     {reply, Reply, State};
 handle_call({get_group, Group}, _From, State) ->
-    {value, Reply} = gb_trees:lookup(Group, State#chatterl.groups),
+    Reply = case gb_trees:lookup(Group, State#chatterl.groups) of
+		{value, Value} -> Value;
+		_ -> false
+	    end,
     {reply, Reply, State};
 handle_call(list_users, _From, State) ->
     Reply = gb_trees:keys(State#chatterl.users),
@@ -205,6 +191,9 @@ handle_call({user_exists, User}, _From, State) ->
     {reply, Reply, State};
 handle_call({group_exists,Group}, _From, State) ->
     Reply = gb_trees:is_defined(Group, State#chatterl.groups),
+    {reply, Reply, State};
+handle_call({join, Group, User}, _From, State) ->
+    Reply = chatterl_serv:join(Group,User),
     {reply, Reply, State}.
 %%--------------------------------------------------------------------
 %% Function: handle_cast(Msg, State) -> {noreply, State} |
