@@ -88,7 +88,7 @@ handle_call({drop, User}, _From, State) ->
     {Reply, NewTree} =
 	case gb_trees:is_defined(User, State#group.users) of
 	    true ->
-		{{ok, "User removed"},
+		{{ok, dropped},
 		 gb_trees:delete(User, State#group.users)};
 	    false ->
 		{{error, "Not connected"}, State}
