@@ -52,7 +52,7 @@ join(Group) ->
 		{name, Name} -> 
 		    case gen_server:call(GroupPid, {join, Name}, infinity) of
 			{ok, Msg} ->
-			    gen_server:call(chatterl_client, {drop_group, GroupName, GroupPid}, infinity),
+			    gen_server:call(chatterl_client, {add_group, GroupName, GroupPid}, infinity),
 			    {ok, Msg};
 			_ -> {error, "Unable to connect!"}
 		    end;
@@ -120,7 +120,7 @@ handle_call(client_name, _From, State) ->
 handle_call(groups, _From, State) ->
     Reply = gb_trees:values(State#user.groups),
     {reply, Reply, State};
-handle_call({drop_group, Group, Pid}, _From, State) ->
+handle_call({add_group, Group, Pid}, _From, State) ->
     NewTree = gb_trees:insert(Group, {Group, Pid}, State#user.groups),
     {reply, ok, State#user{groups = NewTree}};
 handle_call({drop_group, Group}, _From, State) ->
