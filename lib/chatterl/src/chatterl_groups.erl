@@ -9,7 +9,7 @@
 -behaviour(gen_server).
 
 %% API
--export([start/2,stop/0,create/2,list/0]).
+-export([start/2,stop/0]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -32,12 +32,6 @@ stop() ->
     Group = gen_server:call({global, ?MODULE}, name, infinity),
     gen_server:call({global, chatterl_client}, {stop, Group}, infinity),
     gen_server:call({global, ?MODULE}, stop, infinity).
-
-create(Group, Description) ->
-    gen_server:call({global, ?MODULE}, {create, Group, Description}, infinity).
-
-list() ->
-    gen_server:call({global, ?MODULE}, list_groups, infinity).
 %%====================================================================
 %% gen_server callbacks
 %%====================================================================
@@ -77,6 +71,9 @@ handle_call(name, _From, State) ->
 handle_call(description, _From, State) ->
     Result = State#group.description,
     Reply = {description, Result},
+    {reply, Reply, State};
+handle_call(list_users, _From, State) ->
+    Reply = State#group.users,
     {reply, Reply, State};
 handle_call({join, User}, From, State) ->
     {Reply, NewTree} =
