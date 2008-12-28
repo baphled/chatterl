@@ -86,10 +86,10 @@ send_msg(Group,Msg) ->
 	false ->
 	    {error, "Unable to send message"};
 	{_GroupName, GroupPid} ->
-	    User = gen_server:call(chatterl_client, client_name, infinity),
+	    {name,User} = gen_server:call(chatterl_client, client_name, infinity),
 	    case gen_server:call(GroupPid, {send_msg, User, Msg}, infinity) of
-		{ok, Msg} ->
-		    {ok, Msg};
+		{ok, msg_sent} ->
+		    io:format("Sent message~n");
 		{error, Error} ->
 		    {error, Error}
 	    end
