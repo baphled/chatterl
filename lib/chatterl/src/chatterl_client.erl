@@ -10,7 +10,7 @@
 -behaviour(gen_server).
 
 %% API
--export([start/1,stop/0,join/1,drop/1,name/0,connected_to/0,send_msg/2]).
+-export([start/1,stop/0,join/1,drop/1,name/0,connected_to/0,list_groups/0,send_msg/2]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -42,6 +42,9 @@ name() ->
 
 connected_to() ->
     gen_server:call(chatterl_client, groups, infinity).
+
+list_groups() ->
+    gen_server:call({global, chatterl_serv}, list_groups, infinity).
 
 join(Group) ->
     case gen_server:call({global, chatterl_serv}, {get_group, Group}, infinity) of
