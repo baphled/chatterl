@@ -10,7 +10,7 @@
 -behaviour(gen_server).
 
 %% API
--export([start/1,stop/0,join/1,drop/1,name/0,connected_to/0]).
+-export([start/1,stop/0,join/1,drop/1,name/0,connected_to/0,send_msg/2]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -80,7 +80,19 @@ drop(Group) ->
 	false ->
 	    {error, "Group doesn't exist"}
     end.
-		    
+
+send_msg(Group,Msg) ->
+    case gen_server:call({global, chatterl_serv}, {get_group, Group}, infinity) of
+	false ->
+	    {error, "Unable to send message"};
+	{_GroupName, GroupPid} ->
+	    case gen_server:call(GroupPid, {send_msg, User, Msg}, infinity) of
+		{ok, Msg} ->
+		    {ok, Msg};
+		{error, Error} ->
+		    {error, Error}
+	    end
+    end.
 %%====================================================================
 %% gen_server callbacks
 %%====================================================================
@@ -126,6 +138,7 @@ handle_call({add_group, Group, Pid}, _From, State) ->
 handle_call({drop_group, Group}, _From, State) ->
     NewTree = gb_trees:delete(Group, State#user.groups),
     {reply, ok, State#user{groups = NewTree}}.
+    
 
 %%--------------------------------------------------------------------
 %% Function: handle_cast(Msg, State) -> {noreply, State} |

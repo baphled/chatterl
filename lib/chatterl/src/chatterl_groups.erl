@@ -93,7 +93,18 @@ handle_call({drop, User}, _From, State) ->
 	    false ->
 		{{error, "Not connected"}, State}
 	end,
-    {reply, Reply, State#group{users=NewTree}}.
+    {reply, Reply, State#group{users=NewTree}};
+handle_call({send_msg, User, Message}, _From, State) ->
+    {Reply, NewTree} =
+	case gb_trees:is_defined(Message, State#group.messages) of
+	    false ->
+		io:format("~p: ~p~n", [User, Message]),
+		{{ok, msg_sent},
+		gb_trees:insert(Message, {User, Message}, State#group.messages)};
+	    true ->
+		{{error, already_sent}, State}
+	end,
+    {reply, Reply, State#group{messages=NewTree}}.
 %%--------------------------------------------------------------------
 %% Function: handle_cast(Msg, State) -> {noreply, State} |
 %%                                      {noreply, State, Timeout} |
