@@ -101,7 +101,7 @@ send_msg(Group,Msg) ->
 
 private_msg(User,Msg) ->
     case gen_server:call({global, chatterl_serv}, {user_lookup, User}, infinity) of
-	{ok,UserPid} ->
+	{value,UserInfo} ->
 	    case gen_server:call(UserPid, {receive_msg, Msg}, infinity) of
 		ok ->
 		    {ok, msg_sent};
