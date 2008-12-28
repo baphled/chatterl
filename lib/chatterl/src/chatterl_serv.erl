@@ -58,9 +58,9 @@ create(Group, Description) ->
 	    case chatterl_groups:start(Group, Description) of
 		{error, Error} ->
 		    {error, Error};
-		{ok,GroupPid} -> 
-		    link(GroupPid),
-		    gen_server:call({global, ?MODULE}, {add_pid, Group,GroupPid}, infinity)
+		{ok,GroupPid} ->
+		    gen_server:call({global, ?MODULE}, {add_pid, Group,GroupPid}, infinity),
+		    link(GroupPid)
 	    end;
 	_ -> io:format("Unable create group: ~p~n", [Group])
     end.
