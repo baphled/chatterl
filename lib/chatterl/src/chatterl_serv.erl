@@ -193,8 +193,8 @@ handle_call({user_lookup, User}, _From, State) ->
     Reply = case gb_trees:is_defined(User, State#chatterl.users) of
 		 true ->
 		     case gb_trees:lookup(User, State#chatterl.users) of
-			 {value, {UserName, UserPid, _UserPidRef}} ->
-			     {ok,UserName,UserPid};
+			 {value, {_UserName, UserPid, UserPidRef}} ->
+			     {ok,UserPid};
 			 _ ->
 			     {error, "Unable to lookup user"}
 		     end;
