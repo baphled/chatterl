@@ -155,7 +155,7 @@ handle_call({drop_group, Group}, _From, State) ->
     NewTree = gb_trees:delete(Group, State#user.groups),
     {reply, ok, State#user{groups = NewTree}};
 handle_call({receive_msg, Msg}, From, State) ->
-    User = user_lookup(From),
+    {name,User} = user_lookup(From),
     io:format("Received msg from:~p: ~p~n", [From,Msg]),
     {reply, ok, State}.
     
@@ -202,4 +202,4 @@ code_change(_OldVsn, State, _Extra) ->
 
 
 user_lookup(ClientPid) ->
-    "erm".
+    gen_server:call(ClientPid, client_name, infinity).
