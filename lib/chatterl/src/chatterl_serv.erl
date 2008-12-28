@@ -59,6 +59,7 @@ create(Group, Description) ->
 		{error, Error} ->
 		    {error, Error};
 		{ok,GroupPid} -> 
+		    link(GroupPid),
 		    gen_server:call({global, ?MODULE}, {add_pid, Group,GroupPid}, infinity)
 	    end;
 	_ -> io:format("Unable create group: ~p~n", [Group])
@@ -171,7 +172,6 @@ handle_call({add_pid, Group, GroupPid}, _From, State) ->
 	    false ->
 		case erlang:is_process_alive(GroupPid) of
 		    true -> 
-			link(GroupPid),
 			{{ok, "Created group..."},
 			     gb_trees:insert(Group, {Group, GroupPid}, State#chatterl.groups)};
 		    false -> {{error, "Unable to add group"},
