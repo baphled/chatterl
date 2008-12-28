@@ -84,7 +84,7 @@ handle_call({join, User}, From, State) ->
 		{{ok, "User added"}, gb_trees:insert(User, {User,From}, State#group.users)}
 	end,
     {reply, Reply, State#group{ users=NewTree }};
-handle_call({drop, User}, From, State) ->
+handle_call({drop, User}, _From, State) ->
     {Reply, NewTree} =
 	case gb_trees:is_defined(User, State#group.users) of
 	    true ->

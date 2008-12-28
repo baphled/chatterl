@@ -72,7 +72,7 @@ drop(Group) ->
 			{ok, Msg} ->
 			    gen_server:call(chatterl_client, {remove_pid, GroupName}, infinity),
 			    {ok, Msg};
-			_ -> {error, "Unable to disconnect!"}
+			{error, Error} -> {error, Error}
 		    end;
 		_ ->
 		    {error, "Unable to disconnect!"}
