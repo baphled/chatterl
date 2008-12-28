@@ -9,7 +9,7 @@
 -behaviour(gen_server).
 
 %% API
--export([start/0,stop/0,connect/1,disconnect/1,create/2,drop/1,list_users/0]).
+-export([start/0,stop/0,connect/1,disconnect/1,create/2,drop/1,list_users/0,list_users/1]).
 %% Group specific
 -export([group_description/1,list_groups/0,group_exists/1]).
 %% User specific
@@ -105,6 +105,9 @@ group_exists(Group) ->
 list_users() ->
     gen_server:call({global, ?MODULE}, list_users, infinity).
 
+list_users(Group) ->
+    gen_server:call({global, Group}, list_users, infinity).
+
 list_groups() ->
     gen_server:call({global, ?MODULE}, list_groups, infinity).
 %%====================================================================
@@ -178,8 +181,9 @@ handle_call({add_pid, Group, GroupPid}, _From, State) ->
 		 State#chatterl.groups};
 	    false ->
 		case erlang:is_process_alive(GroupPid) of
-		    true -> {{ok, "Created group..."},
-			     link(GroupPid),
+		    true -> 
+			link(GroupPid),
+			{{ok, "Created group..."},
 			     gb_trees:insert(Group, {Group, GroupPid}, State#chatterl.groups)};
 		    false -> {{error, "Unable to add group"},
 			      State#chatterl.groups}

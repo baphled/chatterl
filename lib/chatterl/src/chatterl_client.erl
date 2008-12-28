@@ -10,7 +10,7 @@
 -behaviour(gen_server).
 
 %% API
--export([start/1,stop/0,join/1]).
+-export([start/1,stop/0,join/1,name/0]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -31,8 +31,22 @@ start(User) ->
 stop() ->
     gen_server:call({local, ?MODULE}, stop, infinity).
 
+name() ->
+    gen_server:call({local,?MODULE}, get_name, infinity).
+
 join(Group) ->
-    gen_server:call({local, ?MODULE}, {join, Group}, infinity).
+    User = gen_server:call({local,?MODULE}, get_name, infinity),
+    case gen_server:call({global, ?MODULE}, {group_exists, Group}, infinity) of
+	true ->
+	    case gen_server:call({global, ?MODULE}, {get_group, Group}, infinity) of
+		{Group,Pid} ->
+		    gen_server:call(Pid, {join, User});
+		{error, Error} ->
+		    {error, Error}
+	    end;
+	false ->
+	    {error, "Group doesn't exist"}
+    end.
 %%====================================================================
 %% gen_server callbacks
 %%====================================================================
@@ -65,7 +79,8 @@ init([User]) ->
 %% Description: Handling call messages
 %%--------------------------------------------------------------------
 handle_call(get_name, _From, State) ->
-    {reply, State#user.name, State};
+    Reply = State#user.name,
+    {reply, Reply, State};
 handle_call({join, Group}, _From, State) ->
     Reply = chatterl_serv:join(Group, State#user.name),
     {reply, Reply, State}.
