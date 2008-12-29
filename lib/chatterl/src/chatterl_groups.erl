@@ -79,7 +79,7 @@ handle_call({join, User}, From, State) ->
     {Reply, NewTree} =
 	case gb_trees:is_defined(User, State#group.users) of
 	    true ->
-		io:format("~w joined~n", [User]),
+		io:format("~p joined~n", [User]),
 		{{error, "Already joined"}, State};
 	    false ->
 		{{ok, "User added"}, gb_trees:insert(User, {User,From}, State#group.users)}
@@ -89,7 +89,7 @@ handle_call({drop, User}, _From, State) ->
     {Reply, NewTree} =
 	case gb_trees:is_defined(User, State#group.users) of
 	    true ->
-		io:format("~w disconnected~n", [User]),
+		io:format("~p disconnected~n", [User]),
 		{{ok, dropped},
 		 gb_trees:delete(User, State#group.users)};
 	    false ->
@@ -134,6 +134,7 @@ handle_info(_Info, State) ->
 %%--------------------------------------------------------------------
 terminate(_Reason, State) ->
     io:format("Shutting down ~p~n", [State#group.name]),
+    gen_server:call({global, chatterl_serv}, {remove_pid, State#group.name}, infinity),
     {shutdown, State#group.name}.
 
 %%--------------------------------------------------------------------

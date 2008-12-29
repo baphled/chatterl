@@ -147,7 +147,7 @@ handle_call(groups, _From, State) ->
     {reply, Reply, State};
 handle_call({add_group, Group, Pid}, _From, State) ->
     NewTree = gb_trees:insert(Group, {Group, Pid}, State#user.groups),
-    {reply, ok, State#user{groups = NewTree}};
+    {reply, {ok, "Joined group"}, State#user{groups = NewTree}};
 handle_call({drop_group, Group}, _From, State) ->
     NewTree = gb_trees:delete(Group, State#user.groups),
     {reply, ok, State#user{groups = NewTree}};
@@ -182,8 +182,8 @@ handle_info(_Info, State) ->
 %% The return value is ignored.
 %%--------------------------------------------------------------------
 terminate(_Reason, State) ->
-    GroupsList = gb_trees:to_list(State#user.groups),
-    lists:foreach(fun chatterl_client:drop/1, GroupsList),
+    %GroupsList = gb_trees:to_list(State#user.groups),
+    %lists:foreach(fun chatterl_client:drop/1, GroupsList),
     gen_server:call({global, chatterl_serv}, {disconnect,State#user.name}, infinity),
     io:format("~p is disconnecting...", [State#user.name]),
     ok.
