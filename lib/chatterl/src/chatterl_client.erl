@@ -30,7 +30,7 @@ start(User) ->
     gen_server:start_link({local, ?MODULE}, ?MODULE, [User], []).
 
 stop() ->
-    gen_server:call({local, ?MODULE}, stop, infinity).
+    gen_server:call(?MODULE, stop, infinity).
 
 name() ->
     gen_server:call(chatterl_client, client_name, infinity).
@@ -181,11 +181,11 @@ handle_info(_Info, State) ->
 %% cleaning up. When it returns, the gen_server terminates with Reason.
 %% The return value is ignored.
 %%--------------------------------------------------------------------
-terminate(_Reason, State) ->
+terminate(Reason, State) ->
     %GroupsList = gb_trees:to_list(State#user.groups),
     %lists:foreach(fun chatterl_client:drop/1, GroupsList),
     gen_server:call({global, chatterl_serv}, {disconnect,State#user.name}, infinity),
-    io:format("~p is disconnecting...", [State#user.name]),
+    io:format("~p is disconnecting...~p", [State#user.name,Reason]),
     ok.
 %%--------------------------------------------------------------------
 %% Func: code_change(OldVsn, State, Extra) -> {ok, NewState}
