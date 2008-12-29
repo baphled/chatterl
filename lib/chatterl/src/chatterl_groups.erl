@@ -135,6 +135,12 @@ handle_info(_Info, State) ->
 terminate(_Reason, State) ->
     io:format("Shutting down ~p~n", [State#group.name]),
     gen_server:call({global, chatterl_serv}, {remove_pid, State#group.name}, infinity),
+    case State#group.users of
+	{0, nil} ->
+	    io:format("No users to inform of shutdown~n");
+	_ ->
+	    get_user_pids(State#group.users)
+    end,
     {shutdown, State#group.name}.
 
 %%--------------------------------------------------------------------
@@ -148,3 +154,10 @@ code_change(_OldVsn, State, _Extra) ->
 %%% Internal functions
 %%--------------------------------------------------------------------
 %% @private
+get_user_pids([UserInfo|UsersList]) ->
+    {_User,UserPid} = UserInfo,
+    GroupName = gen_server:call({global, ?MODULE}, name, infinity),
+    gen_server:call(UserPid, {drop_group, GroupName}, infinity),
+    get_user_pids(UsersList);
+get_user_pids([]) ->
+   ok.
