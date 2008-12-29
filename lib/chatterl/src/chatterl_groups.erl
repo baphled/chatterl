@@ -81,7 +81,7 @@ handle_call({join, User}, From, State) ->
 	    true ->
 		{{error, "Already joined"}, State};
 	    false ->
-		io:format("~p joined~n", [User]),
+		io:format("~p joined ~p~n", [User,State#group.name]),
 		{{ok, "User added"}, gb_trees:insert(User, {User,From}, State#group.users)}
 	end,
     {reply, Reply, State#group{ users=NewTree }};
