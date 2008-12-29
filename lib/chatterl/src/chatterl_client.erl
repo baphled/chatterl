@@ -30,12 +30,6 @@ start(User) ->
     gen_server:start_link({local, ?MODULE}, ?MODULE, [User], []).
 
 stop() ->
-    case gen_server:call(chatter_client, client_name, infinity) of
-	{name, Name} ->
-	    gen_server:call({global, chatterl_serv}, {disconnect, Name}, infinity);
-	_ ->
-	    io:format("Unable to disconnect from server~n")
-    end,
     gen_server:call({local, ?MODULE}, stop, infinity).
 
 name() ->
@@ -186,6 +180,8 @@ handle_info(_Info, State) ->
 %% The return value is ignored.
 %%--------------------------------------------------------------------
 terminate(_Reason, State) ->
+    GroupsList = gb_trees:to_list(State#user.groups),
+    lists:foreach(fun chatterl_client:drop/1, GroupsList),
     gen_server:call({global, chatterl_serv}, {disconnect,State#user.name}, infinity),
     io:format("~p is disconnecting...", [State#user.name]),
     ok.
