@@ -139,11 +139,13 @@ handle_call(list_users, _From, State) ->
     {reply, Reply, State};
 handle_call({connect,User}, From, State) ->
     {Reply, NewTree} = case gb_trees:is_defined(User, State#chatterl.users) of
-		false-> {{ok, "connected"},
+			   false-> 
+			       io:format("~p connected to ~p", [User,?MODULE]),
+			       {{ok, "connected"},
 			gb_trees:insert(User, {User,From}, State#chatterl.users)};
-		true -> {{error, "Unable to connect."},
-			 State#chatterl.users}
-	    end,
+			   true -> {{error, "Unable to connect."},
+				    State#chatterl.users}
+		       end,
     {reply, Reply, State#chatterl{ users = NewTree }};
 handle_call({disconnect, User}, _From, State) ->
      NewTree =  case gb_trees:is_defined(User, State#chatterl.users) of
