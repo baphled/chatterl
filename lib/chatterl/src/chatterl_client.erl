@@ -137,6 +137,8 @@ init([User]) ->
 %%                                      {stop, Reason, State}
 %% Description: Handling call messages
 %%--------------------------------------------------------------------
+handle_call(stop, _From, State) ->
+    {stop, normal, stopped, State};
 handle_call(client_name, _From, State) ->
     Reply = {name, State#user.name},
     {reply, Reply, State};

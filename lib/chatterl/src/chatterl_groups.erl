@@ -30,7 +30,7 @@ start(Name,Description) ->
 
 stop() ->
     Group = gen_server:call({global, ?MODULE}, name, infinity),
-    gen_server:call({global, chatterl_client}, {stop, Group}, infinity),
+    gen_server:call({global, chatterl_client}, {drop_group, Group}, infinity),
     gen_server:call({global, ?MODULE}, stop, infinity).
 %%====================================================================
 %% gen_server callbacks
@@ -79,7 +79,7 @@ handle_call({join, User}, From, State) ->
     {Reply, NewTree} =
 	case gb_trees:is_defined(User, State#group.users) of
 	    true ->
-		io:format("~w join~n", [User]),
+		io:format("~w joined~n", [User]),
 		{{error, "Already joined"}, State};
 	    false ->
 		{{ok, "User added"}, gb_trees:insert(User, {User,From}, State#group.users)}
