@@ -134,12 +134,12 @@ handle_info(_Info, State) ->
 %%--------------------------------------------------------------------
 terminate(_Reason, State) ->
     io:format("Shutting down ~p~n", [State#group.name]),
-    case gb_trees:is_empty(State#group.users) of
-	false ->
-	    get_user_pids(gb_trees:values(State#group.users), State#group.name);
-	true ->
-	    io:format("No users to inform of shutdown~n")
-    end,
+%    case gb_trees:is_empty(State#group.users) of
+%	false ->
+%	    get_user_pids(gb_trees:values(State#group.users), State#group.name);
+%	true ->
+%	    io:format("No users to inform of shutdown~n")
+%    end,
     gen_server:call({global, chatterl_serv}, {remove_pid, State#group.name}, infinity),
     {shutdown, State#group.name}.
 
