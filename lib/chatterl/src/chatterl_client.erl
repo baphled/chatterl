@@ -98,7 +98,8 @@ private_msg(User,Msg) ->
 	{error, Error} -> {error, Error};
 	{ok, _UserName, UserPid} ->
 	    {name,From} = gen_server:call(UserPid, client_name, infinity),
-	    case gen_server:call(UserPid, {receive_msg, From, Msg}, infinity) of
+	    CreatedOn = erlang:now(),
+	    case gen_server:call(UserPid, {receive_msg, CreatedOn, From, Msg}, infinity) of
 		ok ->
 		    {ok, msg_sent};
 		_ ->{error, "Unable to send message!"}
@@ -151,8 +152,8 @@ handle_call({add_group, Group, Pid}, _From, State) ->
 handle_call({drop_group, Group}, _From, State) ->
     NewTree = gb_trees:delete(Group, State#user.groups),
     {reply, ok, State#user{groups = NewTree}};
-handle_call({receive_msg, User, Msg}, _From, State) ->
-    io:format("Received msg from:~p: ~p~n", [User,Msg]),
+handle_call({receive_msg, _CreatedOn, User, Msg}, _From, State) ->
+    io:format("Received msg from ~p: ~p~n", [User,Msg]),
     {reply, ok, State}.
     
 
