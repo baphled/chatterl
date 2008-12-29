@@ -89,7 +89,7 @@ handle_call({drop, User}, _From, State) ->
     {Reply, NewTree} =
 	case gb_trees:is_defined(User, State#group.users) of
 	    true ->
-		io:format("~w disconnected~,", [User]),
+		io:format("~w disconnected~n", [User]),
 		{{ok, dropped},
 		 gb_trees:delete(User, State#group.users)};
 	    false ->

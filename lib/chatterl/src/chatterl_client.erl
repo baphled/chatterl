@@ -95,14 +95,14 @@ send_msg(Group,Msg) ->
 
 private_msg(User,Msg) ->
     case gen_server:call({global, chatterl_serv}, {user_lookup, User}, infinity) of
+	{error, Error} -> {error, Error};
 	{ok, _UserName, UserPid} ->
 	    {name,From} = gen_server:call(UserPid, client_name, infinity),
 	    case gen_server:call(UserPid, {receive_msg, From, Msg}, infinity) of
 		ok ->
 		    {ok, msg_sent};
 		_ ->{error, "Unable to send message!"}
-	    end;
-	{error, Msg} -> {error, Msg}
+	    end
     end.
 %%====================================================================
 %% gen_server callbacks
