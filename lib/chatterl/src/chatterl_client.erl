@@ -101,13 +101,14 @@ send_msg(Group,Msg) ->
 
 private_msg(User,Msg) ->
     case gen_server:call({global, chatterl_serv}, {user_lookup, User}, infinity) of
-	{value, _UserName, UserPid} ->
-	    case gen_server:call(UserPid, {receive_msg, Msg}, infinity) of
+	{ok, _UserName, UserPid} ->
+	    {name,From} = gen_server:call(UserPid, client_name, infinity),
+	    case gen_server:call(UserPid, {receive_msg, From, Msg}, infinity) of
 		ok ->
 		    {ok, msg_sent};
 		_ ->{error, "Unable to send message!"}
 	    end;
-	false -> {error, "User doesn't exist!"}
+	{error, Msg} -> {error, Msg}
     end.
 %%====================================================================
 %% gen_server callbacks
@@ -154,9 +155,8 @@ handle_call({add_group, Group, Pid}, _From, State) ->
 handle_call({drop_group, Group}, _From, State) ->
     NewTree = gb_trees:delete(Group, State#user.groups),
     {reply, ok, State#user{groups = NewTree}};
-handle_call({receive_msg, Msg}, From, State) ->
-    {name,User} = user_lookup(From),
-    io:format("Received msg from:~p: ~p~n", [From,Msg]),
+handle_call({receive_msg, User, Msg}, _From, State) ->
+    io:format("Received msg from:~p: ~p~n", [User,Msg]),
     {reply, ok, State}.
     
 
@@ -199,7 +199,6 @@ code_change(_OldVsn, State, _Extra) ->
 %%--------------------------------------------------------------------
 %%% Internal functions
 %%--------------------------------------------------------------------
-
 
 user_lookup(ClientPid) ->
     gen_server:call(ClientPid, client_name, infinity).
