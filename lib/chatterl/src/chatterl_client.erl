@@ -199,6 +199,3 @@ code_change(_OldVsn, State, _Extra) ->
 %%--------------------------------------------------------------------
 %%% Internal functions
 %%--------------------------------------------------------------------
-
-user_lookup(ClientPid) ->
-    gen_server:call(ClientPid, client_name, infinity).
