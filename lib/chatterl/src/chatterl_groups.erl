@@ -1,9 +1,10 @@
 %%%-------------------------------------------------------------------
-%%% File    : chatterl_groups_new.erl
-%%% Author  : Yomi Akindayini <yomi@boodh.net>
-%%% Description : Handle chatterl's group system
-%%%
-%%% Created : 18 Dec 2008 by Yomi Akindayini <yomi@boodah.net>
+%%% @author Yomi Colledge <yomi@boodah.net>
+%%% @doc
+%%% Chatterl groups process used to handle a specific groups data (clients,
+%%% messages, etc).
+%%% @end
+%%% @copyright 2008 by Yomi Colledge <yomi@boodah.net>
 %%%-------------------------------------------------------------------
 -module(chatterl_groups).
 -behaviour(gen_server).
@@ -22,12 +23,23 @@
 %% API
 %%====================================================================
 %%--------------------------------------------------------------------
-%% Function: start_link() -> {ok,Pid} | ignore | {error,Error}
-%% Description: Starts the server
+%% @doc
+%% Starts the group process.
+%%
+%% @spec start(Name,Description) -> {ok,Pid} | ignore | {error,Error} 
+%% @end
 %%--------------------------------------------------------------------
 start(Name,Description) ->
     gen_server:start_link({global, Name}, ?MODULE, [Name,Description], []).
 
+%%--------------------------------------------------------------------
+%% @doc
+%% Stops the process, sending messages to all clients connected and to the
+%% server handling its process and information.
+%%
+%% @spec stop() -> stopped
+%% @end
+%%--------------------------------------------------------------------
 stop() ->
     Group = gen_server:call({global, ?MODULE}, name, infinity),
     gen_server:call({global, chatterl_client}, {drop_group, Group}, infinity),
@@ -37,11 +49,15 @@ stop() ->
 %%====================================================================
 
 %%--------------------------------------------------------------------
-%% Function: init(Args) -> {ok, State} |
+%% @private
+%% @doc
+%% Initialises our group process.
+%%
+%% @spec init(Args) -> {ok, State} |
 %%                         {ok, State, Timeout} |
 %%                         ignore               |
 %%                         {stop, Reason}
-%% Description: Initiates the server
+%% @end
 %%--------------------------------------------------------------------
 init([Name,Description]) ->
     process_flag(trap_exit, true),
@@ -54,13 +70,16 @@ init([Name,Description]) ->
        users = gb_trees:empty()}}.
 
 %%--------------------------------------------------------------------
-%% Function: %% handle_call(Request, From, State) -> {reply, Reply, State} |
+%% @doc
+%% Handles our call messages
+%%
+%% @spec handle_call(Request, From, State) -> {reply, Reply, State} |
 %%                                      {reply, Reply, State, Timeout} |
 %%                                      {noreply, State} |
 %%                                      {noreply, State, Timeout} |
 %%                                      {stop, Reason, Reply, State} |
 %%                                      {stop, Reason, State}
-%% Description: Handling call messages
+%% @end
 %%--------------------------------------------------------------------
 handle_call(stop, _From, State) ->
     {stop, normal, stopped, State};
@@ -108,29 +127,35 @@ handle_call({send_msg, User, Message}, _From, State) ->
 	end,
     {reply, Reply, State#group{messages=NewTree}}.
 %%--------------------------------------------------------------------
-%% Function: handle_cast(Msg, State) -> {noreply, State} |
+%% @doc
+%% Handling cast messages
+%%
+%% @spec handle_cast(Msg, State) -> {noreply, State} |
 %%                                      {noreply, State, Timeout} |
 %%                                      {stop, Reason, State}
-%% Description: Handling cast messages
+%% @end
 %%--------------------------------------------------------------------
 handle_cast(_Msg, State) ->
     {noreply, State}.
 
 %%--------------------------------------------------------------------
-%% Function: handle_info(Info, State) -> {noreply, State} |
+%% @doc
+%% Handling all non call/cast messages
+%%
+%% @spec handle_info(Info, State) -> {noreply, State} |
 %%                                       {noreply, State, Timeout} |
 %%                                       {stop, Reason, State}
-%% Description: Handling all non call/cast messages
+%% @end
 %%--------------------------------------------------------------------
 handle_info(_Info, State) ->
     {unknown, State}.
 
 %%--------------------------------------------------------------------
-%% Function: terminate(Reason, State) -> void()
-%% Description: This function is called by a gen_server when it is about to
-%% terminate. It should be the opposite of Module:init/1 and do any necessary
-%% cleaning up. When it returns, the gen_server terminates with Reason.
-%% The return value is ignored.
+%% @doc
+%% Terminates the group process
+%%
+%% @spec terminate(Reason, State) -> void()
+%% @end
 %%--------------------------------------------------------------------
 terminate(_Reason, State) ->
     io:format("Shutting down ~p~n", [State#group.name]),
@@ -144,8 +169,11 @@ terminate(_Reason, State) ->
     {shutdown, State#group.name}.
 
 %%--------------------------------------------------------------------
-%% Func: code_change(OldVsn, State, Extra) -> {ok, NewState}
-%% Description: Convert process state when code is changed
+%% @doc
+%% Convert process state when code is changed
+%%
+%% @spec code_change(OldVsn, State, Extra) -> {ok, NewState}
+%% @end
 %%--------------------------------------------------------------------
 code_change(_OldVsn, State, _Extra) ->
     {ok, State}.
