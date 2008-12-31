@@ -278,13 +278,8 @@ handle_call({add_pid, Group, GroupPid}, _From, State) ->
 		{{error, "Groups already created"},
 		 State#chatterl.groups};
 	    false ->
-		case erlang:is_process_alive(GroupPid) of
-		    true -> 
-			{{ok, "Created group..."},
-			     gb_trees:insert(Group, {Group, GroupPid}, State#chatterl.groups)};
-		    false -> {{error, "Unable to add group"},
-			      State#chatterl.groups}
-		end
+		{{ok, "Created group..."},
+		 gb_trees:insert(Group, {Group, GroupPid}, State#chatterl.groups)}
 	end,
     {reply, Reply, State#chatterl{ groups = NewTree }};
 handle_call({remove_pid, Group}, _From, State) ->
