@@ -23,43 +23,61 @@
 %% API
 %%====================================================================
 %%--------------------------------------------------------------------
-%% Function: start(User) -> {ok,Pid} | ignore | {error,Error}
-%% Description: Starts the server
+%% @edoc
+%% Starts the server
+%%
+%% @spec start(User) -> {ok,Pid} | ignore | {error,Error} 
+%% @end
 %%--------------------------------------------------------------------
 start(User) ->
     gen_server:start_link({local, ?MODULE}, ?MODULE, [User], []).
 
 %%--------------------------------------------------------------------
-%% Function: stop() -> stopped
-%% Description: Stops the server
+%% @edoc
+%% Stops the server
+%%
+%% @spec stop() -> stopped
+%% @end
 %%--------------------------------------------------------------------
 stop() ->
     gen_server:call(?MODULE, stop, infinity).
 
 %%--------------------------------------------------------------------
-%% Function: name() -> {name,Name} | {error,Error}
-%% Description: Gets the clients name
+%% @edoc
+%% Gets the clients name
+%%
+%% @spec name() -> {name,Name} | {error,Error}
+%% @end
 %%--------------------------------------------------------------------
 name() ->
     gen_server:call(chatterl_client, client_name, infinity).
 
 %%--------------------------------------------------------------------
-%% Function: connected_to() -> [Groups] | []
-%% Description: Retrieves a list of groups the client is connected to
+%% @edoc
+%% Retrieves a list of groups the client is connected to
+%%
+%% @spec connected_to() -> [Groups] | []
+%% @end
 %%--------------------------------------------------------------------
 connected_to() ->
     gen_server:call(chatterl_client, groups, infinity).
 
 %%--------------------------------------------------------------------
-%% Function: list_groups() -> [Groups] | []
-%% Description: Retrieves a list of avaliable groups
+%% @edoc
+%% Retrieves a list of avaliable groups
+%%
+%% @spec list_groups() -> [Groups] | []
+%% @end
 %%--------------------------------------------------------------------
 list_groups() ->
     gen_server:call({global, chatterl_serv}, list_groups, infinity).
 
 %%--------------------------------------------------------------------
-%% Function: join(Group) -> {ok,Msg} | {error,Error}
-%% Description: Allows a client to join a group
+%% @edoc
+%% Allows a client to join a group
+%%
+%% @spec join(Group) -> {ok,Msg} | {error,Error}
+%% @end
 %%--------------------------------------------------------------------
 join(Group) ->
     case gen_server:call({global, chatterl_serv}, {get_group, Group}, infinity) of
@@ -82,8 +100,11 @@ join(Group) ->
     end.
 
 %%--------------------------------------------------------------------
-%% Function: drop(Group) -> {ok,Msg} | {error,Error}
-%% Description: Allows the uesr to drop their selves from a group
+%% @edoc
+%% Allows the uesr to drop their selves from a group
+%%
+%% @spec drop(Group) -> {ok,Msg} | {error,Error}
+%% @end
 %%--------------------------------------------------------------------
 drop(Group) ->
     case gen_server:call({global, chatterl_serv}, {get_group, Group}, infinity) of
@@ -104,8 +125,11 @@ drop(Group) ->
     end.
 
 %%--------------------------------------------------------------------
-%% Function: send_msg(Group,Msg) -> {ok,msg_sent} | {error,Error}
-%% Description: Sends a message to a group
+%% @edoc
+%% Sends a message to a group
+%%
+%% @spec send_msg(Group,Msg) -> {ok,msg_sent} | {error,Error}
+%% @end
 %%--------------------------------------------------------------------
 send_msg(Group,Msg) ->
     case gen_server:call({global, chatterl_serv}, {get_group, Group}, infinity) of
@@ -122,8 +146,11 @@ send_msg(Group,Msg) ->
     end.
 
 %%--------------------------------------------------------------------
-%% Function: private_msg(User,Msg) -> {ok,Pid} | ignore | {error,Error}
-%% Description: Sends a private message to a connected client.
+%% @edoc
+%% Sends a private message to a connected client.
+%%
+%% @spec private_msg(User,Msg) -> {ok,Pid} | ignore | {error,Error}
+%% @end
 %%--------------------------------------------------------------------
 private_msg(User,Msg) ->
     case gen_server:call({global, chatterl_serv}, {user_lookup, User}, infinity) of
@@ -142,11 +169,15 @@ private_msg(User,Msg) ->
 %%====================================================================
 
 %%--------------------------------------------------------------------
-%% Function: init(Args) -> {ok, State} |
+%% @private
+%% @edoc
+%% Initiates the server
+%%
+%% @spec init(Args) -> {ok, State} |
 %%                         {ok, State, Timeout} |
 %%                         ignore               |
 %%                         {stop, Reason}
-%% Description: Initiates the server
+%% @end
 %%--------------------------------------------------------------------
 init([User]) ->
     process_flag(trap_exit, true),
@@ -162,13 +193,16 @@ init([User]) ->
     end.
 
 %%--------------------------------------------------------------------
-%% Function: handle_call(Request, From, State) -> {reply, Reply, State} |
+%% @edoc
+%% Handling call messages
+%%
+%% @spec handle_call(Request, From, State) -> {reply, Reply, State} |
 %%                                      {reply, Reply, State, Timeout} |
 %%                                      {noreply, State} |
 %%                                      {noreply, State, Timeout} |
 %%                                      {stop, Reason, Reply, State} |
 %%                                      {stop, Reason, State}
-%% Description: Handling call messages
+%% @end
 %%--------------------------------------------------------------------
 handle_call(stop, _From, State) ->
     {stop, normal, stopped, State};
@@ -190,29 +224,35 @@ handle_call({receive_msg, _CreatedOn, User, Msg}, _From, State) ->
     
 
 %%--------------------------------------------------------------------
-%% Function: handle_cast(Msg, State) -> {noreply, State} |
+%% @edoc
+%% Handling cast messages
+%%
+%% @spec handle_cast(Msg, State) -> {noreply, State} |
 %%                                      {noreply, State, Timeout} |
 %%                                      {stop, Reason, State}
-%% Description: Handling cast messages
+%% @end
 %%--------------------------------------------------------------------
 handle_cast(_Msg, State) ->
     {noreply, State}.
 
 %%--------------------------------------------------------------------
-%% Function: handle_info(Info, State) -> {noreply, State} |
+%% @edoc
+%% Handling all non call/cast messages
+%%
+%% @spec handle_info(Info, State) -> {noreply, State} |
 %%                                       {noreply, State, Timeout} |
 %%                                       {stop, Reason, State}
-%% Description: Handling all non call/cast messages
+%% @end
 %%--------------------------------------------------------------------
 handle_info(_Info, State) ->
     {noreply, State}.
 
 %%--------------------------------------------------------------------
-%% Function: terminate(Reason, State) -> void()
-%% Description: This function is called by a gen_server when it is about to
-%% terminate. It should be the opposite of Module:init/1 and do any necessary
-%% cleaning up. When it returns, the gen_server terminates with Reason.
-%% The return value is ignored.
+%% @edoc
+%% Disconnects the user from the client.
+%%
+%% @spec terminate(Reason, State) -> void()
+%% @end
 %%--------------------------------------------------------------------
 terminate(Reason, State) ->
     %GroupsList = gb_trees:to_list(State#user.groups),
@@ -221,8 +261,11 @@ terminate(Reason, State) ->
     io:format("~p is disconnecting...~p", [State#user.name,Reason]),
     ok.
 %%--------------------------------------------------------------------
-%% Func: code_change(OldVsn, State, Extra) -> {ok, NewState}
-%% Description: Convert process state when code is changed
+%% @edoc
+%% Convert process state when code is changed
+%%
+%% @spec code_change(OldVsn, State, Extra) -> {ok, NewState}
+%% @end
 %%--------------------------------------------------------------------
 code_change(_OldVsn, State, _Extra) ->
     {ok, State}.
