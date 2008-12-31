@@ -81,14 +81,7 @@ list_groups() ->
 %% @end
 %%--------------------------------------------------------------------
 join(Group) ->
-    case gen_server:call({global, chatterl_serv}, {get_group, Group}, infinity) of
-	{error, Error} ->
-	    {error, Error};
-	{GroupName,GroupPid} ->
-	    set_client_to_group(join,GroupName,GroupPid);
-	false ->
-	    {error, "Group doesn't exist"}
-    end.
+    set_client_to_group(join,Group).
 
 %%--------------------------------------------------------------------
 %% @doc
@@ -100,7 +93,17 @@ join(Group) ->
 drop(Group) ->
     case gen_server:call({global, chatterl_serv}, {get_group, Group}, infinity) of
 	{GroupName, GroupPid} ->
-	    set_client_to_group(drop,GroupName,GroupPid);
+	    case gen_server:call(chatterl_client, client_name, infinity) of
+		{name, Name} ->
+		    case gen_server:call(GroupPid, {drop, Name}, infinity) of
+			{ok, Msg} ->
+			    gen_server:call(chatterl_client, {drop_group, GroupName}, infinity),
+			    {ok, Msg};
+			{error, Error} -> {error, Error}
+		    end;
+		_ ->
+		    {error, "Unable to disconnect!"}
+	    end;
 	false ->
 	    {error, "Group doesn't exist"}
     end.
@@ -253,7 +256,7 @@ code_change(_OldVsn, State, _Extra) ->
 %%--------------------------------------------------------------------
 %%% Internal functions
 %%--------------------------------------------------------------------
-set_client_to_group(Action,GroupName,GroupPid) ->
+set_client_to_group(Action,Group) ->
     Response =
 	case Action of
 	    join ->
@@ -262,17 +265,22 @@ set_client_to_group(Action,GroupName,GroupPid) ->
 		{drop,drop_group};
 	    _ -> {error, {"Illegal action",Action}}
 	end,
-    group_connection(Response,GroupName,GroupPid).
+    group_connection(Response,Group).
 
-group_connection({GroupCall,ClientCall},GroupName,GroupPid) ->
-    case gen_server:call(chatterl_client, client_name, infinity) of
-	{name, Name} -> 
-	    case gen_server:call(GroupPid, {GroupCall, Name}, infinity) of
-		{ok, Msg} ->
-		    gen_server:call(chatterl_client, {ClientCall, GroupName, GroupPid}, infinity),
-		    {ok, Msg};
-		_ -> {error, "Unable to connect!"}
+group_connection({GroupCall,ClientCall},Group) ->
+    case gen_server:call({global, chatterl_serv}, {get_group, Group}, infinity) of
+	{GroupName, GroupPid} ->
+	    case gen_server:call(chatterl_client, client_name, infinity) of
+		{name, Name} -> 
+		    case gen_server:call(GroupPid, {GroupCall, Name}, infinity) of
+			{ok, Msg} ->
+			    gen_server:call(chatterl_client, {ClientCall, GroupName, GroupPid}, infinity),
+			    {ok, Msg};
+			_ -> {error, "Unable to connect!"}
+		    end;
+		_ -> 
+		    {error, "Unable to connect"}
 	    end;
-	_ -> 
-	    {error, "Unable to connect"}
+	false ->
+	    {error, "Group doesn't exist"}
     end.
