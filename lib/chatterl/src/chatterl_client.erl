@@ -1,9 +1,10 @@
 %%%-------------------------------------------------------------------
-%%% File    : chatterl_client.erl
-%%% Author  : Yomi Colledge <yomi@boodah.net>
-%%% Description : Basic client for chat system
-%%%
-%%% Created : 27 Dec 2008 by Yomi Colledge <yomi@boodah.net>
+%%% @author Yomi Colledge <yomi@boodah.net>
+%%% @doc
+%%% Basic client for chat system, used to interact with chatterl_serv
+%%% and chatterl_groups
+%%% @end
+%%% @copyright 2008 by Yomi Colledge <yomi@boodah.net>
 %%%-------------------------------------------------------------------
 -module(chatterl_client).
 
@@ -23,7 +24,7 @@
 %% API
 %%====================================================================
 %%--------------------------------------------------------------------
-%% @edoc
+%% @doc
 %% Starts the server
 %%
 %% @spec start(User) -> {ok,Pid} | ignore | {error,Error} 
@@ -33,7 +34,7 @@ start(User) ->
     gen_server:start_link({local, ?MODULE}, ?MODULE, [User], []).
 
 %%--------------------------------------------------------------------
-%% @edoc
+%% @doc
 %% Stops the server
 %%
 %% @spec stop() -> stopped
@@ -43,7 +44,7 @@ stop() ->
     gen_server:call(?MODULE, stop, infinity).
 
 %%--------------------------------------------------------------------
-%% @edoc
+%% @doc
 %% Gets the clients name
 %%
 %% @spec name() -> {name,Name} | {error,Error}
@@ -53,7 +54,7 @@ name() ->
     gen_server:call(chatterl_client, client_name, infinity).
 
 %%--------------------------------------------------------------------
-%% @edoc
+%% @doc
 %% Retrieves a list of groups the client is connected to
 %%
 %% @spec connected_to() -> [Groups] | []
@@ -63,7 +64,7 @@ connected_to() ->
     gen_server:call(chatterl_client, groups, infinity).
 
 %%--------------------------------------------------------------------
-%% @edoc
+%% @doc
 %% Retrieves a list of avaliable groups
 %%
 %% @spec list_groups() -> [Groups] | []
@@ -73,7 +74,7 @@ list_groups() ->
     gen_server:call({global, chatterl_serv}, list_groups, infinity).
 
 %%--------------------------------------------------------------------
-%% @edoc
+%% @doc
 %% Allows a client to join a group
 %%
 %% @spec join(Group) -> {ok,Msg} | {error,Error}
@@ -100,7 +101,7 @@ join(Group) ->
     end.
 
 %%--------------------------------------------------------------------
-%% @edoc
+%% @doc
 %% Allows the uesr to drop their selves from a group
 %%
 %% @spec drop(Group) -> {ok,Msg} | {error,Error}
@@ -125,7 +126,7 @@ drop(Group) ->
     end.
 
 %%--------------------------------------------------------------------
-%% @edoc
+%% @doc
 %% Sends a message to a group
 %%
 %% @spec send_msg(Group,Msg) -> {ok,msg_sent} | {error,Error}
@@ -146,7 +147,7 @@ send_msg(Group,Msg) ->
     end.
 
 %%--------------------------------------------------------------------
-%% @edoc
+%% @doc
 %% Sends a private message to a connected client.
 %%
 %% @spec private_msg(User,Msg) -> {ok,Pid} | ignore | {error,Error}
@@ -170,7 +171,7 @@ private_msg(User,Msg) ->
 
 %%--------------------------------------------------------------------
 %% @private
-%% @edoc
+%% @doc
 %% Initiates the server
 %%
 %% @spec init(Args) -> {ok, State} |
@@ -193,7 +194,7 @@ init([User]) ->
     end.
 
 %%--------------------------------------------------------------------
-%% @edoc
+%% @doc
 %% Handling call messages
 %%
 %% @spec handle_call(Request, From, State) -> {reply, Reply, State} |
@@ -224,7 +225,7 @@ handle_call({receive_msg, _CreatedOn, User, Msg}, _From, State) ->
     
 
 %%--------------------------------------------------------------------
-%% @edoc
+%% @doc
 %% Handling cast messages
 %%
 %% @spec handle_cast(Msg, State) -> {noreply, State} |
@@ -236,7 +237,7 @@ handle_cast(_Msg, State) ->
     {noreply, State}.
 
 %%--------------------------------------------------------------------
-%% @edoc
+%% @doc
 %% Handling all non call/cast messages
 %%
 %% @spec handle_info(Info, State) -> {noreply, State} |
@@ -248,7 +249,7 @@ handle_info(_Info, State) ->
     {noreply, State}.
 
 %%--------------------------------------------------------------------
-%% @edoc
+%% @doc
 %% Disconnects the user from the client.
 %%
 %% @spec terminate(Reason, State) -> void()
@@ -261,7 +262,7 @@ terminate(Reason, State) ->
     io:format("~p is disconnecting...~p", [State#user.name,Reason]),
     ok.
 %%--------------------------------------------------------------------
-%% @edoc
+%% @doc
 %% Convert process state when code is changed
 %%
 %% @spec code_change(OldVsn, State, Extra) -> {ok, NewState}
