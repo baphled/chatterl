@@ -141,11 +141,9 @@ private_msg(Client,Msg) ->
 	{error, Error} -> {error, Error};
 	{ok, _ClientName, ClientPid} ->
 	    {name,From} = gen_server:call(ClientPid, client_name, infinity),
-	    CreatedOn = erlang:now(),
-	    case gen_server:call(ClientPid, {receive_msg, CreatedOn, From, Msg}, infinity) of
-		ok ->
-		    {ok, msg_sent};
-		_ ->{error, "Unable to send message!"}
+	    case gen_server:call(ClientPid, {receive_msg, erlang:now(), From, Msg}, infinity) of
+		ok -> {ok, msg_sent};
+		_ -> {error, "Unable to send message!"}
 	    end
     end.
 %%====================================================================
@@ -241,7 +239,7 @@ handle_info(_Info, State) ->
 terminate(Reason, State) ->
     GroupsList = gb_trees:values(State#client.groups),
     gen_server:call({global, chatterl_serv}, {disconnect,State#client.name,GroupsList}, infinity),
-    io:format("~p is disconnecting...~p", [State#client.name,Reason]),
+    io:format("~p is disconnecting...~p~n", [State#client.name,Reason]),
     ok.
 %%--------------------------------------------------------------------
 %% @doc
