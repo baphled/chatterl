@@ -65,7 +65,7 @@ connect(User) ->
 %% @end
 %%--------------------------------------------------------------------
 disconnect(User) ->
-    gen_server:call({global, ?MODULE}, {disconnect,User}, infinity).
+    gen_server:call({global, ?MODULE}, {disconnect,User,[]}, infinity).
 
 %%--------------------------------------------------------------------
 %% @doc

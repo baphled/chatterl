@@ -108,7 +108,7 @@ handle_call({drop, User}, _From, State) ->
     {Reply, NewTree} =
 	case gb_trees:is_defined(User, State#group.users) of
 	    true ->
-		io:format("~p disconnected from ~p~n", [User,State#group.name]),
+		io:format("~p disconnected group:~p~n", [User,State#group.name]),
 		{{ok, dropped},
 		 gb_trees:delete(User, State#group.users)};
 	    false ->
@@ -181,10 +181,3 @@ code_change(_OldVsn, State, _Extra) ->
 %%--------------------------------------------------------------------
 %%% Internal functions
 %%--------------------------------------------------------------------
-%% @private
-get_user_pids([UserInfo|UsersList],GroupName) ->
-    {_User,{UserPid,_PidRef}} = UserInfo,
-    gen_server:call(UserPid, {drop_group, GroupName}, infinity),
-    get_user_pids(UsersList,GroupName);
-get_user_pids([],GroupName) ->
-   {ok,GroupName}.
