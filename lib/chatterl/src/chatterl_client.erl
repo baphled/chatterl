@@ -23,24 +23,44 @@
 %% API
 %%====================================================================
 %%--------------------------------------------------------------------
-%% Function: start_link() -> {ok,Pid} | ignore | {error,Error}
+%% Function: start(User) -> {ok,Pid} | ignore | {error,Error}
 %% Description: Starts the server
 %%--------------------------------------------------------------------
 start(User) ->
     gen_server:start_link({local, ?MODULE}, ?MODULE, [User], []).
 
+%%--------------------------------------------------------------------
+%% Function: stop() -> stopped
+%% Description: Stops the server
+%%--------------------------------------------------------------------
 stop() ->
     gen_server:call(?MODULE, stop, infinity).
 
+%%--------------------------------------------------------------------
+%% Function: name() -> {name,Name} | {error,Error}
+%% Description: Gets the clients name
+%%--------------------------------------------------------------------
 name() ->
     gen_server:call(chatterl_client, client_name, infinity).
 
+%%--------------------------------------------------------------------
+%% Function: connected_to() -> [Groups] | []
+%% Description: Retrieves a list of groups the client is connected to
+%%--------------------------------------------------------------------
 connected_to() ->
     gen_server:call(chatterl_client, groups, infinity).
 
+%%--------------------------------------------------------------------
+%% Function: list_groups() -> [Groups] | []
+%% Description: Retrieves a list of avaliable groups
+%%--------------------------------------------------------------------
 list_groups() ->
     gen_server:call({global, chatterl_serv}, list_groups, infinity).
 
+%%--------------------------------------------------------------------
+%% Function: join(Group) -> {ok,Msg} | {error,Error}
+%% Description: Allows a client to join a group
+%%--------------------------------------------------------------------
 join(Group) ->
     case gen_server:call({global, chatterl_serv}, {get_group, Group}, infinity) of
 	{error, Error} ->
@@ -61,6 +81,10 @@ join(Group) ->
 	    {error, "Group doesn't exist"}
     end.
 
+%%--------------------------------------------------------------------
+%% Function: drop(Group) -> {ok,Msg} | {error,Error}
+%% Description: Allows the uesr to drop their selves from a group
+%%--------------------------------------------------------------------
 drop(Group) ->
     case gen_server:call({global, chatterl_serv}, {get_group, Group}, infinity) of
 	{GroupName, GroupPid} ->
@@ -79,6 +103,10 @@ drop(Group) ->
 	    {error, "Group doesn't exist"}
     end.
 
+%%--------------------------------------------------------------------
+%% Function: send_msg(Group,Msg) -> {ok,msg_sent} | {error,Error}
+%% Description: Sends a message to a group
+%%--------------------------------------------------------------------
 send_msg(Group,Msg) ->
     case gen_server:call({global, chatterl_serv}, {get_group, Group}, infinity) of
 	false ->
@@ -93,6 +121,10 @@ send_msg(Group,Msg) ->
 	    end
     end.
 
+%%--------------------------------------------------------------------
+%% Function: private_msg(User,Msg) -> {ok,Pid} | ignore | {error,Error}
+%% Description: Sends a private message to a connected client.
+%%--------------------------------------------------------------------
 private_msg(User,Msg) ->
     case gen_server:call({global, chatterl_serv}, {user_lookup, User}, infinity) of
 	{error, Error} -> {error, Error};
@@ -130,7 +162,7 @@ init([User]) ->
     end.
 
 %%--------------------------------------------------------------------
-%% Function: %% handle_call(Request, From, State) -> {reply, Reply, State} |
+%% Function: handle_call(Request, From, State) -> {reply, Reply, State} |
 %%                                      {reply, Reply, State, Timeout} |
 %%                                      {noreply, State} |
 %%                                      {noreply, State, Timeout} |
