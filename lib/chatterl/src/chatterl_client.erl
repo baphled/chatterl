@@ -18,7 +18,7 @@
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
 	 terminate/2, code_change/3]).
 
--record(user, {name, ip, groups}).
+-record(client, {name, ip, groups}).
 
 %%====================================================================
 %% API
@@ -27,11 +27,11 @@
 %% @doc
 %% Starts the server
 %%
-%% @spec start(User) -> {ok,Pid} | ignore | {error,Error} 
+%% @spec start(Client) -> {ok,Pid} | ignore | {error,Error} 
 %% @end
 %%--------------------------------------------------------------------
-start(User) ->
-    gen_server:start_link({local, ?MODULE}, ?MODULE, [User], []).
+start(Client) ->
+    gen_server:start_link({local, ?MODULE}, ?MODULE, [Client], []).
 
 %%--------------------------------------------------------------------
 %% @doc
@@ -127,7 +127,7 @@ drop(Group) ->
 
 %%--------------------------------------------------------------------
 %% @doc
-%% Sends a message to a group
+%% Sends a message to a specific group
 %%
 %% @spec send_msg(Group,Msg) -> {ok,msg_sent} | {error,Error}
 %% @end
@@ -137,10 +137,10 @@ send_msg(Group,Msg) ->
 	false ->
 	    {error, "Unable to send message"};
 	{GroupName, GroupPid} ->
-	    {name,User} = gen_server:call(chatterl_client, client_name, infinity),
-	    case gen_server:call(GroupPid, {send_msg, User, Msg}, infinity) of
+	    {name,Client} = gen_server:call(chatterl_client, client_name, infinity),
+	    case gen_server:call(GroupPid, {send_msg, Client, Msg}, infinity) of
 		{ok, msg_sent} ->
-		    io:format("Sent message to ~p~n",[GroupName]);
+		    io:format("Sent message to: ~p~n",[GroupName]);
 		{error, Error} ->
 		    {error, Error}
 	    end
@@ -150,16 +150,16 @@ send_msg(Group,Msg) ->
 %% @doc
 %% Sends a private message to a connected client.
 %%
-%% @spec private_msg(User,Msg) -> {ok,Pid} | ignore | {error,Error}
+%% @spec private_msg(Client,Msg) -> {ok,Pid} | ignore | {error,Error}
 %% @end
 %%--------------------------------------------------------------------
-private_msg(User,Msg) ->
-    case gen_server:call({global, chatterl_serv}, {user_lookup, User}, infinity) of
+private_msg(Client,Msg) ->
+    case gen_server:call({global, chatterl_serv}, {client_lookup, Client}, infinity) of
 	{error, Error} -> {error, Error};
-	{ok, _UserName, UserPid} ->
-	    {name,From} = gen_server:call(UserPid, client_name, infinity),
+	{ok, _ClientName, ClientPid} ->
+	    {name,From} = gen_server:call(ClientPid, client_name, infinity),
 	    CreatedOn = erlang:now(),
-	    case gen_server:call(UserPid, {receive_msg, CreatedOn, From, Msg}, infinity) of
+	    case gen_server:call(ClientPid, {receive_msg, CreatedOn, From, Msg}, infinity) of
 		ok ->
 		    {ok, msg_sent};
 		_ ->{error, "Unable to send message!"}
@@ -180,16 +180,16 @@ private_msg(User,Msg) ->
 %%                         {stop, Reason}
 %% @end
 %%--------------------------------------------------------------------
-init([User]) ->
+init([Client]) ->
     process_flag(trap_exit, true),
-    case gen_server:call({global, chatterl_serv}, {connect, User}, infinity) of
+    case gen_server:call({global, chatterl_serv}, {connect, Client}, infinity) of
 	{error, Error} ->
 	    io:format("~p~n", [Error]),
 	    {stop, Error};
 	{ok, Message} ->
-	    io:format("~p is ~p.~n", [User, Message]),
-	    {ok, #user{
-	       name = User,
+	    io:format("~p is ~p.~n", [Client, Message]),
+	    {ok, #client{
+	       name = Client,
 	      groups = gb_trees:empty()}}
     end.
 
@@ -208,19 +208,19 @@ init([User]) ->
 handle_call(stop, _From, State) ->
     {stop, normal, stopped, State};
 handle_call(client_name, _From, State) ->
-    Reply = {name, State#user.name},
+    Reply = {name, State#client.name},
     {reply, Reply, State};
 handle_call(groups, _From, State) ->
-    Reply = gb_trees:values(State#user.groups),
+    Reply = gb_trees:values(State#client.groups),
     {reply, Reply, State};
 handle_call({add_group, Group, Pid}, _From, State) ->
-    NewTree = gb_trees:insert(Group, {Group, Pid}, State#user.groups),
-    {reply, {ok, "Joined group"}, State#user{groups = NewTree}};
+    NewTree = gb_trees:insert(Group, {Group, Pid}, State#client.groups),
+    {reply, {ok, "Joined group"}, State#client{groups = NewTree}};
 handle_call({drop_group, Group}, _From, State) ->
-    NewTree = gb_trees:delete(Group, State#user.groups),
-    {reply, ok, State#user{groups = NewTree}};
-handle_call({receive_msg, _CreatedOn, User, Msg}, _From, State) ->
-    io:format("Received msg from ~p: ~p~n", [User,Msg]),
+    NewTree = gb_trees:delete(Group, State#client.groups),
+    {reply, ok, State#client{groups = NewTree}};
+handle_call({receive_msg, _CreatedOn, Client, Msg}, _From, State) ->
+    io:format("Received msg from ~p: ~p~n", [Client,Msg]),
     {reply, ok, State}.
     
 
@@ -250,15 +250,15 @@ handle_info(_Info, State) ->
 
 %%--------------------------------------------------------------------
 %% @doc
-%% Disconnects the user from the client.
+%% Disconnects the client from the client.
 %%
 %% @spec terminate(Reason, State) -> void()
 %% @end
 %%--------------------------------------------------------------------
 terminate(Reason, State) ->
-    GroupsList = gb_trees:values(State#user.groups),
-    gen_server:call({global, chatterl_serv}, {disconnect,State#user.name,GroupsList}, infinity),
-    io:format("~p is disconnecting...~p", [State#user.name,Reason]),
+    GroupsList = gb_trees:values(State#client.groups),
+    gen_server:call({global, chatterl_serv}, {disconnect,State#client.name,GroupsList}, infinity),
+    io:format("~p is disconnecting...~p", [State#client.name,Reason]),
     ok.
 %%--------------------------------------------------------------------
 %% @doc
