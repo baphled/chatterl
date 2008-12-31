@@ -1,9 +1,9 @@
 %%%-------------------------------------------------------------------
-%%% File    : chatterl_serv.erl
-%%% Author  : Yomi Akindayini <yomi@boodah.net>
-%%% Description : Chatterl server, used to manage users.
-%%%
-%%% Created : 13 Dec 2008 by Yomi Akindayini <yomi@boodah.net>
+%%% @author Yomi Colledge <yomi@boodah.net>
+%%% @doc
+%%% Handles the groups and client processes
+%%% @end
+%%% @copyright 2008 by Yomi Colledge <yomi@boodah.net>
 %%%-------------------------------------------------------------------
 -module(chatterl_serv).
 -behaviour(gen_server).
@@ -25,23 +25,56 @@
 %% API
 %%====================================================================
 %%--------------------------------------------------------------------
-%% Function: start() -> {ok,Pid} | ignore | {error,Error}
-%% Description: Starts the server
+%% @doc
+%% Starts the server
+%%
+%% @spec start() -> {ok,Pid} | ignore | {error,Error} 
+%% @end
 %%--------------------------------------------------------------------
 start() ->
     io:format("Starting chatterl server...~n"),
     gen_server:start_link({global, ?SERVER}, ?MODULE, [], []).
 
+%%--------------------------------------------------------------------
+%% @doc
+%% Stops the server
+%%
+%% @spec stop() -> stopped
+%% @end
+%%--------------------------------------------------------------------
 stop() ->
     io:format("Stopping chatterl...~n"),
     gen_server:call({global, ?MODULE}, stop, infinity).
 
+%%--------------------------------------------------------------------
+%% @doc
+%% Connects client to server, this must be done before a user can interact
+%% with chatterl.
+%%
+%% @spec connect(User) -> {ok,"connected"} | {error,Error} 
+%% @end
+%%--------------------------------------------------------------------
 connect(User) ->
     gen_server:call({global, ?MODULE}, {connect,User}, infinity).
 
+%%--------------------------------------------------------------------
+%% @doc
+%% Disconnect a client from the server, doing so will automatically disconnect
+%% the client from the groups, they are logged into.
+%%
+%% @spec disconnect(User) -> {ok,"user dropped"} | {error,Error} 
+%% @end
+%%--------------------------------------------------------------------
 disconnect(User) ->
     gen_server:call({global, ?MODULE}, {disconnect,User}, infinity).
 
+%%--------------------------------------------------------------------
+%% @doc
+%% Retrieves a group processes description
+%%
+%% @spec group_description(Group) -> {description,Description} | {error,Error} 
+%% @end
+%%--------------------------------------------------------------------
 group_description(Group) ->
     case gen_server:call({global, ?MODULE}, {get_group, Group}, infinity) of
 	{Name, GroupPid} -> 
@@ -52,6 +85,13 @@ group_description(Group) ->
 	_ -> {error, "Can not find group."}
     end.
 
+%%--------------------------------------------------------------------
+%% @doc
+%% Create a new group
+%%
+%% @spec create(Group,Description) -> {ok,Group} | {error,Error} 
+%% @end
+%%--------------------------------------------------------------------
 create(Group, Description) ->
     case gen_server:call({global, ?MODULE}, {create, Group, Description}, infinity) of
 	{ok, Group} ->
@@ -60,9 +100,11 @@ create(Group, Description) ->
 		    {error, Error};
 		{ok,GroupPid} -> 
 		    gen_server:call({global, ?MODULE}, {add_pid, Group,GroupPid}, infinity),
-		    link(GroupPid)
+		    link(GroupPid),
+		    {ok, GroupPid}
 	    end;
-	_ -> io:format("Unable create group: ~p~n", [Group])
+	_ -> io:format("Unable create group: ~p~n", [Group]),
+	     {error, "Unable to create group"}
     end.
 
 drop(Group) ->
