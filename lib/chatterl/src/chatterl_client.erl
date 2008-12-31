@@ -11,8 +11,8 @@
 -behaviour(gen_server).
 
 %% API
--export([start/1,stop/0,join/1,drop/1,name/0,connected_to/0,list_groups/0]).
--export([private_msg/2,send_msg/2]).
+-export([start/1,stop/0,join/1,drop/1,connected_to/0,list_groups/0]).
+-export([name/0,private_msg/2,send_msg/2]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -25,7 +25,7 @@
 %%====================================================================
 %%--------------------------------------------------------------------
 %% @doc
-%% Starts the server
+%% Starts the client
 %%
 %% @spec start(Client) -> {ok,Pid} | ignore | {error,Error} 
 %% @end
@@ -35,7 +35,7 @@ start(Client) ->
 
 %%--------------------------------------------------------------------
 %% @doc
-%% Stops the server
+%% Stops the client
 %%
 %% @spec stop() -> stopped
 %% @end
@@ -273,3 +273,26 @@ code_change(_OldVsn, State, _Extra) ->
 %%--------------------------------------------------------------------
 %%% Internal functions
 %%--------------------------------------------------------------------
+set_client_to_group(Action,GroupName,GroupPid) ->
+    Response =
+	case Action of
+	    join ->
+		{join,add_group};
+	    drop ->
+		{drop,drop_group};
+	    _ -> {error, {"Illegal action",Action}}
+	end,
+    group_connection(Response,{GroupName,GroupPid}).
+
+group_connection({GroupCall,ClientCall},{GroupName,GroupPid}) ->
+    case gen_server:call(chatterl_client, client_name, infinity) of
+	{name, Name} -> 
+	    case gen_server:call(GroupPid, {GroupCall, Name}, infinity) of
+		{ok, Msg} ->
+		    gen_server:call(chatterl_client, {ClientCall, GroupName, GroupPid}, infinity),
+		    {ok, Msg};
+		_ -> {error, "Unable to connect!"}
+	    end;
+	_ -> 
+	    {error, "Unable to connect"}
+    end.
