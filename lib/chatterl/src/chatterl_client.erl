@@ -256,9 +256,8 @@ handle_info(_Info, State) ->
 %% @end
 %%--------------------------------------------------------------------
 terminate(Reason, State) ->
-    %GroupsList = gb_trees:to_list(State#user.groups),
-    %lists:foreach(fun chatterl_client:drop/1, GroupsList),
-    gen_server:call({global, chatterl_serv}, {disconnect,State#user.name}, infinity),
+    GroupsList = gb_trees:values(State#user.groups),
+    gen_server:call({global, chatterl_serv}, {disconnect,State#user.name,GroupsList}, infinity),
     io:format("~p is disconnecting...~p", [State#user.name,Reason]),
     ok.
 %%--------------------------------------------------------------------

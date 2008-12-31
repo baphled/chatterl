@@ -242,14 +242,27 @@ handle_call({connect,User}, From, State) ->
 handle_call({disconnect, User}, _From, State) ->
      NewTree =  case gb_trees:is_defined(User, State#chatterl.users) of
         true -> 
-			io:format("~p disconnect~n", [User]),
-		       Result = {ok, "User dropped"},
-		       gb_trees:delete(User, State#chatterl.users);
+			io:format("~p disconnecting...~n", [User]),
+			Result = {ok, "User dropped"},
+			gb_trees:delete(User, State#chatterl.users);
         false -> 
-		       Result = {error, "Unable to drop group."},
-		       State#chatterl.users
+			Result = {error, "Unable to drop group."},
+			State#chatterl.users
     end,
     {reply, Result, State#chatterl{ users = NewTree }};
+handle_call({disconnect, User, Groups}, _From, State) ->
+    {Reply,NewTree} =
+	case gb_trees:is_defined(User, State#chatterl.users) of
+	    true ->
+		lists:foreach(fun(Group) ->
+				      {_Name,Pid} = Group,
+				      gen_server:call(Pid, {drop, User}, infinity) end, Groups),
+		io:format("~p disconnecting...~n", [User]),
+		{{ok, "User dropped"}, gb_trees:delete(User, State#chatterl.users)};
+	    false -> 
+		{{error, "Unable to drop group."},State#chatterl.users}
+	end,
+    {reply, Reply, State#chatterl{ users = NewTree }};
 handle_call({create, Group, _Description}, _From, State) ->
     case gb_trees:is_defined(Group, State#chatterl.groups) of
         true ->
