@@ -48,10 +48,9 @@ stop() ->
 
 %%--------------------------------------------------------------------
 %% @doc
-%% Connects client to server, this must be done before a user can interact
-%% with chatterl.
+%% Connects client to server, must be done before a user can interact with chatterl.
 %%
-%% @spec connect(User) -> {ok,"connected"} | {error,Error} 
+%% @spec connect(User) -> {ok,Message} | {error,Error}
 %% @end
 %%--------------------------------------------------------------------
 connect(User) ->
@@ -62,7 +61,7 @@ connect(User) ->
 %% Disconnect a client from the server, doing so will automatically disconnect
 %% the client from the groups, they are logged into.
 %%
-%% @spec disconnect(User) -> {ok,"user dropped"} | {error,Error} 
+%% @spec disconnect(User) -> {ok,Message} | {error,Error} 
 %% @end
 %%--------------------------------------------------------------------
 disconnect(User) ->
@@ -87,7 +86,7 @@ group_description(Group) ->
 
 %%--------------------------------------------------------------------
 %% @doc
-%% Create a new group
+%% Create a new chatterl group
 %%
 %% @spec create(Group,Description) -> {ok,Group} | {error,Error} 
 %% @end
@@ -107,6 +106,14 @@ create(Group, Description) ->
 	     {error, "Unable to create group"}
     end.
 
+%%--------------------------------------------------------------------
+%% @doc
+%% Drop a chatterl group from the server, this will send a message to
+%% all users and the group to terminate related processes.
+%%
+%% @spec drop(Group) -> {ok,Message} | {error,Error} 
+%% @end
+%%--------------------------------------------------------------------
 drop(Group) ->
     case group_exists(Group) of
 	     true -> 
@@ -114,41 +121,81 @@ drop(Group) ->
 		     {Group,Pid} ->
 			 gen_server:call(Pid, stop),
 			 gen_server:call({global, ?MODULE}, {remove_pid, Group}, infinity),
-			 unlink(Pid);
+			 unlink(Pid),
+			 {ok, "Group Dropped"};
 		     {error, Error} ->
 			 {error, Error}
 		 end;
 	     false -> {error, "Group not valid"}
     end.
-	    
+
+%%--------------------------------------------------------------------
+%% @doc
+%% Determines whether a user exists on the server.
+%%
+%% @spec user_exists(User) -> bool
+%% @end
+%%--------------------------------------------------------------------
 user_exists(User) ->
      gen_server:call({global, ?MODULE}, {user_exists, User}, infinity).
 
+%%--------------------------------------------------------------------
+%% @doc
+%% Determines whether a group exists on chatterl.
+%%
+%% @spec group_exists(Group) -> bool
+%% @end
+%%--------------------------------------------------------------------
 group_exists(Group) ->
     gen_server:call({global, ?MODULE}, {group_exists, Group}, infinity).
 
-%% View the users connected to the server
+
+%%--------------------------------------------------------------------
+%% @doc
+%% Lists all the users connected to chatterl
+%%
+%% @spec list_users() -> [Users] | [] 
+%% @end
+%%--------------------------------------------------------------------
 list_users() ->
     gen_server:call({global, ?MODULE}, list_users, infinity).
 
+%%--------------------------------------------------------------------
+%% @doc
+%% Lists all the users connected to a specific chatterl group
+%%
+%% @spec list_users(Group) -> [Users] | [] 
+%% @end
+%%--------------------------------------------------------------------
 list_users(Group) ->
     case group_exists(Group) of
 	true -> gen_server:call({global, Group}, list_users, infinity);
 	false -> {error, "Group doesn't exist!"}
     end.
 
+%%--------------------------------------------------------------------
+%% @doc
+%% List all the groups on chatterl.
+%%
+%% @spec list_groups() -> [Groups] | [] 
+%% @end
+%%--------------------------------------------------------------------
 list_groups() ->
     gen_server:call({global, ?MODULE}, list_groups, infinity).
 %%====================================================================
 %% gen_server callbacks
 %%====================================================================
 
+
 %%--------------------------------------------------------------------
-%% Function: init(Args) -> {ok, State} |
+%% @doc
+%% Initiates the server
+%%
+%% @spec init(Args) -> {ok, State} |
 %%                         {ok, State, Timeout} |
 %%                         ignore               |
 %%                         {stop, Reason}
-%% Description: Initiates the server
+%% @end 
 %%--------------------------------------------------------------------
 init([]) ->
     process_flag(trap_exit, true),
@@ -159,13 +206,16 @@ init([]) ->
        }}.
 
 %%--------------------------------------------------------------------
-%% Function: %% handle_call(Request, From, State) -> {reply, Reply, State} |
+%% @doc
+%% Handling call messages
+%%
+%% @spec handle_call(Request, From, State) -> {reply, Reply, State} |
 %%                                      {reply, Reply, State, Timeout} |
 %%                                      {noreply, State} |
 %%                                      {noreply, State, Timeout} |
 %%                                      {stop, Reason, Reply, State} |
 %%                                      {stop, Reason, State}
-%% Description: Handling call messages
+%% @end
 %%--------------------------------------------------------------------
 handle_call(list_groups, _Client, State) ->
     Reply =  gb_trees:values(State#chatterl.groups),
@@ -256,38 +306,48 @@ handle_call({group_exists,Group}, _From, State) ->
 handle_call({join, Group, User}, _From, State) ->
     Reply = chatterl_serv:join(Group,User),
     {reply, Reply, State}.
+
 %%--------------------------------------------------------------------
-%% Function: handle_cast(Msg, State) -> {noreply, State} |
+%% @doc
+%% Handling cast message
+%%
+%% @spec handle_cast(Msg, State) -> {noreply, State} |
 %%                                      {noreply, State, Timeout} |
 %%                                      {stop, Reason, State}
-%% Description: Handling cast messages
+%% @end
 %%--------------------------------------------------------------------
 handle_cast(_Msg, State) ->
     {noreply, State}.
 
 %%--------------------------------------------------------------------
-%% Function: handle_info(Info, State) -> {noreply, State} |
+%% @doc
+%% Handling all non call/cast messages
+%%
+%% @spec handle_info(Info, State) -> {noreply, State} |
 %%                                       {noreply, State, Timeout} |
 %%                                       {stop, Reason, State}
-%% Description: Handling all non call/cast messages
+%% @end
 %%--------------------------------------------------------------------
 handle_info(_Info, State) ->
     {noreply, State}.
 
 %%--------------------------------------------------------------------
-%% Function: terminate(Reason, State) -> void()
-%% Description: This function is called by a gen_server when it is about to
-%% terminate. It should be the opposite of Module:init/1 and do any necessary
-%% cleaning up. When it returns, the gen_server terminates with Reason.
-%% The return value is ignored.
+%% @doc
+%% Terminates chatterl_serv
+%%
+%% @spec terminate(Reason, State) -> void()
+%% @end
 %%--------------------------------------------------------------------
 terminate(_Reason, _State) ->
     %% Here we need to loop through each of our processes send a stop message
     ok.
 
 %%--------------------------------------------------------------------
-%% Func: code_change(OldVsn, State, Extra) -> {ok, NewState}
-%% Description: Convert process state when code is changed
+%% @doc
+%% Convert process state when code is changed
+%%
+%% @spec code_change(OldVsn, State, Extra) -> {ok, NewState}
+%% @end
 %%--------------------------------------------------------------------
 code_change(_OldVsn, State, _Extra) ->
     {ok, State}.
