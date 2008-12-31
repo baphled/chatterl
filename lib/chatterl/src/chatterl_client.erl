@@ -256,31 +256,46 @@ code_change(_OldVsn, State, _Extra) ->
 %%--------------------------------------------------------------------
 %%% Internal functions
 %%--------------------------------------------------------------------
+%%--------------------------------------------------------------------
+%% @private
+%% @doc
+%% Determines the action that needs to be taken out on a group
+%%
+%% @spec send_msg(Group,Msg) -> {ok,Message} | {error,Error}
+%% @end
+%%--------------------------------------------------------------------
 set_client_to_group(Action,Group) ->
-    Response =
-	case Action of
-	    join ->
-		{join,add_group};
-	    drop ->
-		{drop,drop_group};
-	    _ -> {error, {"Illegal action",Action}}
-	end,
-    group_connection(Response,Group).
-
-group_connection({GroupCall,ClientCall},Group) ->
     case gen_server:call({global, chatterl_serv}, {get_group, Group}, infinity) of
 	{GroupName, GroupPid} ->
-	    case gen_server:call(chatterl_client, client_name, infinity) of
-		{name, Name} -> 
-		    case gen_server:call(GroupPid, {GroupCall, Name}, infinity) of
-			{ok, Msg} ->
-			    gen_server:call(chatterl_client, {ClientCall, GroupName, GroupPid}, infinity),
-			    {ok, Msg};
-			_ -> {error, "Unable to connect!"}
-		    end;
-		_ -> 
-		    {error, "Unable to connect"}
-	    end;
+	    Response =
+		case Action of
+		    join ->
+			{{join,GroupName,GroupPid},add_group};
+		    drop ->
+			{{drop,Group},drop_group};
+		    _ -> {error, {"Illegal action",Action}}
+		end,
+	    group_connection(Response,GroupPid);
 	false ->
-	    {error, "Group doesn't exist"}
+	    {error, "Group doesn't exist!"}
+    end.
+%%--------------------------------------------------------------------
+%% @private
+%% @doc
+%% Sets up the connection between the client and the group
+%%
+%% @spec send_msg(Group,Msg) -> {ok,msg_sent} | {error,Error}
+%% @end
+%%--------------------------------------------------------------------
+group_connection({GroupCall,ClientCall},GroupPid) ->
+    case gen_server:call(chatterl_client, client_name, infinity) of
+	{name, Name} -> 
+	    case gen_server:call(GroupPid, {GroupCall, Name}, infinity) of
+		{ok, Msg} ->
+		    gen_server:call(chatterl_client, ClientCall, infinity),
+		    {ok, Msg};
+		_ -> {error, "Unable to connect!"}
+	    end;
+	_ -> 
+	    {error, "Unknown error!"}
     end.
