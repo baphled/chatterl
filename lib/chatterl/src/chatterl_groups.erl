@@ -24,7 +24,7 @@
 %%====================================================================
 %%--------------------------------------------------------------------
 %% @doc
-%% Starts the group process.
+%% Starts the group process, passing the group name and description.
 %%
 %% @spec start(Name,Description) -> {ok,Pid} | ignore | {error,Error} 
 %% @end
