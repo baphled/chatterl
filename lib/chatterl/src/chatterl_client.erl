@@ -81,7 +81,7 @@ list_groups() ->
 %% @end
 %%--------------------------------------------------------------------
 join(Group) ->
-    set_client_to_group(join,Group).
+    determine_group_action(join,Group).
 
 %%--------------------------------------------------------------------
 %% @doc
@@ -91,7 +91,7 @@ join(Group) ->
 %% @end
 %%--------------------------------------------------------------------
 drop(Group) ->
-    set_client_to_group(join,Group).
+    determine_group_action(join,Group).
 
 %%--------------------------------------------------------------------
 %% @doc
@@ -247,7 +247,7 @@ code_change(_OldVsn, State, _Extra) ->
 %% @spec send_msg(Group,Msg) -> {ok,Message} | {error,Error}
 %% @end
 %%--------------------------------------------------------------------
-set_client_to_group(Action,Group) ->
+determine_group_action(Action,Group) ->
     case gen_server:call({global, chatterl_serv}, {get_group, Group}, infinity) of
   {GroupName, GroupPid} ->
    {GroupCall,ClientCall} =
@@ -258,7 +258,7 @@ set_client_to_group(Action,Group) ->
       {drop,{drop_group,GroupName}};
      _ -> {error, {"Illegal action",Action}}
     end,
-   group_connection(GroupCall,ClientCall,GroupPid);
+   group_action(GroupCall,ClientCall,GroupPid);
   false ->
    {error, "Group doesn't exist!"}
     end.
@@ -270,7 +270,7 @@ set_client_to_group(Action,Group) ->
 %% @spec send_msg(Group,Msg) -> {ok,msg_sent} | {error,Error}
 %% @end
 %%--------------------------------------------------------------------
-group_connection(GroupCall,ClientCall,GroupPid) ->
+group_action(GroupCall,ClientCall,GroupPid) ->
     case gen_server:call(chatterl_client, client_name, infinity) of
   {name, Client} ->
    case gen_server:call(GroupPid, {GroupCall, Client}, infinity) of
