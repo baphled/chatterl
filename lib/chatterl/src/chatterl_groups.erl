@@ -119,8 +119,8 @@ handle_call({send_msg,User,Message},_From,State) ->
 	case gb_trees:is_defined(Message, State#group.messages) of
 	    false ->
 		io:format("~p: ~p~n", [User,Message]),
+		CreatedOn = erlang:now(),
 		{{ok, msg_sent},
-		 CreatedOn = erlang:now(),
 		gb_trees:insert(Message, {User,CreatedOn,Message}, State#group.messages)};
 	    true ->
 		{{error, already_sent}, State}
