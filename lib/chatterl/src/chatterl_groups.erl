@@ -184,6 +184,17 @@ code_change(_OldVsn, State, _Extra) ->
 %%--------------------------------------------------------------------
 %%% Internal functions
 %%--------------------------------------------------------------------
+%%--------------------------------------------------------------------
+%% @private
+%% @doc
+%% Determines the kind of action that needs to be taken out and calls
+%% send_msg_to_users.
+%%
+%% @spec determine_user_action(GroupName,{Action,PayLoad},UsersList) ->
+%%                                                       {error,Error}
+%%                                                       | void()
+%% @end
+%%--------------------------------------------------------------------
 determine_user_action(GroupName,{Action,PayLoad},UsersList) ->
     case Action of
 	drop_group ->
@@ -200,6 +211,16 @@ determine_user_action(GroupName,{Action,PayLoad},UsersList) ->
 	_ -> {error, "Illegal action!"}
     end.
 
+%%--------------------------------------------------------------------
+%% @private
+%% @doc
+%% Sends processs messages to all connected clients
+%%
+%% @spec send_msg_to_users(PayLoad,UsersList,GroupMsg) ->
+%%                                                       {error,Error}
+%%                                                       | void()
+%% @end
+%%--------------------------------------------------------------------
 send_msg_to_users(PayLoad,UsersList,GroupMsg) ->
     lists:foreach(
 	      fun(User) ->
@@ -215,40 +236,4 @@ send_msg_to_users(PayLoad,UsersList,GroupMsg) ->
 		      end
 	      end,
       UsersList).
-%%--------------------------------------------------------------------
-%% @private
-%% @doc
-%% Sends all the clients connected to the group a drop_group message.
-%%
-%% @spec send_users_drop_msg(GroupName,UsersList -> void()
-%% @end
-%%--------------------------------------------------------------------
-send_users_drop_msg(GroupName,UsersList) ->
-    lists:foreach(
-	      fun(User) ->
-		      {Client,_PidInfo} = User,
-		      case gen_server:call({global, chatterl_serv},
-					   {user_lookup, Client}, infinity) of
-			  {error, Error} ->
-			      io:format("Error: ~p~n",[Error]);
-			  {ok, ClientName, ClientPid} ->
-			      io:format("Send disconnects message to ~p~n",
-					[ClientName]),
-			      gen_server:call(ClientPid,{drop_group,GroupName})
-		      end
-	      end,
-      UsersList).
 
-send_users_group_msg({Sender,CreatedOn,Msg},UsersList) ->
-    lists:foreach(
-	      fun(User) ->
-		      {Recipient,_PidInfo} = User,
-		      case gen_server:call({global, chatterl_serv},
-					   {user_lookup, Recipient}, infinity) of
-			  {error, Error} ->
-			      io:format("Error: ~p~n",[Error]);
-			  {ok, _Client, ClientPid} ->
-			      gen_server:call(ClientPid,{receive_msg, CreatedOn, Sender, Msg},infinity)
-		      end
-	      end,
-      UsersList).
