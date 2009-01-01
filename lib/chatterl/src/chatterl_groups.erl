@@ -119,7 +119,7 @@ handle_call({send_msg,User,Message},_From,State) ->
 	    false ->
 		CreatedOn = erlang:now(),
 		io:format("~p: ~p~n", [User,Message]),
-		determine_user_action(State#group.name,{recieve_msg,{CreatedOn,User,Message}},
+		determine_user_action(State#group.name,{receive_msg,{CreatedOn,User,Message}},
 				      gb_trees:values(State#group.users)),
 		{{ok, msg_sent},
 		 gb_trees:insert(Message, {User,CreatedOn,Message}, State#group.messages)};
@@ -191,7 +191,7 @@ determine_user_action(GroupName,{Action,PayLoad},UsersList) ->
 	receive_msg ->
 	    case PayLoad of
 		{CreatedOn,Sender,Msg} ->
-		    send_msg_to_users({recieve_msg, CreatedOn,Sender,Msg},UsersList);
+		    send_msg_to_users({receive_msg, CreatedOn,Sender,Msg},UsersList);
 		_ ->
 		    {error, "Illegal payload format"}
 	    end;
