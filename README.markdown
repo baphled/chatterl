@@ -1,4 +1,4 @@
-<h2>Erlang based chat system</h2>
+<h1>Erlang based chat system</h1>
 
 This system is OTP based and uses sinan (erlware) to compile it's sources, see faxien (http://www.erlware.com) for more details.
 
@@ -33,39 +33,40 @@ Chat modules handler(banning, censorship, chatbots).
 <pre><code>sinan build</code></pre>
 within the root directory of the source file, this will create the _build directory to which the binary files can be located.</p>
 
-<h2>Starting the server</h2>
+<h2>Useage</h2>
+<b>Starting the server</b>
 <pre><code>application:start(chatterl).</code></pre>
 will initialise the server allowing you to create groups associated to it. Groups can be created accross the node as long as the node can communicate with the server (must use the same cookie value if on different boxes).
 
-<h2>Starting a group</h2>
+<b>Starting a group</b>
 Groups can be initialised by calling the command:
 <pre><code>chatterl_serv:create("room","description").</code></pre>
 which will create a group process which users can connect to.
 
-<h2>Connection to chatterl</h2>
+<b>Connection to chatterl</b>
 Node users must follow the basic OTP configurations (same cookie, valid DNS name, etc). Creating a connection to the server is done by using the following command.
 <pre><code>chatter_client:start(UserName).</code></pre>
 This will initialise a user and connect them to chatterl_serv (this must be done before users can connect to a group or communicate with chatterl users).
 
-<h2>Disconnecting from chatterl</h2>
+<b>Disconnecting from chatterl</b>
 Chatterl clients can simply disconnect from chatterl by issuing the following command:
 <pre><code>chatterl_client:stop().</code></pre>
 This will disconnect the user from all the groups they are currently connected to aswell as the actual chatterl server.
 
-<h2>Joining a group</h2>
+<b>Joining a group</b>
 This can be done by using the following command:
 <pre><code>chatterl_client:join(GroupName).</code></pre>
 If the group exists the user is able to join the group and send message to the room.
 
-<h2>Dropping from a group</h2>
+<b>Dropping from a group</b>
 This is as simple as connection, simply supply the following command:
 <pre><code>chatterl_client:drop(GroupName).</code></pre>
 This will send a message to the group, which will handle the termination.
 
-<h2>Sending group message</h2>
+<b>Sending group message</b>
 <pre><code>chatterl_client:send_msg(GroupName,Message).</code></pre>
 GroupName being the name of the group the client is connected to & Message being the message that you want to send to the receiving client.
 
-<h2>Sending a private message</h2>
+<b>Sending a private message</b>
 This allows a chatterl client to send a private message to another client, by executing the following:
 <pre><code>chatterl_client:private_msg(RecipientName,Message).</code></pre>
