@@ -41,10 +41,6 @@ start(Name,Description) ->
 %% @end
 %%--------------------------------------------------------------------
 stop() ->
-    Group = gen_server:call({global,?MODULE},name,infinity),
-    Users = gen_server:call({global,?MODULE},list_users,infinity),
-    lists:foreach(fun() ->
-			  gen_server:call({global,chatterl_client},{drop_group,Group},infinity) end, Users),
     gen_server:call({global,?MODULE},stop,infinity).
 %%====================================================================
 %% gen_server callbacks
@@ -84,6 +80,7 @@ init([Name,Description]) ->
 %% @end
 %%--------------------------------------------------------------------
 handle_call(stop, _From, State) ->
+    io:format("Processing shutting down ~p~n", [State#group.name]),
     {stop, normal, stopped, State};
 handle_call(name, _From, State) ->
     Result = State#group.name,
@@ -161,15 +158,18 @@ handle_info(_Info, State) ->
 %% @end
 %%--------------------------------------------------------------------
 terminate(_Reason, State) ->
-    io:format("Processing shutting down ~p~n", [State#group.name]),
     case gb_trees:is_empty(State#group.users) of
 	false ->
 	    UsersList = gb_trees:values(State#group.users),
-	    io:format("Send disconnects messages to ~p~n", [UsersList]);
+	    
+	    lists:foreach(fun(User) ->
+				  {Client,{_ClientPid,_RefPid}} = User,
+				  io:format("Send disconnects messages to ~p~n", [Client]),
+				  gen_server:call(Client,{drop_group,State#group.name}) end,
+			  UsersList);
 	true ->
 	    io:format("No users to inform of shutdown~n")
     end,
-    gen_server:call({global, chatterl_serv}, {remove_pid, State#group.name}, infinity),
     io:format("Shutdown ~p~n",[State#group.name]),
     {shutdown, State#group.name}.
 
