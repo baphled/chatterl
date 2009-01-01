@@ -346,10 +346,12 @@ handle_info(_Info, State) ->
 %% @spec terminate(Reason, State) -> void()
 %% @end
 %%--------------------------------------------------------------------
-terminate(_Reason, _State) ->
+terminate(normal, _State) ->
     %% Here we need to loop through each of our processes send a stop message
+    %% First well drop all groups, then we'll drop users.
+    ok;
+terminate(_Reason,_State) ->
     ok.
-
 %%--------------------------------------------------------------------
 %% @doc
 %% Convert process state when code is changed
