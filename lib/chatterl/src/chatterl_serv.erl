@@ -19,6 +19,8 @@
 	 terminate/2, code_change/3]).
 
 -define(SERVER, ?MODULE).
+-define(APP, "Chatterl").
+
 -include("chatterl.hrl").
 
 %%====================================================================
@@ -32,7 +34,7 @@
 %% @end
 %%--------------------------------------------------------------------
 start() ->
-    io:format("Starting chatterl server...~n"),
+    io:format("Starting ~p...~n",[?APP]),
     gen_server:start_link({global, ?SERVER}, ?MODULE, [], []).
 
 %%--------------------------------------------------------------------
@@ -43,7 +45,7 @@ start() ->
 %% @end
 %%--------------------------------------------------------------------
 stop() ->
-    io:format("Stopping chatterl...~n"),
+    io:format("Stopping ~p...~n",[?APP]),
     gen_server:call({global, ?MODULE}, stop, infinity).
 
 %%--------------------------------------------------------------------
@@ -164,8 +166,6 @@ list_groups() ->
 %%====================================================================
 %% gen_server callbacks
 %%====================================================================
-
-
 %%--------------------------------------------------------------------
 %% @doc
 %% Initiates the server
@@ -178,7 +178,7 @@ list_groups() ->
 %%--------------------------------------------------------------------
 init([]) ->
     process_flag(trap_exit, true),
-    io:format("Initialising Chatterl Serv~n"),
+    io:format("Initialising ~p...~n",[?APP]),
     {ok, #chatterl{
        groups = gb_trees:empty(),
        users = gb_trees:empty()
@@ -186,7 +186,7 @@ init([]) ->
 
 %%--------------------------------------------------------------------
 %% @doc
-%% Handling call messages
+%% Handling the call messages the chat server.
 %%
 %% @spec handle_call(Request, From, State) -> {reply, Reply, State} |
 %%                                      {reply, Reply, State, Timeout} |
