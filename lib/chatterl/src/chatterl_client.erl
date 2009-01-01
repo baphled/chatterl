@@ -276,7 +276,7 @@ group_action(GroupCall,ClientCall,GroupPid) ->
 	    case gen_server:call(GroupPid, {GroupCall, Client}, infinity) of
 		{ok, _Msg} ->
 		    gen_server:call(chatterl_client, ClientCall, infinity),
-		    {ok, msg_sent};
+		    {ok, joined_group};
 		_ -> {error, "Unable to connect!"}
 	    end;
 	_ ->
