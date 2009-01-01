@@ -161,7 +161,7 @@ init([Client]) ->
 
 %%--------------------------------------------------------------------
 %% @doc
-%% Handling call messages
+%% Handles the clients call messages
 %%
 %% @spec handle_call(Request, From, State) -> {reply, Reply, State} |
 %%                                      {reply, Reply, State, Timeout} |
@@ -267,7 +267,7 @@ determine_group_action(Action,Group) ->
 %% @doc
 %% Sets up the connection between the client and the group
 %%
-%% @spec group_action(GroupCall,ClientCall,GroupPid) -> {ok,msg_sent} | {error,Error}
+%% @spec group_action(GroupCall,ClientCall,GroupPid) -> {ok,joined_group} | {error,Error}
 %% @end
 %%--------------------------------------------------------------------
 group_action(GroupCall,ClientCall,GroupPid) ->
