@@ -66,6 +66,6 @@ Sending group message.
 <code>chatterl_client:send_msg(GroupName,Message).</code>
 GroupName being the name of the group the client is connected to & Message being the message that you want to send to the receiving client.
 
-vSending a private message.
+Sending a private message.
 This allows a chatterl client to send a private message to another client, by executing the following:
 <code>chatterl_client:private_msg(RecipientName,Message).</code>
