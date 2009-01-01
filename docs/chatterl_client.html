@@ -1,0 +1,159 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<title>Module chatterl_client</title>
+<link rel="stylesheet" type="text/css" href="stylesheet.css" title="EDoc">
+</head>
+<body bgcolor="white">
+<div class="navbar"><a name="#navbar_top"></a><table width="100%" border="0" cellspacing="0" cellpadding="2" summary="navigation bar"><tr><td><a href="overview-summary.html" target="overviewFrame">Overview</a></td><td><a href="http://www.erlang.org/"><img src="erlang.png" align="right" border="0" alt="erlang logo"></a></td></tr></table></div>
+<hr>
+
+<h1>Module chatterl_client</h1>
+<ul class="index"><li><a href="#description">Description</a></li><li><a href="#index">Function Index</a></li><li><a href="#functions">Function Details</a></li></ul>
+   Basic client for chat system, used to interact with chatterl_serv
+   and chatterl_groups.
+<p>Copyright © 2008 by Yomi Colledge &lt;yomi@boodah.net&gt;
+  -------------------------------------------------------------------</p>
+
+<p><b>Behaviours:</b> <a href="gen_server.html"><tt>gen_server</tt></a>.</p>
+<p><b>Authors:</b> Yomi Colledge (<a href="mailto:yomi@boodah.net"><tt>yomi@boodah.net</tt></a>).</p>
+
+<h2><a name="description">Description</a></h2>
+   Basic client for chat system, used to interact with chatterl_serv
+   and chatterl_groups
+<h2><a name="index">Function Index</a></h2>
+<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#code_change-3">code_change/3</a></td><td>
+  Convert process state when code is changed.</td></tr>
+<tr><td valign="top"><a href="#connected_to-0">connected_to/0</a></td><td>
+  Retrieves a list of groups the client is connected to.</td></tr>
+<tr><td valign="top"><a href="#drop-1">drop/1</a></td><td>
+  Allows the uesr to drop their selves from a group.</td></tr>
+<tr><td valign="top"><a href="#handle_call-3">handle_call/3</a></td><td>
+  Handles the clients call messages.</td></tr>
+<tr><td valign="top"><a href="#handle_cast-2">handle_cast/2</a></td><td>
+  Handling cast messages.</td></tr>
+<tr><td valign="top"><a href="#handle_info-2">handle_info/2</a></td><td>
+  Handling all non call/cast messages.</td></tr>
+<tr><td valign="top"><a href="#join-1">join/1</a></td><td>
+  Allows a client to join a group.</td></tr>
+<tr><td valign="top"><a href="#list_groups-0">list_groups/0</a></td><td>
+  Retrieves a list of avaliable groups.</td></tr>
+<tr><td valign="top"><a href="#name-0">name/0</a></td><td>
+  Gets the clients name.</td></tr>
+<tr><td valign="top"><a href="#private_msg-2">private_msg/2</a></td><td>
+  Sends a private message to a connected client.</td></tr>
+<tr><td valign="top"><a href="#send_msg-2">send_msg/2</a></td><td>
+  Sends a message to a specific group.</td></tr>
+<tr><td valign="top"><a href="#start-1">start/1</a></td><td>
+  Starts the client.</td></tr>
+<tr><td valign="top"><a href="#stop-0">stop/0</a></td><td>
+  Stops the client.</td></tr>
+<tr><td valign="top"><a href="#terminate-2">terminate/2</a></td><td>
+  Disconnects the client from the client.</td></tr>
+</table>
+
+<h2><a name="functions">Function Details</a></h2>
+
+<h3 class="function"><a name="code_change-3">code_change/3</a></h3>
+<div class="spec">
+<p><tt>code_change(OldVsn, State, Extra) -&gt; {ok, NewState}</tt></p>
+</div><p>
+  Convert process state when code is changed
+ </p>
+
+<h3 class="function"><a name="connected_to-0">connected_to/0</a></h3>
+<div class="spec">
+<p><tt>connected_to() -&gt; [Groups] | []</tt></p>
+</div><p>
+  Retrieves a list of groups the client is connected to
+ </p>
+
+<h3 class="function"><a name="drop-1">drop/1</a></h3>
+<div class="spec">
+<p><tt>drop(Group) -&gt; {ok, Msg} | {error, Error}</tt></p>
+</div><p>
+  Allows the uesr to drop their selves from a group
+ </p>
+
+<h3 class="function"><a name="handle_call-3">handle_call/3</a></h3>
+<div class="spec">
+<p><tt>handle_call(X1::Request, From, State) -&gt; {reply, Reply, State} | {reply, Reply, State, Timeout} | {noreply, State} | {noreply, State, Timeout} | {stop, Reason, Reply, State} | {stop, Reason, State}</tt></p>
+</div><p>
+  Handles the clients call messages
+ </p>
+
+<h3 class="function"><a name="handle_cast-2">handle_cast/2</a></h3>
+<div class="spec">
+<p><tt>handle_cast(Msg, State) -&gt; {noreply, State} | {noreply, State, Timeout} | {stop, Reason, State}</tt></p>
+</div><p>
+  Handling cast messages
+ </p>
+
+<h3 class="function"><a name="handle_info-2">handle_info/2</a></h3>
+<div class="spec">
+<p><tt>handle_info(Info, State) -&gt; {noreply, State} | {noreply, State, Timeout} | {stop, Reason, State}</tt></p>
+</div><p>
+  Handling all non call/cast messages
+ </p>
+
+<h3 class="function"><a name="join-1">join/1</a></h3>
+<div class="spec">
+<p><tt>join(Group) -&gt; {ok, Msg} | {error, Error}</tt></p>
+</div><p>
+  Allows a client to join a group
+ </p>
+
+<h3 class="function"><a name="list_groups-0">list_groups/0</a></h3>
+<div class="spec">
+<p><tt>list_groups() -&gt; [Groups] | []</tt></p>
+</div><p>
+  Retrieves a list of avaliable groups
+ </p>
+
+<h3 class="function"><a name="name-0">name/0</a></h3>
+<div class="spec">
+<p><tt>name() -&gt; {name, Name} | {error, Error}</tt></p>
+</div><p>
+  Gets the clients name
+ </p>
+
+<h3 class="function"><a name="private_msg-2">private_msg/2</a></h3>
+<div class="spec">
+<p><tt>private_msg(Client, Msg) -&gt; {ok, Pid} | ignore | {error, Error}</tt></p>
+</div><p>
+  Sends a private message to a connected client.
+ </p>
+
+<h3 class="function"><a name="send_msg-2">send_msg/2</a></h3>
+<div class="spec">
+<p><tt>send_msg(Group, Msg) -&gt; {ok, msg_sent} | {error, Error}</tt></p>
+</div><p>
+  Sends a message to a specific group
+ </p>
+
+<h3 class="function"><a name="start-1">start/1</a></h3>
+<div class="spec">
+<p><tt>start(Client) -&gt; {ok, Pid} | ignore | {error, Error}</tt></p>
+</div><p>
+  Starts the client
+ </p>
+
+<h3 class="function"><a name="stop-0">stop/0</a></h3>
+<div class="spec">
+<p><tt>stop() -&gt; stopped</tt></p>
+</div><p>
+  Stops the client
+ </p>
+
+<h3 class="function"><a name="terminate-2">terminate/2</a></h3>
+<div class="spec">
+<p><tt>terminate(Reason, State) -&gt; <a href="#type-void">void()</a></tt></p>
+</div><p>
+  Disconnects the client from the client.
+ </p>
+<hr>
+
+<div class="navbar"><a name="#navbar_bottom"></a><table width="100%" border="0" cellspacing="0" cellpadding="2" summary="navigation bar"><tr><td><a href="overview-summary.html" target="overviewFrame">Overview</a></td><td><a href="http://www.erlang.org/"><img src="erlang.png" align="right" border="0" alt="erlang logo"></a></td></tr></table></div>
+<p><i>Generated by EDoc, Jan 1 2009, 01:55:12.</i></p>
+</body>
+</html>

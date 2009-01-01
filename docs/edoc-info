@@ -1,0 +1,4 @@
+{application,chatterl}.
+{packages,[]}.
+{modules,[chatterl_app,chatterl_client,chatterl_groups,
+          chatterl_serv,chatterl_sup,chatterl_web]}.
