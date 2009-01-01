@@ -269,7 +269,7 @@ clean_user_list(CleanList,[User|Users]) ->
     CleanedList = [Value|CleanList],
     clean_user_list(CleanedList,Users);
 clean_user_list(CleanList,[]) ->
-    {ok,CleanList}.
+    CleanList.
 %%--------------------------------------------------------------------
 %% @private
 %% @doc
