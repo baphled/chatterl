@@ -120,7 +120,8 @@ handle_call({send_msg,User,Message},_From,State) ->
 	    false ->
 		io:format("~p: ~p~n", [User,Message]),
 		{{ok, msg_sent},
-		gb_trees:insert(Message, {User,erlang:now(),Message}, State#group.messages)};
+		 CreatedOn = erlang:now(),
+		gb_trees:insert(Message, {User,CreatedOn,Message}, State#group.messages)};
 	    true ->
 		{{error, already_sent}, State}
 	end,
