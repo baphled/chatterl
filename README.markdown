@@ -38,15 +38,15 @@ within the root directory of the source file, this will create the _build direct
 <pre><code>application:start(chatterl).</code></pre>
 will initialise the server allowing you to create groups associated to it. Groups can be created accross the node as long as the node can communicate with the server (must use the same cookie value if on different boxes).
 
-<b>Starting a group</b>
+<p><b>Starting a group</b>
 Groups can be initialised by calling the command:
 <pre><code>chatterl_serv:create("room","description").</code></pre>
-which will create a group process which users can connect to.
+which will create a group process which users can connect to.</p>
 
 <b>Connection to chatterl</b>
 Node users must follow the basic OTP configurations (same cookie, valid DNS name, etc). Creating a connection to the server is done by using the following command.
 <pre><code>chatter_client:start(UserName).</code></pre>
-This will initialise a user and connect them to chatterl_serv (this must be done before users can connect to a group or communicate with chatterl users).
+This will initialise a user and connect them to chatterl_serv (must be done before users can connect to a group or communicate with chatterl users).
 
 <b>Disconnecting from chatterl</b>
 Chatterl clients can simply disconnect from chatterl by issuing the following command:
