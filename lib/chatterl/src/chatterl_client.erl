@@ -195,6 +195,7 @@ handle_call(groups, _From, State) ->
     Reply = gb_trees:values(State#client.groups),
     {reply, Reply, State};
 handle_call({add_group, Group, Pid}, _From, State) ->
+    io:format("Joining group: ~p~n",[Group]),
     NewTree = gb_trees:insert(Group, {Group, Pid}, State#client.groups),
     {reply, {ok, "Joined group"}, State#client{groups = NewTree}};
 handle_call({drop_group, Group}, _From, State) ->
