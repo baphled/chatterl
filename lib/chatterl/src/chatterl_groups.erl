@@ -161,8 +161,6 @@ handle_info(_Info, State) ->
 terminate(_Reason, State) ->
     case gb_trees:is_empty(State#group.users) of
 	false ->
-	    UsersList = gb_trees:values(State#group.users),
-	    
 	    lists:foreach(
 	      fun(User) ->
 		      {Client,_PidInfo} = User,
@@ -174,7 +172,7 @@ terminate(_Reason, State) ->
 			      gen_server:call(ClientPid,{drop_group,State#group.name})
 		      end
 	      end,
-	      UsersList);
+	      gb_trees:values(State#group.users));
 	true ->
 	    io:format("No users to inform of shutdown~n")
     end,
