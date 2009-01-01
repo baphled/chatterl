@@ -161,12 +161,11 @@ handle_info(_Info, State) ->
 terminate(Reason, State) ->
     case gb_trees:is_empty(State#group.users) of
 	false ->
-	    UsersList = gb_trees:values(State#group.users),
-	    send_users_drop_msg(State#group.name,UsersList);
+	    send_users_drop_msg(State#group.name,gb_trees:values(State#group.users));
 	true ->
 	    io:format("No users to inform of shutdown~n")
     end,
-    io:format("Shutdown ~p:~n Reason:~p~n",[State#group.name,Reason]),
+    io:format("Shutdown ~p:~nReason:~p~n",[State#group.name,Reason]),
     {shutdown, State#group.name}.
 
 %%--------------------------------------------------------------------
