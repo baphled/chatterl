@@ -244,13 +244,14 @@ handle_call({disconnect, User, Groups}, _From, State) ->
 	end,
     {reply, Reply, State#chatterl{ users = NewTree }};
 handle_call({create, Group, _Description}, _From, State) ->
-    case gb_trees:is_defined(Group, State#chatterl.groups) of
-        true ->
-	    Result = {error, "Group already created"};
-	false -> 
-	    Result = {ok, Group}
-    end,
-    {reply, Result, State};
+    Reply =
+	case gb_trees:is_defined(Group, State#chatterl.groups) of
+	    true ->
+		{error, "Group already created"};
+	    false -> 
+		{ok, Group}
+	end,
+    {reply, Reply, State};
 handle_call({add_pid, Group, GroupPid}, _From, State) ->
     {Reply,NewTree} = 
 	case gb_trees:is_defined(Group, State#chatterl.groups) of
