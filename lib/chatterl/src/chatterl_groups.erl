@@ -117,13 +117,13 @@ handle_call({drop, User}, _From, State) ->
 		{{error, "Not connected"}, State}
 	end,
     {reply, Reply, State#group{users=NewTree}};
-handle_call({send_msg, User, Message}, _From, State) ->
+handle_call({send_msg,User,Message},_From,State) ->
     {Reply, NewTree} =
 	case gb_trees:is_defined(Message, State#group.messages) of
 	    false ->
-		io:format("~p: ~p~n", [User, Message]),
+		io:format("~p: ~p~n", [User,Message]),
 		{{ok, msg_sent},
-		gb_trees:insert(Message, {User, Message}, State#group.messages)};
+		gb_trees:insert(Message, {User,erlang:now(),Message}, State#group.messages)};
 	    true ->
 		{{error, already_sent}, State}
 	end,
