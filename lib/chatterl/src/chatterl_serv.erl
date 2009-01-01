@@ -164,12 +164,12 @@ list_users() ->
 %% @doc
 %% Lists all the users connected to a specific chatterl group
 %%
-%% @spec list_users(Group) -> [Users] | [] 
+%% @spec list_users(GroupName) -> [Users] | [] 
 %% @end
 %%--------------------------------------------------------------------
-list_users(Group) ->
-    case group_exists(Group) of
-	true -> gen_server:call({global, Group}, list_users, infinity);
+list_users(GroupName) ->
+    case group_exists(GroupName) of
+	true -> gen_server:call({global, GroupName}, list_users, infinity);
 	false -> {error, "Group doesn't exist!"}
     end.
 
