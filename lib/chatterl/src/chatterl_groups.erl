@@ -41,9 +41,11 @@ start(Name,Description) ->
 %% @end
 %%--------------------------------------------------------------------
 stop() ->
-    Group = gen_server:call({global, ?MODULE}, name, infinity),
-    gen_server:call({global, chatterl_client}, {drop_group, Group}, infinity),
-    gen_server:call({global, ?MODULE}, stop, infinity).
+    Group = gen_server:call({global,?MODULE},name,infinity),
+    Users = gen_server:call({global,?MODULE},list_users,infinity),
+    lists:foreach(fun(User) ->
+			  gen_server:call({global,chatterl_client},{drop_group,Group},infinity) end, Users),
+    gen_server:call({global,?MODULE},stop,infinity).
 %%====================================================================
 %% gen_server callbacks
 %%====================================================================
@@ -53,7 +55,7 @@ stop() ->
 %% @doc
 %% Initialises our group process.
 %%
-%% @spec init(Args) -> {ok, State} |
+%% @spec init(Name,Description) -> {ok, State} |
 %%                         {ok, State, Timeout} |
 %%                         ignore               |
 %%                         {stop, Reason}
@@ -92,7 +94,7 @@ handle_call(description, _From, State) ->
     Reply = {description, Result},
     {reply, Reply, State};
 handle_call(list_users, _From, State) ->
-    Reply = State#group.users,
+    Reply = gb_trees:values(State#group.users),
     {reply, Reply, State};
 handle_call({join, User}, From, State) ->
     {Reply, NewTree} =
@@ -152,9 +154,10 @@ handle_info(_Info, State) ->
 
 %%--------------------------------------------------------------------
 %% @doc
-%% Terminates the group process
+%% Terminates the group process, making sure that all the users aswell
+%% as the server know.
 %%
-%% @spec terminate(Reason, State) -> void()
+%% @spec terminate(Reason, State) -> {shutdown,GroupName}
 %% @end
 %%--------------------------------------------------------------------
 terminate(_Reason, State) ->
