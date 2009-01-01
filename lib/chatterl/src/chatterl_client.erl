@@ -198,8 +198,9 @@ handle_call({add_group, Group, Pid}, _From, State) ->
     NewTree = gb_trees:insert(Group, {Group, Pid}, State#client.groups),
     {reply, {ok, "Joined group"}, State#client{groups = NewTree}};
 handle_call({drop_group, Group}, _From, State) ->
+    io:format("Disconnecting from: ~p~n",[Group]),
     NewTree = gb_trees:delete(Group, State#client.groups),
-    {reply, ok, State#client{groups = NewTree}};
+    {reply, {ok,"Dropped from group"}, State#client{groups = NewTree}};
 handle_call({receive_msg, _CreatedOn, Client, Msg}, _From, State) ->
     io:format("Received msg from ~p: ~p~n", [Client,Msg]),
     {reply, ok, State}.
