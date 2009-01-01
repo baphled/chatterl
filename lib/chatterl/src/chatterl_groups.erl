@@ -158,25 +158,15 @@ handle_info(_Info, State) ->
 %% @spec terminate(Reason, State) -> {shutdown,GroupName}
 %% @end
 %%--------------------------------------------------------------------
-terminate(_Reason, State) ->
+terminate(Reason, State) ->
     case gb_trees:is_empty(State#group.users) of
 	false ->
-	    lists:foreach(
-	      fun(User) ->
-		      {Client,_PidInfo} = User,
-		      case gen_server:call({global, chatterl_serv}, {user_lookup, Client}, infinity) of
-			  {error, Error} ->
-			      io:format("Error: ~p~n",[Error]);
-			  {ok, ClientName, ClientPid} ->
-			      io:format("Send disconnects messages to ~p~n", [ClientName]),
-			      gen_server:call(ClientPid,{drop_group,State#group.name})
-		      end
-	      end,
-	      gb_trees:values(State#group.users));
+	    UsersList = gb_trees:values(State#group.users),
+	    send_users_drop_msg(State#group.name,UsersList);
 	true ->
 	    io:format("No users to inform of shutdown~n")
     end,
-    io:format("Shutdown ~p~n",[State#group.name]),
+    io:format("Shutdown ~p:~n Reason:~p~n",[State#group.name,Reason]),
     {shutdown, State#group.name}.
 
 %%--------------------------------------------------------------------
@@ -192,3 +182,16 @@ code_change(_OldVsn, State, _Extra) ->
 %%--------------------------------------------------------------------
 %%% Internal functions
 %%--------------------------------------------------------------------
+send_users_drop_msg(GroupName,UsersList) ->
+    lists:foreach(
+	      fun(User) ->
+		      {Client,_PidInfo} = User,
+		      case gen_server:call({global, chatterl_serv}, {user_lookup, Client}, infinity) of
+			  {error, Error} ->
+			      io:format("Error: ~p~n",[Error]);
+			  {ok, ClientName, ClientPid} ->
+			      io:format("Send disconnects messages to ~p~n", [ClientName]),
+			      gen_server:call(ClientPid,{drop_group,GroupName})
+		      end
+	      end,
+      UsersList).
