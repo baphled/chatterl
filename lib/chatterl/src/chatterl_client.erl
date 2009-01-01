@@ -254,18 +254,29 @@ code_change(_OldVsn, State, _Extra) ->
 %%--------------------------------------------------------------------
 %%% Internal functions
 %%--------------------------------------------------------------------
-clean_user_list(Results,[User|Users]) ->
-    {Name,{_Pid,_PidRef}} = User,
-    NewList = [Name|Results],
-    clean_user_list(NewList,Users);
-clean_user_list(Results,[]) ->
-    {ok,Results}.
+%%--------------------------------------------------------------------
+%% @private
+%% @doc
+%% Cleans list so that we only have the actual values.
+%% Used to remove our pid/pid reference from our results.
+%%
+%% @spec clean_user_list(CleanList,Users) -> {ok,Message}
+%%                                               | {error,Error}
+%% @end
+%%--------------------------------------------------------------------
+clean_user_list(CleanList,[User|Users]) ->
+    {Value,{_Pid,_PidRef}} = User,
+    CleanedList = [Value|CleanList],
+    clean_user_list(CleanedList,Users);
+clean_user_list(CleanList,[]) ->
+    {ok,CleanList}.
 %%--------------------------------------------------------------------
 %% @private
 %% @doc
 %% Determines the action that needs to be taken out on a group
 %%
-%% @spec determine_group_action(Action,Group) -> {ok,Message} | {error,Error}
+%% @spec determine_group_action(Action,Group) -> {ok,Message}
+%%                                               | {error,Error}
 %% @end
 %%--------------------------------------------------------------------
 determine_group_action(Action,Group) ->
