@@ -55,7 +55,7 @@ stop() ->
 %% @doc
 %% Initialises our group process.
 %%
-%% @spec init(Name,Description) -> {ok, State} |
+%% @spec init([Name,Description]) -> {ok, State} |
 %%                         {ok, State, Timeout} |
 %%                         ignore               |
 %%                         {stop, Reason}
