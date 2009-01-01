@@ -203,7 +203,6 @@ handle_call({drop_group, Group}, _From, State) ->
 handle_call({receive_msg, _CreatedOn, Client, Msg}, _From, State) ->
     io:format("Received msg from ~p: ~p~n", [Client,Msg]),
     {reply, ok, State}.
-    
 
 %%--------------------------------------------------------------------
 %% @doc
