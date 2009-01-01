@@ -191,7 +191,7 @@ list_groups() ->
 %% @doc
 %% Initiates the server
 %%
-%% @spec init(Args) -> {ok, State} |
+%% @spec init([]) -> {ok, State} |
 %%                         {ok, State, Timeout} |
 %%                         ignore               |
 %%                         {stop, Reason}
