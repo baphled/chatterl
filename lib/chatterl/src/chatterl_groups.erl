@@ -161,7 +161,8 @@ handle_info(_Info, State) ->
 terminate(Reason, State) ->
     case gb_trees:is_empty(State#group.users) of
 	false ->
-	    send_users_drop_msg(State#group.name,gb_trees:values(State#group.users));
+	    send_users_drop_msg(State#group.name,
+				gb_trees:values(State#group.users));
 	true ->
 	    io:format("No users to inform of shutdown~n")
     end,
@@ -193,11 +194,13 @@ send_users_drop_msg(GroupName,UsersList) ->
     lists:foreach(
 	      fun(User) ->
 		      {Client,_PidInfo} = User,
-		      case gen_server:call({global, chatterl_serv}, {user_lookup, Client}, infinity) of
+		      case gen_server:call({global, chatterl_serv},
+					   {user_lookup, Client}, infinity) of
 			  {error, Error} ->
 			      io:format("Error: ~p~n",[Error]);
 			  {ok, ClientName, ClientPid} ->
-			      io:format("Send disconnects message to ~p~n", [ClientName]),
+			      io:format("Send disconnects message to ~p~n",
+					[ClientName]),
 			      gen_server:call(ClientPid,{drop_group,GroupName})
 		      end
 	      end,
