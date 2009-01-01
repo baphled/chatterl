@@ -197,8 +197,7 @@ init([]) ->
 %% @end
 %%--------------------------------------------------------------------
 handle_call(list_groups, _Client, State) ->
-    Reply =  gb_trees:values(State#chatterl.groups),
-    {reply, Reply, State};
+    {reply, gb_trees:values(State#chatterl.groups), State};
 handle_call({get_group, Group}, _From, State) ->
     Reply = case gb_trees:lookup(Group, State#chatterl.groups) of
 		{value, Value} -> Value;
