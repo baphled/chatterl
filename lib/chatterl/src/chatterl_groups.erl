@@ -119,10 +119,10 @@ handle_call({send_msg,User,Message},_From,State) ->
 	    false ->
 		CreatedOn = erlang:now(),
 		io:format("~p: ~p~n", [User,Message]),
-		send_users_group_msg({User,CreatedOn,Message},
-				     gb_trees:values(State#group.users)),
+		determine_user_action(State#group.name,{recieve_msg,{CreatedOn,User,Message}},
+				      gb_trees:values(State#group.users)),
 		{{ok, msg_sent},
-		gb_trees:insert(Message, {User,CreatedOn,Message}, State#group.messages)};
+		 gb_trees:insert(Message, {User,CreatedOn,Message}, State#group.messages)};
 	    true ->
 		{{error, already_sent}, State}
 	end,
