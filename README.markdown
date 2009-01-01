@@ -29,9 +29,9 @@ Web interface/API.
 Chat modules handler(banning, censorship, chatbots).
 
 <b>Installation</b>
-To compile run:</br>
+<p>To compile run:</br>
 <pre><code>sinan build</code></pre></br>
-within the root directory of the source file, this will create the _build directory to which the binary files can be located.
+within the root directory of the source file, this will create the _build directory to which the binary files can be located.</p>
 
 <b>Starting the server</b>
 <pre><code>application:start(chatterl).</code></pre></br>
