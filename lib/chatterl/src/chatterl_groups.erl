@@ -197,7 +197,7 @@ send_users_drop_msg(GroupName,UsersList) ->
 			  {error, Error} ->
 			      io:format("Error: ~p~n",[Error]);
 			  {ok, ClientName, ClientPid} ->
-			      io:format("Send disconnects messages to ~p~n", [ClientName]),
+			      io:format("Send disconnects message to ~p~n", [ClientName]),
 			      gen_server:call(ClientPid,{drop_group,GroupName})
 		      end
 	      end,
