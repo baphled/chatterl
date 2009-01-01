@@ -43,7 +43,7 @@ start(Name,Description) ->
 stop() ->
     Group = gen_server:call({global,?MODULE},name,infinity),
     Users = gen_server:call({global,?MODULE},list_users,infinity),
-    lists:foreach(fun(User) ->
+    lists:foreach(fun() ->
 			  gen_server:call({global,chatterl_client},{drop_group,Group},infinity) end, Users),
     gen_server:call({global,?MODULE},stop,infinity).
 %%====================================================================
@@ -165,7 +165,7 @@ terminate(_Reason, State) ->
     case gb_trees:is_empty(State#group.users) of
 	false ->
 	    UsersList = gb_trees:values(State#group.users),
-	    io:format("Send disconnects messages to ~p~n", [UserList]);
+	    io:format("Send disconnects messages to ~p~n", [UsersList]);
 	true ->
 	    io:format("No users to inform of shutdown~n")
     end,
