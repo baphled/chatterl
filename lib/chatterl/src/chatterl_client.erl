@@ -11,7 +11,7 @@
 -behaviour(gen_server).
 
 %% API
--export([start/1,stop/0,join/1,drop/1,connected_to/0,list_groups/0]).
+-export([start/1,stop/0,join/1,drop/1,connected_to/0,list_users/1,list_groups/0]).
 -export([name/0,private_msg/2,send_msg/2]).
 
 %% gen_server callbacks
@@ -73,6 +73,21 @@ connected_to() ->
 list_groups() ->
     gen_server:call({global, chatterl_serv}, list_groups, infinity).
 
+%%--------------------------------------------------------------------
+%% @doc
+%% Retrieves a list of users connect to a groups
+%%
+%% @spec list_users(GroupName) -> [Users] | []
+%% @end
+%%--------------------------------------------------------------------
+list_users(GroupName) ->
+    case chatterl_serv:list_users(GroupName) of
+	{error, Error} ->
+	    {error, Error};
+	Users ->
+	    clean_user_list([],Users)
+    end.
+    
 %%--------------------------------------------------------------------
 %% @doc
 %% Allows a client to join a group
@@ -239,6 +254,12 @@ code_change(_OldVsn, State, _Extra) ->
 %%--------------------------------------------------------------------
 %%% Internal functions
 %%--------------------------------------------------------------------
+clean_user_list(Results,[User|Users]) ->
+    {Name,{_Pid,_PidRef}} = User,
+    NewList = [Name|Results],
+    clean_user_list(NewList,Users);
+clean_user_list(Results,[]) ->
+    {ok,Results}.
 %%--------------------------------------------------------------------
 %% @private
 %% @doc
