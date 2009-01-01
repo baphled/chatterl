@@ -119,6 +119,8 @@ handle_call({send_msg,User,Message},_From,State) ->
 	    false ->
 		CreatedOn = erlang:now(),
 		io:format("~p: ~p~n", [User,Message]),
+		send_users_group_msg({User,CreatedOn,Message},
+				     gb_trees:values(State#group.users)),
 		{{ok, msg_sent},
 		gb_trees:insert(Message, {User,CreatedOn,Message}, State#group.messages)};
 	    true ->
@@ -160,6 +162,7 @@ handle_info(_Info, State) ->
 terminate(Reason, State) ->
     case gb_trees:is_empty(State#group.users) of
 	false ->
+	    gen_server:call({global,chatterl_serv}, {remove_pid,State#group.name}),
 	    send_users_drop_msg(State#group.name,
 				gb_trees:values(State#group.users));
 	true ->
@@ -205,18 +208,16 @@ send_users_drop_msg(GroupName,UsersList) ->
 	      end,
       UsersList).
 
-send_users_msg({Client,CreatedOn,Msg},UsersList) ->
+send_users_group_msg({Sender,CreatedOn,Msg},UsersList) ->
     lists:foreach(
 	      fun(User) ->
-		      {Client,_PidInfo} = User,
+		      {Recipient,_PidInfo} = User,
 		      case gen_server:call({global, chatterl_serv},
-					   {user_lookup, Client}, infinity) of
+					   {user_lookup, Recipient}, infinity) of
 			  {error, Error} ->
 			      io:format("Error: ~p~n",[Error]);
-			  {ok, ClientName, ClientPid} ->
-			      io:format("Send disconnects message to ~p~n",
-					[ClientName]),
-			      gen_server:call(ClientPid,{receive_msg, CreatedOn, Client, Msg})
+			  {ok, _Client, ClientPid} ->
+			      gen_server:call(ClientPid,{receive_msg, CreatedOn, Sender, Msg},infinity)
 		      end
 	      end,
       UsersList).
