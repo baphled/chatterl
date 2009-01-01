@@ -187,18 +187,20 @@ code_change(_OldVsn, State, _Extra) ->
 determine_user_action(GroupName,{Action,PayLoad},UsersList) ->
     case Action of
 	drop_group ->
-	    send_msg_to_users({drop_group,GroupName},UsersList);
+	    GroupMsg = "Sending disconnect message to ~p~n",
+	    send_msg_to_users({drop_group,GroupName},UsersList,GroupMsg);
 	receive_msg ->
 	    case PayLoad of
-		{CreatedOn,Sender,Msg} ->
-		    send_msg_to_users({receive_msg, CreatedOn,Sender,Msg},UsersList);
+		{CreatedOn,Sender,Message} ->
+		    GroupMsg = "Sending to users ~p~n",
+		    send_msg_to_users({receive_msg, CreatedOn,Sender,Message},UsersList,GroupMsg);
 		_ ->
 		    {error, "Illegal payload format"}
 	    end;
 	_ -> {error, "Illegal action!"}
     end.
 
-send_msg_to_users(PayLoad,UsersList) ->
+send_msg_to_users(PayLoad,UsersList,GroupMsg) ->
     lists:foreach(
 	      fun(User) ->
 		      {Client,_PidInfo} = User,
@@ -207,7 +209,7 @@ send_msg_to_users(PayLoad,UsersList) ->
 			  {error, Error} ->
 			      io:format("Error: ~p~n",[Error]);
 			  {ok, ClientName, ClientPid} ->
-			      io:format("Send disconnects message to ~p~n",
+			      io:format(GroupMsg,
 					[ClientName]),
 			      gen_server:call(ClientPid,PayLoad)
 		      end
