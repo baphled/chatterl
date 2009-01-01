@@ -103,7 +103,7 @@ handle_call({join, User}, From, State) ->
 		io:format("~p joined ~p~n", [User,State#group.name]),
 		{{ok, "User added"}, gb_trees:insert(User, {User,From}, State#group.users)}
 	end,
-    {reply, Reply, State#group{ users=NewTree }};
+    {reply, Reply, State#group{users=NewTree}};
 handle_call({drop, User}, _From, State) ->
     {Reply, NewTree} =
 	case gb_trees:is_defined(User, State#group.users) of
@@ -158,14 +158,16 @@ handle_info(_Info, State) ->
 %% @end
 %%--------------------------------------------------------------------
 terminate(_Reason, State) ->
-    io:format("Shutting down ~p~n", [State#group.name]),
-%    case gb_trees:is_empty(State#group.users) of
-%	false ->
-%	    get_user_pids(gb_trees:values(State#group.users), State#group.name);
-%	true ->
-%	    io:format("No users to inform of shutdown~n")
-%    end,
+    io:format("Processing shutting down ~p~n", [State#group.name]),
+    case gb_trees:is_empty(State#group.users) of
+	false ->
+	    UsersList = gb_trees:values(State#group.users),
+	    io:format("Send disconnects messages to ~p~n", [UserList]);
+	true ->
+	    io:format("No users to inform of shutdown~n")
+    end,
     gen_server:call({global, chatterl_serv}, {remove_pid, State#group.name}, infinity),
+    io:format("Shutdown ~p~n",[State#group.name]),
     {shutdown, State#group.name}.
 
 %%--------------------------------------------------------------------
