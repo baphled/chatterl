@@ -137,7 +137,7 @@ send_msg(Group,Msg) ->
 %% @end
 %%--------------------------------------------------------------------
 private_msg(Client,Msg) ->
-    case gen_server:call({global, chatterl_serv}, {client_lookup, Client}, infinity) of
+    case gen_server:call({global, chatterl_serv}, {user_lookup, Client}, infinity) of
 	{error, Error} -> {error, Error};
 	{ok, _ClientName, ClientPid} ->
 	    {name,From} = gen_server:call(ClientPid, client_name, infinity),
