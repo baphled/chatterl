@@ -28,7 +28,7 @@ Chat bots (AIML).
 Web interface/API.
 Chat modules handler(banning, censorship, chatbots).
 
-<b>Installation</b>
+v<b>Installation</b>
 To compile run:
 <code>sinan build</code>
 within the root directory of the source file, this will create the _build directory to which the binary files can be located.
