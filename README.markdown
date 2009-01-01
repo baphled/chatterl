@@ -6,12 +6,12 @@ This system is OTP based and uses sinan (erlware) to compile it's sources, see f
 A multi-process chat system, allowing for a single user to connect to multiple groups and send message to other
 clients, with the ability to interface with clients over varying mediums.
 
-<b>Mission Statement</h2>
+<h2>Mission Statement</h2>
 A chat system that can be housed over a number of nodes and track clients over varying devices, at the time of the writing the system works over multiple nodes and is able to do the basics (connect to a group, send message). 
 
 The main focus of this project is to create a chat system that is highly reliable as well as scaleable. Other developers will be able to create add-on modules that are able to interact with chatterl and further enhance the functionality of chatterl and the chatterl clients experience.
 
-<b>Features</h2>
+<h2>Features</h2>
 Client login/logout to chatterl.
 View chatterl groups.
 View chatterl users.
