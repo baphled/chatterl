@@ -184,6 +184,35 @@ code_change(_OldVsn, State, _Extra) ->
 %%--------------------------------------------------------------------
 %%% Internal functions
 %%--------------------------------------------------------------------
+determine_user_action(GroupName,{Action,PayLoad},UsersList) ->
+    case Action of
+	drop_group ->
+	    send_msg_to_users({drop_group,GroupName},UsersList);
+	receive_msg ->
+	    case PayLoad of
+		{CreatedOn,Sender,Msg} ->
+		    send_msg_to_users({recieve_msg, CreatedOn,Sender,Msg},UsersList);
+		_ ->
+		    {error, "Illegal payload format"}
+	    end;
+	_ -> {error, "Illegal action!"}
+    end.
+
+send_msg_to_users(PayLoad,UsersList) ->
+    lists:foreach(
+	      fun(User) ->
+		      {Client,_PidInfo} = User,
+		      case gen_server:call({global, chatterl_serv},
+					   {user_lookup, Client}, infinity) of
+			  {error, Error} ->
+			      io:format("Error: ~p~n",[Error]);
+			  {ok, ClientName, ClientPid} ->
+			      io:format("Send disconnects message to ~p~n",
+					[ClientName]),
+			      gen_server:call(ClientPid,PayLoad)
+		      end
+	      end,
+      UsersList).
 %%--------------------------------------------------------------------
 %% @private
 %% @doc
