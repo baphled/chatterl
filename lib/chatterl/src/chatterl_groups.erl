@@ -152,8 +152,8 @@ handle_info(_Info, State) ->
 
 %%--------------------------------------------------------------------
 %% @doc
-%% Terminates the group process, making sure that all the users aswell
-%% as the server know.
+%% Terminates the group process, making sure that all the users
+%% connected to the group as the server know of the termination.
 %%
 %% @spec terminate(Reason, State) -> {shutdown,GroupName}
 %% @end
