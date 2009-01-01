@@ -264,34 +264,34 @@ handle_call({add_pid, Group, GroupPid}, _From, State) ->
 	end,
     {reply, Reply, State#chatterl{ groups = NewTree }};
 handle_call({remove_pid, Group}, _From, State) ->
-    {Reply, NewTree} = case gb_trees:is_defined(Group, State#chatterl.groups) of
-	true ->
-			{gb_trees:lookup(Group, State#chatterl.groups),
-			gb_trees:delete(Group, State#chatterl.groups)};
-        false ->
-			{{error, {"can not find",Group}},
-			State#chatterl.groups}
-    end,
+    {Reply, NewTree} =
+	case gb_trees:is_defined(Group, State#chatterl.groups) of
+	    true ->
+		{gb_trees:lookup(Group, State#chatterl.groups),
+		 gb_trees:delete(Group, State#chatterl.groups)};
+	    false ->
+		{{error, {"can not find",Group}},
+		 State#chatterl.groups}
+	end,
     {reply, Reply, State#chatterl{ groups = NewTree }};
 handle_call({user_lookup, User}, _From, State) ->
-    Reply = case gb_trees:is_defined(User, State#chatterl.users) of
-		 true ->
-		     case gb_trees:lookup(User, State#chatterl.users) of
-			 {value, {UserName, {UserPid, _UserPidRef}}} ->
-			     {ok,UserName,UserPid};
-			 _ ->
-			     {error, "Unable to lookup user"}
-		     end;
-		 false ->
-		     {error, "Cannot find user!"}
-	     end,
+    Reply =
+	case gb_trees:is_defined(User, State#chatterl.users) of
+	    true ->
+		case gb_trees:lookup(User, State#chatterl.users) of
+		    {value, {UserName, {UserPid, _UserPidRef}}} ->
+			{ok,UserName,UserPid};
+		    _ ->
+			{error, "Unable to lookup user"}
+		end;
+	    false ->
+		{error, "Cannot find user!"}
+	end,
     {reply, Reply, State};
 handle_call({user_exists, User}, _From, State) ->
-    Reply = gb_trees:is_defined(User, State#chatterl.users),
-    {reply, Reply, State};
+    {reply, gb_trees:is_defined(User, State#chatterl.users), State};
 handle_call({group_exists,Group}, _From, State) ->
-    Reply = gb_trees:is_defined(Group, State#chatterl.groups),
-    {reply, Reply, State};
+    {reply, gb_trees:is_defined(Group, State#chatterl.groups), State};
 handle_call({join, Group, User}, _From, State) ->
     Reply = chatterl_serv:join(Group,User),
     {reply, Reply, State}.
