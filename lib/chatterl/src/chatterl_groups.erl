@@ -182,6 +182,14 @@ code_change(_OldVsn, State, _Extra) ->
 %%--------------------------------------------------------------------
 %%% Internal functions
 %%--------------------------------------------------------------------
+%%--------------------------------------------------------------------
+%% @private
+%% @doc
+%% Sends all the clients connected to the group a drop_group message.
+%%
+%% @spec send_users_drop_msg(GroupName,UsersList -> void()
+%% @end
+%%--------------------------------------------------------------------
 send_users_drop_msg(GroupName,UsersList) ->
     lists:foreach(
 	      fun(User) ->
