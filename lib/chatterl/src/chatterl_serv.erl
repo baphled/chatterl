@@ -268,6 +268,7 @@ handle_call({remove_pid, Group}, _From, State) ->
     {Reply, NewTree} =
 	case gb_trees:is_defined(Group, State#chatterl.groups) of
 	    true ->
+		io:format("Dropping group: ~p~n",[Group]),
 		{gb_trees:lookup(Group, State#chatterl.groups),
 		 gb_trees:delete(Group, State#chatterl.groups)};
 	    false ->
