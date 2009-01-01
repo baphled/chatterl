@@ -1,4 +1,4 @@
-<b>Erlang based chat system</b>
+<h2>Erlang based chat system</h2>
 
 This system is OTP based and uses sinan (erlware) to compile it's sources, see faxien (http://www.erlware.com) for more details.
 
@@ -29,43 +29,43 @@ Web interface/API.
 Chat modules handler(banning, censorship, chatbots).
 
 <b>Installation</b>
-To compile run:
-<pre><code>sinan build</code></pre>
+To compile run:</br>
+<pre><code>sinan build</code></pre></br>
 within the root directory of the source file, this will create the _build directory to which the binary files can be located.
 
 <b>Starting the server</b>
-<pre><code>application:start(chatterl).</code></pre>
+<pre><code>application:start(chatterl).</code></pre></br>
 will initialise the server allowing you to create groups associated to it. Groups can be created accross the node as long as the node can communicate with the server (must use the same cookie value if on different boxes).
 
 <b>Starting a group</b>
-Groups can be initialised by calling the command:
-<pre><code>chatterl_serv:create("room","description").</code></pre>
+Groups can be initialised by calling the command:</br>
+<pre><code>chatterl_serv:create("room","description").</code></pre></br>
 which will create a group process which users can connect to.
 
 <b>Connection to chatterl</b>
 Node users must follow the basic OTP configurations (same cookie, valid DNS name, etc). Creating a connection to the server is done by using the following command.
-<pre><code>chatter_client:start(UserName).</code></pre>
+<pre><code>chatter_client:start(UserName).</code></pre></br>
 This will initialise a user and connect them to chatterl_serv (this must be done before users can connect to a group or communicate with chatterl users).
 
 <b>Disconnecting from chatterl</b>
-Chatterl clients can simply disconnect from chatterl by issuing the following command:
-<pre><code>chatterl_client:stop().</code></pre>
+Chatterl clients can simply disconnect from chatterl by issuing the following command:</br>
+<pre><code>chatterl_client:stop().</code></pre></br>
 This will disconnect the user from all the groups they are currently connected to aswell as the actual chatterl server.
 
 <b>Joining a group</b>
-This can be done by using the following command:
+This can be done by using the following command:</br>
 <pre><code>chatterl_client:join(GroupName).</code></pre>
 If the group exists the user is able to join the group and send message to the room.
 
 <b>Dropping from a group</b>
-This is as simple as connection, simply supply the following command:
-<pre><code>chatterl_client:drop(GroupName).</code></pre>
+This is as simple as connection, simply supply the following command:</br>
+<pre><code>chatterl_client:drop(GroupName).</code></pre></br>
 This will send a message to the group, which will handle the termination.
 
 <b>Sending group message</b>
-<pre><code>chatterl_client:send_msg(GroupName,Message).</code></pre>
+<pre><code>chatterl_client:send_msg(GroupName,Message).</code></pre></br>
 GroupName being the name of the group the client is connected to & Message being the message that you want to send to the receiving client.
 
 <b>Sending a private message</b>
-This allows a chatterl client to send a private message to another client, by executing the following:
-<pre><code>chatterl_client:private_msg(RecipientName,Message).</code></pre>
+This allows a chatterl client to send a private message to another client, by executing the following:</br>
+<pre><code>chatterl_client:private_msg(RecipientName,Message).</code></pre></br>
