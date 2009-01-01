@@ -17,13 +17,13 @@ The main focus of this project is to create a chat system that is highly reliabl
 <li>View chatterl groups.</li>
 <li>View chatterl users.</li>
 <li>Login/logout of a chatterl group.</li>
-<li>Send message to a group & other clients.</li>
+<li>Send message to a group and other clients.</li>
 </ul>
 
 <h2>Future Fetures</h2>
 <ul>
-<li>Centralised Error logging & data storage.</li>
-<li>Client customisable routines (able to poll RSS feeds, twitter, FB & the such like).</li>
+<li>Centralised Error logging and data storage.</li>
+<li>Client customisable routines (able to poll RSS feeds, twitter, FB and the such like).</li>
 <li>Better handling of errors.</li>
 <li>User registration.</li>
 <li>FB Connect.</li>
