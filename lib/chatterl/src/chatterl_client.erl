@@ -91,7 +91,7 @@ join(Group) ->
 %% @end
 %%--------------------------------------------------------------------
 drop(Group) ->
-    gen_server:call(chatterl_client, {drop_group,Group}, infinity).
+    set_client_to_group(join,Group).
 
 %%--------------------------------------------------------------------
 %% @doc
@@ -180,25 +180,11 @@ handle_call(groups, _From, State) ->
     Reply = gb_trees:values(State#client.groups),
     {reply, Reply, State};
 handle_call({add_group, Group, Pid}, _From, State) ->
-    NewTree =
-	case set_client_to_group(join,Group) of
-	    {ok, Msg} ->
-		{{ok,Msg},
-		 gb_trees:insert(Group, {Group, Pid}, State#client.groups)};
-	    {error, _Error} ->
-		State
-	end,
+    NewTree = gb_trees:insert(Group, {Group, Pid}, State#client.groups),
     {reply, {ok, "Joined group"}, State#client{groups = NewTree}};
 handle_call({drop_group, Group}, _From, State) ->
-    {Reply,NewTree} =
-	case set_client_to_group(drop,Group) of
-	    {ok, Msg} ->
-		{{ok,Msg},
-		gb_trees:delete(Group, State#client.groups)};
-	    {error, _Error} ->
-		State
-	end,
-    {reply, Reply, State#client{groups = NewTree}};
+    NewTree = gb_trees:delete(Group, State#client.groups),
+    {reply, ok, State#client{groups = NewTree}};
 handle_call({receive_msg, _CreatedOn, Client, Msg}, _From, State) ->
     io:format("Received msg from ~p: ~p~n", [Client,Msg]),
     {reply, ok, State}.
@@ -263,16 +249,18 @@ code_change(_OldVsn, State, _Extra) ->
 %%--------------------------------------------------------------------
 set_client_to_group(Action,Group) ->
     case gen_server:call({global, chatterl_serv}, {get_group, Group}, infinity) of
-	{_GroupName, GroupPid} ->
-	    case Action of
-		    join ->
-			group_connection(join,GroupPid);
-		    drop ->
-			group_connection(drop,GroupPid);
-		    _ -> {error, {"Illegal action",Action}}
-		end;
-	false ->
-	    {error, "Group doesn't exist!"}
+  {GroupName, GroupPid} ->
+   {GroupCall,ClientCall} =
+    case Action of
+     join ->
+      {join,{add_group,GroupName,GroupPid}};
+     drop ->
+      {drop,{drop_group,GroupName}};
+     _ -> {error, {"Illegal action",Action}}
+    end,
+   group_connection(GroupCall,ClientCall,GroupPid);
+  false ->
+   {error, "Group doesn't exist!"}
     end.
 %%--------------------------------------------------------------------
 %% @private
@@ -282,14 +270,15 @@ set_client_to_group(Action,Group) ->
 %% @spec send_msg(Group,Msg) -> {ok,msg_sent} | {error,Error}
 %% @end
 %%--------------------------------------------------------------------
-group_connection(GroupCall,GroupPid) ->
+group_connection(GroupCall,ClientCall,GroupPid) ->
     case gen_server:call(chatterl_client, client_name, infinity) of
-	{name, Client} -> 
-	    case gen_server:call(GroupPid, {GroupCall, Client}, infinity) of
-		{ok, Msg} ->
-		    {ok, Msg};
-		_ -> {error, "Unable to connect!"}
-	    end;
-	_ -> 
-	    {error, "Unknown error!"}
+  {name, Client} ->
+   case gen_server:call(GroupPid, {GroupCall, Client}, infinity) of
+    {ok, Msg} ->
+     gen_server:call(chatterl_client, ClientCall, infinity),
+     {ok, Msg};
+    _ -> {error, "Unable to connect!"}
+   end;
+  _ ->
+   {error, "Unknown error!"}
     end.
