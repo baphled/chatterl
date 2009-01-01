@@ -204,3 +204,19 @@ send_users_drop_msg(GroupName,UsersList) ->
 		      end
 	      end,
       UsersList).
+
+send_users_msg({Client,CreatedOn,Msg},UsersList) ->
+    lists:foreach(
+	      fun(User) ->
+		      {Client,_PidInfo} = User,
+		      case gen_server:call({global, chatterl_serv},
+					   {user_lookup, Client}, infinity) of
+			  {error, Error} ->
+			      io:format("Error: ~p~n",[Error]);
+			  {ok, ClientName, ClientPid} ->
+			      io:format("Send disconnects message to ~p~n",
+					[ClientName]),
+			      gen_server:call(ClientPid,{receive_msg, CreatedOn, Client, Msg})
+		      end
+	      end,
+      UsersList).
