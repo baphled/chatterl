@@ -107,9 +107,8 @@ handle_call({drop, User}, _From, State) ->
     {Reply, NewTree} =
 	case gb_trees:is_defined(User, State#group.users) of
 	    true ->
-		io:format("~p disconnected from group:~p~n", [User,State#group.name]),
-		{{ok, dropped},
-		 gb_trees:delete(User, State#group.users)};
+		io:format("~p disconnected from group:~p~n",[User,State#group.name]),
+		{{ok, dropped},gb_trees:delete(User, State#group.users)};
 	    false ->
 		{{error, "Not connected"}, State}
 	end,
@@ -118,8 +117,8 @@ handle_call({send_msg,User,Message},_From,State) ->
     {Reply, NewTree} =
 	case gb_trees:is_defined(Message, State#group.messages) of
 	    false ->
-		io:format("~p: ~p~n", [User,Message]),
 		CreatedOn = erlang:now(),
+		io:format("~p: ~p~n", [User,Message]),
 		{{ok, msg_sent},
 		gb_trees:insert(Message, {User,CreatedOn,Message}, State#group.messages)};
 	    true ->
