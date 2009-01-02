@@ -293,10 +293,7 @@ handle_call({user_lookup, User}, _From, State) ->
 handle_call({user_exists, User}, _From, State) ->
     {reply, gb_trees:is_defined(User, State#chatterl.users), State};
 handle_call({group_exists,Group}, _From, State) ->
-    {reply, gb_trees:is_defined(Group, State#chatterl.groups), State};
-handle_call({join, Group, User}, _From, State) ->
-    Reply = chatterl_serv:join(Group,User),
-    {reply, Reply, State}.
+    {reply, gb_trees:is_defined(Group, State#chatterl.groups), State}.
 
 %%--------------------------------------------------------------------
 %% @doc
@@ -319,13 +316,7 @@ handle_cast(_Msg, State) ->
 %%                                       {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_info(Info, State) ->
-    case Info of
-	{‘EXIT’, Pid, _Why} ->
-	    handle_call({logout, Pid}, blah, State);
-	Unknown ->
-	    io:format("Caught unhandled message: ~w\n", [Unknown])
-    end,
+handle_info(_Info, State) ->
     {noreply, State}.
 
 %%--------------------------------------------------------------------
