@@ -23,10 +23,10 @@ sudo faxien install-release chatterl-0.1.0.2.tar.gz</code></pre>
 
 The above presumes that you have Sinan configured &amp; installed, if you haven't refer to erlware.
 You will need to change to cookie &amp; name values to something else, doing so should drop you into the erlang shell &amp; ready to run the Chatterl application. To run a client on a different machine you will need to do the above if  (making sure that the -sname is not the same as any other connected nodes &amp; that the cookie is the same) if connecting on the same box simply cd to the ebin directory and run the following command:
-<pre><code>erl -name bar -setcookie abc</pre></code>
+<pre><code>erl -name bar -setcookie abc</code></pre>
 
 From here you will need to make sure that they nodes can connect via:
-<pre><code>net_adm:ping(foo@bar.net).</pre></code>
+<pre><code>net_adm:ping(foo@bar.net).</code></pre>
 
 Where foo is the node name &amp; bar.net is the tld of the node box (indicated within yout hosts file or dns server).
 Once you receive the infamous pong response you are ready to roll.
@@ -53,7 +53,7 @@ Future Features
 
 Starting the server
 Chatterl server runs as an OTP application and uses a supervisor to manage it (in later versions there will be options to spawn multiple servers, allowing for a more fault tolerant chat system). To start up the server you simply need to run the following command:
-<code><pre>application:start(chatterl).</code></pre>
+<pre><code>application:start(chatterl).</code></pre>
 
 Which will initialise the server allowing clients to connect and groups to be created. Groups can be created on differing nodes as long as the node can communicate with the chatterl_serv.
 
@@ -62,46 +62,46 @@ Chatterl groups can be started on any node that can communicate with the server,
 
 A group can be initialised by calling the command:
 
-<code><pre>chatterl_serv:create("room","description").</code></pre>
+<pre><code>chatterl_serv:create("room","description").</code></pre>
 
 which will spawn a group process which users can connect to.
 
 Connection to chatterl
 At the time of this writing chatterl_clients can only spawn a client per node, this will later be changed once the web interface has been fully implemented, possibly to a refactoring the client to a parameterised module.
 For the moment node users must follow the basic OTP configurations (same cookie, valid DNS name, etc). Creating a connection to the server is done by using the following command.
-<code><pre>chatter_client:start(UserName).</code></pre>
+<pre><code>chatter_client:start(UserName).</code></pre>
 
 This will initialise a user and connect them to chatterl_serv (must be done before users can join a group or communicate with other chatterl users).
 
 Disconnecting from chatterl
 Chatterl clients can simply disconnect from chatterl by issuing the following command:
-<code><pre>chatterl_client:stop().</code></pre>
+<pre><code>chatterl_client:stop().</code></pre>
 
 This will disconnect the user from all the groups they are currently connected to as well as the actual Chatterl server.
 
 Joining a group
 This can be done by using the following command:
-<code><pre>chatterl_client:join(GroupName).</code></pre>
+<pre><code>chatterl_client:join(GroupName).</code></pre>
 
 If the group exists the user is able to join the group allowing them to send message to the room.
 
 Dropping from a group
 This is as simple as connection, simply supply the following command:
-<code><pre>chatterl_client:drop(GroupName).</code></pre>
+<pre><code>chatterl_client:drop(GroupName).</code></pre>
 
 This will send a message to the group, which will handle the termination.
 
 Sending group message
-<code><pre>chatterl_client:send_msg(GroupName,Message).</code></pre>
+<pre><code>chatterl_client:send_msg(GroupName,Message).</code></pre>
 
 GroupName being the name of the group the client is connected to, Message being the message that you want to send to the receiving client. If the message is sent, it is send to all clients connected to the group &amp; stored so that it can be polled by joining clients (feature to be added).
 
 Sending a private message
 This allows a Chatterl client to send a private message to another client, by executing the following:
-<code><pre>chatterl_client:private_msg(RecipientName,Message).</code></pre>
+<pre><code>chatterl_client:private_msg(RecipientName,Message).</code></pre>
 
 If the message is sent successfully then the sender will receive follow message:
-<code><pre>{ok,msg_sent}</code></pre>
+<pre><code>{ok,msg_sent}</code></pre>
 
 in turn sending the message to the receipients node.
 @end
