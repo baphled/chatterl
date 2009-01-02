@@ -203,7 +203,7 @@ handle_call({drop_group, Group}, _From, State) ->
     NewTree = gb_trees:delete(Group, State#client.groups),
     {reply, {ok,"Dropped from group"}, State#client{groups = NewTree}};
 handle_call({receive_msg, _CreatedOn, Client, Msg}, _From, State) ->
-    io:format("Received msg from ~p: ~p~n", [Client,Msg]),
+    io:format("Received msg~p: ~p~n", [Client,Msg]),
     {reply, ok, State}.
 
 %%--------------------------------------------------------------------
@@ -249,7 +249,8 @@ terminate(Reason, State) ->
 %% @spec code_change(OldVsn, State, Extra) -> {ok, NewState}
 %% @end
 %%--------------------------------------------------------------------
-code_change(_OldVsn, State, _Extra) ->
+code_change(OldVsn, State, _Extra) ->
+    io:format("Updating system from:~p~n",[OldVsn]),
     {ok, State}.
 
 %%--------------------------------------------------------------------
