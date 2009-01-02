@@ -3,15 +3,15 @@
 @version {@vsn}
 
 @doc
-Description
+<h2>Description</h2>
 
-A chat system that can be housed over a number of nodes and track clients over varying devices, at the time of the writing the system works over multiple nodes and is able to do the basics (connect to a group, send message to other clients and connected groups).
+A multi processed chat system that can be housed over a number of nodes and track clients over varying devices, at the time of the writing the system works over multiple nodes and is able to do the basics (connect to a group, send message to other clients and connected groups).
 
 The main focus of this project is to create a chat system that is highly reliable as well as scaleable. Other developers will be able to create add-on modules that are able to interact with chatterl and further enhance the functionality of chatterl and the chatterl clients experience.
 
 As mentioned the system is OTP based, of which it uses Sinan to maintain its builds.
 
-Installing Chatterl
+<h2>Installing Chatterl</h2>
 
 At the moment of this writing Chatterl is still in alpha so their is no real release at the moment, to get it running you will need to do the following:
 <pre><code>git-clone git://github.com/baphled/chatterl.git &amp;&amp;
@@ -31,7 +31,7 @@ From here you will need to make sure that they nodes can connect via:
 Where foo is the node name &amp; bar.net is the tld of the node box (indicated within yout hosts file or dns server).
 Once you receive the infamous pong response you are ready to roll.
 
-Features
+<h2>Features</h2>
 <ul>
     <li>Client login/logout to Chatterl.</li>
     <li>List Chatterl groups.</li>
@@ -39,7 +39,8 @@ Features
     <li> Login/logout of a chatterl group.</li>
     <li> Send message to a group and other clients.</li>
 </ul>
-Future Features
+
+<h2>Future Features</h2>
 <ul>
     <li> Centralised Error logging and data storage.</li>
     <li> Client customisable routines (able to poll RSS feeds, twitter, FB and the such like).</li>
@@ -51,13 +52,13 @@ Future Features
     <li> Chat modules handler(banning, censorship, chatbots).</li>
 </ul>
 
-Starting the server
+<h2>Starting the server</h2>
 Chatterl server runs as an OTP application and uses a supervisor to manage it (in later versions there will be options to spawn multiple servers, allowing for a more fault tolerant chat system). To start up the server you simply need to run the following command:
 <pre><code>application:start(chatterl).</code></pre>
 
 Which will initialise the server allowing clients to connect and groups to be created. Groups can be created on differing nodes as long as the node can communicate with the chatterl_serv.
 
-Starting a group
+<h2>Starting a group</h2>
 Chatterl groups can be started on any node that can communicate with the server, this allows the user to create a number of groups on varying nodes, helping with general organisation as well a performance and reliablity.
 
 A group can be initialised by calling the command:
@@ -66,37 +67,37 @@ A group can be initialised by calling the command:
 
 which will spawn a group process which users can connect to.
 
-Connection to chatterl
+<h2>Connection to chatterl</h2>
 At the time of this writing chatterl_clients can only spawn a client per node, this will later be changed once the web interface has been fully implemented, possibly to a refactoring the client to a parameterised module.
 For the moment node users must follow the basic OTP configurations (same cookie, valid DNS name, etc). Creating a connection to the server is done by using the following command.
 <pre><code>chatter_client:start(UserName).</code></pre>
 
 This will initialise a user and connect them to chatterl_serv (must be done before users can join a group or communicate with other chatterl users).
 
-Disconnecting from chatterl
+<h2>Disconnecting from chatterl</h2>
 Chatterl clients can simply disconnect from chatterl by issuing the following command:
 <pre><code>chatterl_client:stop().</code></pre>
 
 This will disconnect the user from all the groups they are currently connected to as well as the actual Chatterl server.
 
-Joining a group
+<h2>Joining a group</h2>
 This can be done by using the following command:
 <pre><code>chatterl_client:join(GroupName).</code></pre>
 
 If the group exists the user is able to join the group allowing them to send message to the room.
 
-Dropping from a group
+<h2>Dropping from a group</h2>
 This is as simple as connection, simply supply the following command:
 <pre><code>chatterl_client:drop(GroupName).</code></pre>
 
 This will send a message to the group, which will handle the termination.
 
-Sending group message
+<h2>Sending group message</h2>
 <pre><code>chatterl_client:send_msg(GroupName,Message).</code></pre>
 
-GroupName being the name of the group the client is connected to, Message being the message that you want to send to the receiving client. If the message is sent, it is send to all clients connected to the group &amp; stored so that it can be polled by joining clients (feature to be added).
+GroupName being the name of the group the client is connected to, Message being the message that you want to send to the receiving client. If the message is sent successfully all users connected to the group will receive the message.
 
-Sending a private message
+<h2>Sending a private message</h2>
 This allows a Chatterl client to send a private message to another client, by executing the following:
 <pre><code>chatterl_client:private_msg(RecipientName,Message).</code></pre>
 
