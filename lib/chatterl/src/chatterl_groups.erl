@@ -124,7 +124,7 @@ handle_call({send_msg,User,Message},_From,State) ->
 		{{ok, msg_sent},
 		 gb_trees:insert(Message, {User,CreatedOn,Message}, State#group.messages)};
 	    true ->
-		{{error, already_sent}, State}
+		{{error, already_sent}, State#group.messages}
 	end,
     {reply, Reply, State#group{messages=NewTree}}.
 %%--------------------------------------------------------------------
