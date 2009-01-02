@@ -97,7 +97,7 @@ handle_call({join, User}, From, State) ->
     {Reply, NewTree} =
 	case gb_trees:is_defined(User, State#group.users) of
 	    true ->
-		{{error, "Already joined"}, State};
+		{{error, "Already joined"}, State#group.users};
 	    false ->
 		io:format("~p joined ~p~n", [User,State#group.name]),
 		{{ok, "User added"}, gb_trees:insert(User, {User,From}, State#group.users)}
@@ -110,7 +110,7 @@ handle_call({drop, User}, _From, State) ->
 		io:format("~p disconnected from group:~p~n",[User,State#group.name]),
 		{{ok, dropped},gb_trees:delete(User, State#group.users)};
 	    false ->
-		{{error, "Not connected"}, State}
+		{{error, "Not connected"}, State#group.users}
 	end,
     {reply, Reply, State#group{users=NewTree}};
 handle_call({send_msg,User,Message},_From,State) ->
