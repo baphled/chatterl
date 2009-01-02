@@ -80,7 +80,7 @@ init([Name,Description]) ->
 %% @end
 %%--------------------------------------------------------------------
 handle_call(stop, _From, State) ->
-    io:format("Processing shutting down ~p~n", [State#group.name]),
+    io:format("Processing shut down ~p~n", [State#group.name]),
     {stop, normal, stopped, State};
 handle_call(name, _From, State) ->
     Result = State#group.name,
@@ -150,8 +150,8 @@ handle_cast(_Msg, State) ->
 %%--------------------------------------------------------------------
 handle_info(Info, State) ->
     case Info of
-	{‘EXIT’, Pid, _Why} ->
-	    handle_call({logout, Pid}, blah, State);
+	{'EXIT', Pid, _Why} ->
+	    handle_call(stop, self(), State);
 	Unknown ->
 	    io:format("Caught unhandled message: ~w\n", [Unknown])
     end,
