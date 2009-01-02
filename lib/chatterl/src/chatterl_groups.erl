@@ -148,8 +148,14 @@ handle_cast(_Msg, State) ->
 %%                                       {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_info(_Info, State) ->
-    {unknown, State}.
+handle_info(Info, State) ->
+    case Info of
+	{‘EXIT’, Pid, _Why} ->
+	    handle_call({logout, Pid}, blah, State);
+	Unknown ->
+	    io:format("Caught unhandled message: ~w\n", [Unknown])
+    end,
+    {noreply, State}.
 
 %%--------------------------------------------------------------------
 %% @doc
