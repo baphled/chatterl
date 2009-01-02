@@ -188,6 +188,8 @@ init([Client]) ->
 %%--------------------------------------------------------------------
 handle_call(stop, _From, State) ->
     {stop, normal, stopped, State};
+handle_call({stop,Reason},_From,State) ->
+    {stop,Reason,stopped,State};
 handle_call(client_name, _From, State) ->
     Reply = {name, State#client.name},
     {reply, Reply, State};
@@ -229,8 +231,8 @@ handle_cast(_Msg, State) ->
 %%--------------------------------------------------------------------
 handle_info(Info, State) ->
     case Info of
-	{‘EXIT’, Pid, _Why} ->
-	    handle_call({logout, Pid}, blah, State);
+	{'EXIT', Pid, Why} ->
+	    handle_call({stop,Why}, Pid, State);
 	Unknown ->
 	    io:format("Caught unhandled message: ~w\n", [Unknown])
     end,
