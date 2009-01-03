@@ -206,7 +206,7 @@ code_change(_OldVsn, State, _Extra) ->
 %%--------------------------------------------------------------------
 %% @private
 %% @doc
-%% Determines the kind of action that needs to be taken out and calls
+%% Determines the kind of action that needs to be taken and calls
 %% send_msg_to_users.
 %%
 %% @spec determine_user_action(GroupName,{Action,PayLoad},UsersList) ->
