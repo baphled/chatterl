@@ -1,8 +1,8 @@
 %%%----------------------------------------------------------------
-%%% @author  Yomi Akindayini <yomi@boodah.net>
-%%% @doc
+%%% @author  Yomi Colledge <yomi@boodah.net>
+%%% @doc Supervising all of our Chatterl based supervisors.
 %%% @end
-%%% @copyright 2008 Yomi Akindayini
+%%% @copyright 2008 Yomi Colledge
 %%%----------------------------------------------------------------
 -module(chatterl_sup).
 
@@ -24,7 +24,7 @@
 %% @doc
 %% Starts the supervisor
 %%
-%% @spec start_link() -> {ok, Pid} | ignore | {error, Error}
+%% @spec start_link(Port) -> {ok, Pid} | ignore | {error, Error}
 %% @end
 %%--------------------------------------------------------------------
 start_link() ->
@@ -48,9 +48,9 @@ start_link() ->
 %% @end
 %%--------------------------------------------------------------------
 init([]) ->
-    RestartStrategy = one_for_all,
-    MaxRestarts = 1000,
-    MaxSecondsBetweenRestarts = 3600,
+    RestartStrategy = one_for_one,
+    MaxRestarts = 5,
+    MaxSecondsBetweenRestarts = 60,
 
     SupFlags = {RestartStrategy, MaxRestarts, MaxSecondsBetweenRestarts},
 
@@ -58,9 +58,8 @@ init([]) ->
     Shutdown = 2000,
     Type = worker,
 
-    Server = {'Server', {chatterl_serv, start, []},
+    Server = {chatterl_serv, {chatterl_serv, start, []},
               Restart, Shutdown, Type, [chatterl_serv]},
-
     {ok, {SupFlags, [Server]}}.
 
 %%%===================================================================
