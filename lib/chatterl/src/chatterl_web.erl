@@ -14,7 +14,7 @@
 %%% @end
 %%% @copyright 2008 Yomi Akindayini
 %%%---------------------------------------------------------------
-module(chatterl_web).
+-module(chatterl_web).
 
 -behaviour(gen_server).
 
@@ -28,7 +28,7 @@ module(chatterl_web).
 	 terminate/2, code_change/3]).
 
 -record(state, {}).
-
+-define(SERVER, ?MODULE).
 %%====================================================================
 %% API
 %%====================================================================
@@ -37,7 +37,7 @@ module(chatterl_web).
 %% Description: Starts the server
 %%--------------------------------------------------------------------
 start_link(Port) ->
-    gen_server:start_link({local, ?MODULE}, ?MODULE, [Port], []).
+    gen_server:start_link({local, ?SERVER}, ?MODULE, [Port], []).
 
 %%====================================================================
 %% gen_server callbacks
