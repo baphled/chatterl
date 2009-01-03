@@ -1,8 +1,23 @@
 %%%-------------------------------------------------------------------
 %%% @author Yomi Colledge <yomi@boodah.net>
 %%% @doc
-%%% Chatterl groups process used to handle a specific groups data (clients,
-%%% messages, etc).
+%%% Chatterl groups process code used to handle a specific groups data
+%%% (clients, messages, etc).
+%%%
+%%% Can be started independantly of via
+%%% <code>chatterl_groups:start(GroupName,Description).</code>
+%%% or via the Chatterl server:
+%%% <code>chatterl_serv:create(GroupName,Description).</code>
+%%% Both function in exactly the same manner so it is entirely up to the
+%%% group creator.
+%%%
+%%% the system has been setup so that groups can be started as long
+%%% as they can locate the Chatterl server. This allows us to have a
+%%% number of groups per node over a number of servers.
+%%%
+%%% As of this writting groups will be shutdown automatically if the
+%%% server is terminated/stop, this will be modified once the storage
+%%% system has been implemented.
 %%% @end
 %%% @copyright 2008 by Yomi Colledge <yomi@boodah.net>
 %%%-------------------------------------------------------------------
@@ -150,8 +165,6 @@ handle_cast(_Msg, State) ->
 %%--------------------------------------------------------------------
 handle_info(Info, State) ->
     case Info of
-	{'EXIT', Pid, _Why} ->
-	    handle_call(stop, self(), State);
 	Unknown ->
 	    io:format("Caught unhandled message: ~w\n", [Unknown])
     end,
@@ -168,7 +181,7 @@ handle_info(Info, State) ->
 terminate(Reason, State) ->
     case gb_trees:is_empty(State#group.users) of
 	false ->
-	    gen_server:call({global,chatterl_serv}, {remove_pid,State#group.name}),
+	    gen_server:call({global,chatterl_serv}, {remove_pid,State#group.name},infinity),
 	    determine_user_action(State#group.name,{drop_group,[]},
 				  gb_trees:values(State#group.users));
 	true ->
@@ -229,17 +242,17 @@ determine_user_action(GroupName,{Action,PayLoad},UsersList) ->
 %%--------------------------------------------------------------------
 send_msg_to_users(PayLoad,UsersList,GroupMsg) ->
     lists:foreach(
-	      fun(User) ->
-		      {Client,_PidInfo} = User,
-		      case gen_server:call({global, chatterl_serv},
-					   {user_lookup, Client}, infinity) of
-			  {error, Error} ->
-			      io:format("Error: ~p~n",[Error]);
-			  {ok, ClientName, ClientPid} ->
-			      io:format(GroupMsg,
-					[ClientName]),
-			      gen_server:call(ClientPid,PayLoad)
-		      end
-	      end,
+      fun(User) ->
+	      {Client,_PidInfo} = User,
+	      case gen_server:call({global, chatterl_serv},
+				   {user_lookup, Client}, infinity) of
+		  {error, Error} ->
+		      io:format("Error: ~p~n",[Error]);
+		  {ok, ClientName, ClientPid} ->
+		      io:format(GroupMsg,
+				[ClientName]),
+		      gen_server:call(ClientPid,PayLoad)
+	      end
+      end,
       UsersList).
 
