@@ -1,12 +1,12 @@
 %%%----------------------------------------------------------------
-%%% @author Yomi Akindayini <yomi@boodah.net>
+%%% @author Yomi Colledge <yomi@boodah.net>
 %%% @doc
 %%% Initialises chatterl, a multiprocessed chat system, allowing one
 %%% to create a number of chat groups to which clients can connect
 %%% and send each other private messages.
 %%%
 %%% @end
-%%% @copyright 2008 Yomi Akindayini
+%%% @copyright 2008 Yomi Colledge
 %%%----------------------------------------------------------------,
 -module(chatterl_app).
 
