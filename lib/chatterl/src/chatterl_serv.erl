@@ -390,7 +390,7 @@ shutdown_groups(GroupNames) ->
     io:format("Shutting down groups~n"),
     lists:foreach(
       fun(GroupName) ->
-	      io:format("Dropping group ~w...~n",[GroupName]),
+	      io:format("Dropping group ~p...~n",[GroupName]),
 	      gen_server:call({global,GroupName},stop,infinity)
       end,
       GroupNames).
