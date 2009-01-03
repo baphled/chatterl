@@ -2,6 +2,9 @@
 %%% @author  Yomi Akindayini <yomi@boodah.net>
 %%% @doc Supervisor for the Chatterl server, is linked to the
 %%% main Chatterl supervisor.
+%%%
+%%% Handles our Chatterl server, which is in charge of passing mesages
+%%% around and managing groups.
 %%% @end
 %%% @copyright 2008 Yomi Akindayini
 %%%----------------------------------------------------------------
