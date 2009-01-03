@@ -21,7 +21,7 @@
 -define(CONTENT, <<"<html><head><title>Hello</title></head><body>Welcome to Chatterl</body></html>">>).
 
 %% API
--export([start_link/1]).
+-export([start/1]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -33,7 +33,7 @@
 %% API
 %%====================================================================
 %%--------------------------------------------------------------------
-%% Function: start_link() -> {ok,Pid} | ignore | {error,Error}
+%% Function: start() -> {ok,Pid} | ignore | {error,Error}
 %% Description: Starts the server
 %%--------------------------------------------------------------------
 start(Port) ->
