@@ -3,6 +3,9 @@
 %%% @copyright (C) 2009, Yomi (baphled) Colledge
 %%% @doc
 %%%
+%%% Used to start Chatterl.
+%%% To run from the shell
+%%% <code>erl -s chatterl</code>
 %%% Application used when we call Chatterl via:
 %%% <application:start(chatterl).</code>
 %%%
@@ -14,12 +17,22 @@
 -behaviour(application).
 
 %% Application callbacks
--export([start/2, stop/1]).
+-export([start/0,start/2, stop/1]).
 
 %%%===================================================================
 %%% Application callbacks
 %%%===================================================================
-
+%%--------------------------------------------------------------------
+%% @doc
+%% This function is used to call initialise all essential applications
+%% linked to Chatterl and starts Chatterl itself.
+%%
+%% @spec start() -> {ok, Pid} | {ok, Pid, State} | {error, Reason}
+%% @end
+%%--------------------------------------------------------------------
+start() ->
+    mochiweb:stop(),
+    application:start(?MODULE).
 %%--------------------------------------------------------------------
 %% @private
 %% @doc
