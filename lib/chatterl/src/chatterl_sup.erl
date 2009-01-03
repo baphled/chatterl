@@ -24,7 +24,7 @@
 %% @doc
 %% Starts the supervisor
 %%
-%% @spec start_link(Port) -> {ok, Pid} | ignore | {error, Error}
+%% @spec start_link() -> {ok, Pid} | ignore | {error, Error}
 %% @end
 %%--------------------------------------------------------------------
 start_link() ->
@@ -55,11 +55,11 @@ init([]) ->
     SupFlags = {RestartStrategy, MaxRestarts, MaxSecondsBetweenRestarts},
 
     Restart = permanent,
-    Shutdown = 2000,
-    Type = worker,
+    Shutdown = infinityy,
+    Type = supervisor,
 
-    Server = {chatterl_serv, {chatterl_serv, start, []},
-              Restart, Shutdown, Type, [chatterl_serv]},
+    Server = {server_sup, {server_sup, start_link, []},
+              Restart, Shutdown, Type, [server_sup]},
     {ok, {SupFlags, [Server]}}.
 
 %%%===================================================================
