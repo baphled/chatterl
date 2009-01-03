@@ -55,7 +55,7 @@ init([]) ->
     SupFlags = {RestartStrategy, MaxRestarts, MaxSecondsBetweenRestarts},
 
     Restart = permanent,
-    Shutdown = infinityy,
+    Shutdown = infinity,
     Type = supervisor,
 
     Server = {server_sup, {server_sup, start_link, []},
