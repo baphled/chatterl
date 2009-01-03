@@ -1,5 +1,5 @@
 %%%----------------------------------------------------------------
-%%% @author  Yomi Akindayini <yomi@boodah.net>
+%%% @author  Yomi Colledge <yomi@boodah.net>
 %%% @doc
 %%% @end
 %%% @copyright 2008 Yomi Akindayini
