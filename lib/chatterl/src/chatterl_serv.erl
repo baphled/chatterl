@@ -247,9 +247,10 @@ handle_call({disconnect, User, Groups}, _From, State) ->
 handle_call({create, Group, _Description}, _From, State) ->
     Reply =
 	case gb_trees:is_defined(Group, State#chatterl.groups) of
-	    true ->
+	    true ->		
 		{error, "Group already created"};
-	    false -> 
+	    false ->
+		io:format("Group created: ~p~n",[Group]),
 		{ok, Group}
 	end,
     {reply, Reply, State};
@@ -326,9 +327,14 @@ handle_info(_Info, State) ->
 %% @spec terminate(Reason, State) -> void()
 %% @end
 %%--------------------------------------------------------------------
-terminate(normal, _State) ->
+terminate(normal, State) ->
     %% Here we need to loop through each of our processes send a stop message
-    %% First well drop all groups, then we'll drop users.
+    case gb_trees:is_empty(State#chatterl.groups) of
+	false ->
+	    io:format("No groups to inform of shutdown~n");
+	true ->
+	    shutdown_groups(gb_trees:keys(State#chatterl.groups))
+    end,
     ok;
 terminate(_Reason,_State) ->
     ok.
@@ -366,3 +372,18 @@ user_exists(User) ->
 %%--------------------------------------------------------------------
 group_exists(Group) ->
     gen_server:call({global, ?MODULE}, {group_exists, Group}, infinity).
+
+shutdown_groups(GroupNames) ->
+    lists:foreach(
+      fun(GroupName) ->
+	      case gen_server:call({global, chatterl_serv},
+				   {group_exists,GroupName}, infinity) of
+		  true ->
+		      gen_server:call({global,GroupName},stop,infinity);
+		  false ->
+		      io:format("~w to send shutdown to~n",[GroupName]);
+		  _ ->
+		      io:format("Error sending terminate ~w~n",[GroupName])
+	      end
+      end,
+      GroupNames).
