@@ -15,7 +15,7 @@
 -behaviour(supervisor).
 
 %% API
--export([start_link/0]).
+-export([start_link/1]).
 
 %% Supervisor callbacks
 -export([init/1]).
@@ -30,11 +30,11 @@
 %% @doc
 %% Starts the supervisor
 %%
-%% @spec start_link() -> {ok, Pid} | ignore | {error, Error}
+%% @spec start_link(Port) -> {ok, Pid} | ignore | {error, Error}
 %% @end
 %%--------------------------------------------------------------------
-start_link() ->
-    supervisor:start_link({local, ?SERVER}, ?MODULE, []).
+start_link(Port) ->
+    supervisor:start_link({local, ?SERVER}, ?MODULE, [Port]).
 
 %%%===================================================================
 %%% Supervisor callbacks
@@ -54,7 +54,7 @@ start_link() ->
 %% @end
 %%--------------------------------------------------------------------
 init([]) ->
-    RestartStrategy = one_for_all,
+    RestartStrategy = one_for_one,
     MaxRestarts = 1000,
     MaxSecondsBetweenRestarts = 3600,
 
@@ -64,9 +64,9 @@ init([]) ->
     Shutdown = 2000,
     Type = worker,
 
-    Server = {'Server', {chatterl_serv, start, []},
-              Restart, Shutdown, Type, [chatterl_serv]},
-    {ok, {SupFlags, [Server]}}.
+    WebInterface = {'WebInterface', {chatterl_web, start, [Port]},
+              Restart, Shutdown, Type, [chatterl_web]},
+    {ok, {SupFlags, [WebInterface]}}.
 
 %%%===================================================================
 %%% Internal functions
