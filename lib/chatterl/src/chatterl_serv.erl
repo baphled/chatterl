@@ -372,6 +372,14 @@ user_exists(User) ->
 group_exists(Group) ->
     gen_server:call({global, ?MODULE}, {group_exists, Group}, infinity).
 
+%%--------------------------------------------------------------------
+%% @private
+%% @doc
+%% Sends shutdown messages to all groups in the list.
+%%
+%% @spec group_exists(Group) -> void()
+%% @end
+%%--------------------------------------------------------------------
 shutdown_groups(GroupNames) ->
     lists:foreach(
       fun(GroupName) ->
