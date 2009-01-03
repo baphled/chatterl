@@ -45,8 +45,7 @@ start() ->
 %% @end
 %%--------------------------------------------------------------------
 stop() ->
-    io:format("Stopping ~p...~n",[?APP]),
-    gen_server:call({global, ?MODULE}, stop, infinity).
+    gen_server:call({global, ?SERVER}, stop, infinity).
 
 %%--------------------------------------------------------------------
 %% @doc
@@ -196,6 +195,9 @@ init([]) ->
 %%                                      {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
+handle_call(stop, _From, State) ->
+    io:format("Processing shut down ~p~n", [?APP]),
+    {stop, normal, stopped, State};
 handle_call(list_groups, _Client, State) ->
     {reply, gb_trees:values(State#chatterl.groups), State};
 handle_call({get_group, Group}, _From, State) ->
@@ -249,7 +251,7 @@ handle_call({create, Group, _Description}, _From, State) ->
 	case gb_trees:is_defined(Group, State#chatterl.groups) of
 	    true ->		
 		{error, "Group already created"};
-	    false ->
+ 	    false ->
 		io:format("Group created: ~p~n",[Group]),
 		{ok, Group}
 	end,
@@ -327,16 +329,13 @@ handle_info(_Info, State) ->
 %% @spec terminate(Reason, State) -> void()
 %% @end
 %%--------------------------------------------------------------------
-terminate(normal, State) ->
-    %% Here we need to loop through each of our processes send a stop message
+terminate(_Reason,State) ->
     case gb_trees:is_empty(State#chatterl.groups) of
-	false ->
-	    io:format("No groups to inform of shutdown~n");
 	true ->
+	    io:format("No groups to inform of shutdown~n");
+	false ->
 	    shutdown_groups(gb_trees:keys(State#chatterl.groups))
     end,
-    ok;
-terminate(_Reason,_State) ->
     ok.
 %%--------------------------------------------------------------------
 %% @doc
@@ -379,6 +378,7 @@ shutdown_groups(GroupNames) ->
 	      case gen_server:call({global, chatterl_serv},
 				   {group_exists,GroupName}, infinity) of
 		  true ->
+		      io:format("Dropping group ~w...~n",[GroupName]),
 		      gen_server:call({global,GroupName},stop,infinity);
 		  false ->
 		      io:format("~w to send shutdown to~n",[GroupName]);
