@@ -1,15 +1,20 @@
-%%%-------------------------------------------------------------------
-%%% File    : chatterl_web.erl
-%%% Author  : baphled <baphled@mackrhoe.local>
-%%% Description : 
+%%----------------------------------------------------------------
+%%% @author  Yomi Colledge <yomi@boodah.net>
+%%% @doc Web interface for Chatterl
 %%%
-%%% Created : 30 Dec 2008 by baphled <baphled@mackrhoe.local>
-%%%-------------------------------------------------------------------
--module(chatterl_web).
+%%% Initially will be used as a was to simply interact with Chatterl
+%%%
+%%% The idea is to use this module to handle all our web based
+%%% interaction passing them off to the nessary process and waiting
+%%% for the response.
+%%% @end
+%%% @copyright 2008 Yomi Akindayini
+%%%---------------------------------------------------------------
+module(chatterl_web).
 
 -behaviour(gen_server).
 
--define(CONTENT, <<"<html><head><title>Hello</title></head><body>Hello!</body></html>">>).
+-define(CONTENT, <<"<html><head><title>Hello</title></head><body>Welcome to Chatterl</body></html>">>).
 
 %% API
 -export([start_link/1]).
