@@ -15,7 +15,7 @@
 %%%
 %%% In the future we will have a client supervisor that will handle these
 %%% processes, but not before we have branched off and started to implement
-%%% a replacement client frontend for the system (Erlang & web based).
+%%% a replacement client frontend for the system (Erlang and web based).
 %%% @end
 %%% @copyright 2008 by Yomi Colledge <yomi@boodah.net>
 %%%-------------------------------------------------------------------
@@ -38,7 +38,7 @@
 %%====================================================================
 %%--------------------------------------------------------------------
 %% @doc
-%% Starts the client
+%% Connects the client to Chatterl
 %%
 %% @spec start(Client) -> {ok,Pid} | ignore | {error,Error} 
 %% @end
@@ -48,7 +48,10 @@ start(Client) ->
 
 %%--------------------------------------------------------------------
 %% @doc
-%% Stops the client
+%% Stops the client, disconnecting them from Chatterl all together.
+%%
+%% Tells all joined groups and the server to drop the client from the
+%% system.
 %%
 %% @spec stop() -> stopped
 %% @end
@@ -103,7 +106,7 @@ list_users(GroupName) ->
     
 %%--------------------------------------------------------------------
 %% @doc
-%% Allows a client to join a group
+%% Allows a client to join a specific group
 %%
 %% @spec join(Group) -> {ok,Msg} | {error,Error}
 %% @end
@@ -113,7 +116,7 @@ join(Group) ->
 
 %%--------------------------------------------------------------------
 %% @doc
-%% Allows the uesr to drop their selves from a group
+%% Allows the uesr to drop from a group
 %%
 %% @spec drop(Group) -> {ok,Msg} | {error,Error}
 %% @end
@@ -162,11 +165,15 @@ private_msg(Client,Msg) ->
 %%====================================================================
 %% gen_server callbacks
 %%====================================================================
-
 %%--------------------------------------------------------------------
 %% @private
 %% @doc
 %% Initiates the server
+%%
+%% Checks to see if the client can connect to Chatterl, if an error is
+%% encountered we stop the process as nothing can be done without it.
+%% Otherwise it stores the clients name and initialises a list ready to
+%% store the groups.
 %%
 %% @spec init(Args) -> {ok, State} |
 %%                         {ok, State, Timeout} |
@@ -189,7 +196,7 @@ init([Client]) ->
 
 %%--------------------------------------------------------------------
 %% @doc
-%% Handles the clients call messages
+%% Handles all our calls to the client process
 %%
 %% @spec handle_call(Request, From, State) -> {reply, Reply, State} |
 %%                                      {reply, Reply, State, Timeout} |
@@ -255,8 +262,9 @@ handle_info(Info, State) ->
 %% @doc
 %% Disconnects the client from the client.
 %%
-%% @todo Refactor so that the reason is passed with the disconnect.
+%% Removes the client from Chatterl.
 %%
+%% @todo Refactor so that the reason is passed with the disconnect.
 %% @spec terminate(Reason, State) -> ok
 %% @end
 %%--------------------------------------------------------------------
@@ -301,6 +309,10 @@ clean_user_list(CleanList,[]) ->
 %% @doc
 %% Determines the action that needs to be taken out on a group
 %%
+%% Is used by the client API to simply the calls made to drop and join
+%% as both pieces of functionality are simular, it made sense to refactor
+%% them into the below code.
+%%
 %% @spec determine_group_action(Action,Group) -> {ok,Message}
 %%                                               | {error,Error}
 %% @end
@@ -323,8 +335,12 @@ determine_group_action(Action,Group) ->
 %%--------------------------------------------------------------------
 %% @private
 %% @doc
-%% Sets up the connection between the client and the group
+%% Makes a call to our Chatterl client.
 %%
+%% Used by determine_group_action to carry out a actual call to our
+%% client process.
+%%
+%% @see determine_group_action
 %% @spec group_action(GroupCall,ClientCall,GroupPid) -> {ok,joined_group} | {error,Error}
 %% @end
 %%--------------------------------------------------------------------
