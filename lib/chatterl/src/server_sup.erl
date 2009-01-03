@@ -52,6 +52,7 @@ start_link() ->
 %% @end
 %%--------------------------------------------------------------------
 init([]) ->
+    process_flag(trap_exit, true),
     RestartStrategy = one_for_all,
     MaxRestarts = 1000,
     MaxSecondsBetweenRestarts = 3600,
