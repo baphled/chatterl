@@ -2,11 +2,15 @@
 %%% @author  Yomi Colledge <yomi@boodah.net>
 %%% @doc Web interface for Chatterl
 %%%
-%%% Initially will be used as a was to simply interact with Chatterl
+%%% Chatterl Administration web interface
 %%%
-%%% The idea is to use this module to handle all our web based
-%%% interaction passing them off to the nessary process and waiting
-%%% for the response.
+%%% Allows Chatterl admins to manipulate Chatterl.
+%%%
+%%% Eventually this will also handle adding plug-ins to the system
+%%% and activating various modules (chat bots, FB Connect, etc).
+%%%
+%%% This will be seperate from the actual REST web server which
+%%% will be used primarily for clients only.
 %%% @end
 %%% @copyright 2008 Yomi Akindayini
 %%%---------------------------------------------------------------
