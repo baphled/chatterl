@@ -36,7 +36,7 @@
 %% Function: start_link() -> {ok,Pid} | ignore | {error,Error}
 %% Description: Starts the server
 %%--------------------------------------------------------------------
-start_link(Port) ->
+start(Port) ->
     gen_server:start_link({local, ?SERVER}, ?MODULE, [Port], []).
 
 %%====================================================================
@@ -51,8 +51,11 @@ start_link(Port) ->
 %% Description: Initiates the server
 %%--------------------------------------------------------------------
 init([Port]) ->
+    io:format("Initialising Chatterl Web Interface~n"),
+    process_flag(trap_exit, true),
     mochiweb_http:start([{port, Port}, {loop, fun(Req) ->
 						     Req:ok({"text/html", ?CONTENT}) end}]),
+    erlang:monitor(process,mochiweb_http),
     {ok, #state{}}.
 
 %%--------------------------------------------------------------------
@@ -83,6 +86,8 @@ handle_cast(_Msg, State) ->
 %%                                       {stop, Reason, State}
 %% Description: Handling all non call/cast messages
 %%--------------------------------------------------------------------
+handle_info({'DOWN', _, _, {mochiweb_http, _}, _}, State) ->
+    {stop,normal,State};
 handle_info(_Info, State) ->
     {noreply, State}.
 
