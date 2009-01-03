@@ -377,21 +377,14 @@ group_exists(Group) ->
 %% @doc
 %% Sends shutdown messages to all groups in the list.
 %%
-%% @spec group_exists(Group) -> void()
+%% @spec shutdown_groups(GroupNam) -> void()
 %% @end
 %%--------------------------------------------------------------------
 shutdown_groups(GroupNames) ->
+    io:format("Shutting down groups~n"),
     lists:foreach(
       fun(GroupName) ->
-	      case gen_server:call({global, chatterl_serv},
-				   {group_exists,GroupName}, infinity) of
-		  true ->
-		      io:format("Dropping group ~w...~n",[GroupName]),
-		      gen_server:call({global,GroupName},stop,infinity);
-		  false ->
-		      io:format("~w to send shutdown to~n",[GroupName]);
-		  _ ->
-		      io:format("Error sending terminate ~w~n",[GroupName])
-	      end
+	      io:format("Dropping group ~w...~n",[GroupName]),
+	      gen_server:call({global,GroupName},stop,infinity)
       end,
       GroupNames).
