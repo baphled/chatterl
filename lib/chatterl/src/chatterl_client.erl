@@ -1,8 +1,21 @@
 %%%-------------------------------------------------------------------
 %%% @author Yomi Colledge <yomi@boodah.net>
 %%% @doc
-%%% Basic client for chat system, used to interact with chatterl_serv
-%%% and chatterl_groups
+%%% Basic client for chat system, used to interact with Chatterl.
+%%%
+%%% Each time a client starts a process they are automatically connected
+%%% to a Chatterl server, once this is done the user is able to join
+%%% various groups on the server.
+%%%
+%%% There are no restrictions to the number of groups a user can connect
+%%% to, so the user is free to join as many as they please.
+%%%
+%%% Clients can send messages to a specific group or to another client as
+%%% well as being able to what groups they are connected to.
+%%%
+%%% In the future we will have a client supervisor that will handle these
+%%% processes, but not before we have branched off and started to implement
+%%% a replacement client frontend for the system (Erlang & web based).
 %%% @end
 %%% @copyright 2008 by Yomi Colledge <yomi@boodah.net>
 %%%-------------------------------------------------------------------
@@ -106,7 +119,7 @@ join(Group) ->
 %% @end
 %%--------------------------------------------------------------------
 drop(Group) ->
-    determine_group_action(join,Group).
+    determine_group_action(drop,Group).
 
 %%--------------------------------------------------------------------
 %% @doc
@@ -242,12 +255,15 @@ handle_info(Info, State) ->
 %% @doc
 %% Disconnects the client from the client.
 %%
-%% @spec terminate(Reason, State) -> void()
+%% @todo Refactor so that the reason is passed with the disconnect.
+%%
+%% @spec terminate(Reason, State) -> ok
 %% @end
 %%--------------------------------------------------------------------
 terminate(Reason, State) ->
     GroupsList = gb_trees:values(State#client.groups),
-    gen_server:call({global, chatterl_serv}, {disconnect,State#client.name,GroupsList}, infinity),
+    gen_server:call({global, chatterl_serv},
+		    {disconnect,State#client.name,GroupsList}, infinity),
     io:format("~p is disconnecting...~p~n", [State#client.name,Reason]),
     ok.
 %%--------------------------------------------------------------------
