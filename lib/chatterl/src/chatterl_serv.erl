@@ -1,7 +1,13 @@
 %%%-------------------------------------------------------------------
 %%% @author Yomi Colledge <yomi@boodah.net>
 %%% @doc
-%%% Handles the groups and client processes
+%%% Chatterl server process used to manipulate Chatterl
+%%%
+%%% This module is the main backend for Chatterl it managers who is
+%%% connected, what groups are available and who is connected to them.
+%%%
+%%% In the near future this module will be refactored and renamed to
+%%% allow for registered users to interact with directly or via the web.
 %%% @end
 %%% @copyright 2008 by Yomi Colledge <yomi@boodah.net>
 %%%-------------------------------------------------------------------
