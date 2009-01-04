@@ -6,8 +6,11 @@
 %%%
 %%% Handles our Chatterl web interfaces taking the port as a parameter,
 %%% primarily the admin cp. This supervisor will ultimately supervise
-%%% both the admin & server web interface processes.
+%%% both the admin and server web interface processes.
 %%% @end
+%%% @todo Need to refactor web interface so that that there is a
+%%% delay if the port is already in use.
+%%%
 %%% @copyright 2008 Yomi Akindayini
 %%%----------------------------------------------------------------
 -module(web_sup).
