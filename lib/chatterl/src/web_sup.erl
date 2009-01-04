@@ -4,9 +4,9 @@
 %%% Supervisor for the Chatterl Web Interfaces, is linked to the
 %%% main Chatterl supervisor.
 %%%
-%%% Handles our Chatterl web interfaces, primarily the admin cp.
-%%% This supervisor will ultimately supervise both the admin & server
-%%% web interface processes.
+%%% Handles our Chatterl web interfaces taking the port as a parameter,
+%%% primarily the admin cp. This supervisor will ultimately supervise
+%%% both the admin & server web interface processes.
 %%% @end
 %%% @copyright 2008 Yomi Akindayini
 %%%----------------------------------------------------------------
