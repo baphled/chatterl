@@ -113,6 +113,7 @@ handle_info(_Info, State) ->
 %% along side it.
 %%
 %% @spec terminate({node,Reason},State) -> void()
+%% @todo Needs a time out for when the port is already in use.
 %% @end
 %%--------------------------------------------------------------------
 terminate(_Reason, _State) ->
