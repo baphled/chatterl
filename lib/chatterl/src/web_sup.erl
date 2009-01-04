@@ -65,7 +65,7 @@ init([Port]) ->
     Shutdown = 2000,
     Type = worker,
 
-    WebInterface = {'WebInterface', {chatterl_web, start, [Port]},
+    WebInterface = {chatterl_web, {chatterl_web, start, [Port]},
               Restart, Shutdown, Type, [chatterl_web]},
     {ok, {SupFlags, [WebInterface]}}.
 
