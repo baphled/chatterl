@@ -24,7 +24,7 @@ cd chatterl &amp;&amp;
 sinan doc &amp;&amp; 
 sinan dist &amp;&amp;
 cd _/build/development/tar &amp;&amp;
-sudo faxien install-release chatterl-0.1.0.2.tar.gz</code></pre>
+sudo faxien install-release chatterl-0.1.1.0.tar.gz</code></pre>
 
 The above presumes that you have Sinan configured &amp; installed, if you haven't refer to erlware.
 You will need to change to cookie &amp; name values to something else, doing so should drop you into the erlang shell &amp; ready to run the Chatterl application. To run a client on a different machine you will need to do the above if  (making sure that the -sname is not the same as any other connected nodes &amp; that the cookie is the same) if connecting on the same box simply cd to the ebin directory and run the following command:
@@ -60,9 +60,9 @@ Once you receive the infamous pong response you are ready to roll.
 == Useage ==
 <b>Starting the server</b> -
 Chatterl server runs as an OTP application and uses a supervisor to manage it (in later versions there will be options to spawn multiple servers, allowing for a more fault tolerant chat system). To start up the server you simply need to run the following command:
-<pre><code>application:start(chatterl).</code></pre>
+<pre><code>erl -s chatterl</code></pre>
 
-Which will initialise the server allowing clients to connect and groups to be created. Groups can be created on differing nodes as long as the node can communicate with the chatterl_serv.
+Which will initialise the server and the admin web interface allowing clients to connect and groups to be created and admin the ability to manage the system. Groups can be created on differing nodes as long as the node can communicate with the chatterl_serv.
 
 <b>Starting a group</b> -
 Chatterl groups can be started on any node that can communicate with the server, this allows the user to create a number of groups on varying nodes, helping with general organisation as well a performance and reliablity.
