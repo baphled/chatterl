@@ -102,7 +102,8 @@ handle_cast(_Msg, State) ->
 %% @end
 %%--------------------------------------------------------------------
 handle_info({'DOWN', _Ref, _Process, {mochiweb_http, Host}, Reason}, State) ->
-    {stop,{Host,Reason},State};
+    io:format("Unable to start mochiweb on ~s:~nReason: ~s~",[Host,Reason]),
+    {stop,normal,State};
 handle_info(_Info, State) ->
     {noreply, State}.
 
@@ -114,8 +115,8 @@ handle_info(_Info, State) ->
 %% @spec terminate({node,Reason},State) -> void()
 %% @end
 %%--------------------------------------------------------------------
-terminate({Node,Reason}, _State) ->
-    io:format("Shutting down ChatterlWeb on: ~s~n:Reason: ~s~n",[Node,Reason]),
+terminate(Reason, _State) ->
+    io:format("Shutting down ChatterlWeb on: ~s...~n",[node(self())),
     mochiweb_http:stop(),
     ok.
 
