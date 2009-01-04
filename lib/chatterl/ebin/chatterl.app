@@ -6,6 +6,6 @@
    {modules, [chatterl, chatterl_groups, chatterl_client, chatterl_web, chatterl_serv, chatterl_sup,server_sup,web_sup]},
    {registered,[chatterl.groups, chatterl,serv,chatterl_web, chatterl_sup]},
    {applications, [kernel, stdlib,mochiweb]},
-   {mod, {chatterl,[9000]}},
+   {mod, {chatterl,9000}},
    {start_phases, []}]}.
 
