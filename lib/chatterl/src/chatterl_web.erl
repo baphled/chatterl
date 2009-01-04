@@ -33,8 +33,11 @@
 %% API
 %%====================================================================
 %%--------------------------------------------------------------------
-%% Function: start() -> {ok,Pid} | ignore | {error,Error}
-%% Description: Starts the server
+%% @doc
+%% Starts the server
+%%
+%% @spec start() -> {ok,Pid} | ignore | {error,Error}
+%% @end
 %%--------------------------------------------------------------------
 start(Port) ->
     gen_server:start_link({local, ?SERVER}, ?MODULE, [Port], []).
@@ -44,11 +47,14 @@ start(Port) ->
 %%====================================================================
 
 %%--------------------------------------------------------------------
+%% @doc
+%% Initiates the server
+%%
 %% Function: init(Args) -> {ok, State} |
 %%                         {ok, State, Timeout} |
 %%                         ignore               |
 %%                         {stop, Reason}
-%% Description: Initiates the server
+
 %%--------------------------------------------------------------------
 init([Port]) ->
     io:format("Initialising Chatterl Web Interface~n"),
@@ -59,32 +65,41 @@ init([Port]) ->
     {ok, #state{}}.
 
 %%--------------------------------------------------------------------
-%% Function: %% handle_call(Request, From, State) -> {reply, Reply, State} |
+%% @doc
+%% Description: Handling call messages
+%%
+%% @spec handle_call(Request, From, State) -> {reply, Reply, State} |
 %%                                      {reply, Reply, State, Timeout} |
 %%                                      {noreply, State} |
 %%                                      {noreply, State, Timeout} |
 %%                                      {stop, Reason, Reply, State} |
 %%                                      {stop, Reason, State}
-%% Description: Handling call messages
+%% @end
 %%--------------------------------------------------------------------
 handle_call(_Request, _From, State) ->
     Reply = ok,
     {reply, Reply, State}.
 
 %%--------------------------------------------------------------------
-%% Function: handle_cast(Msg, State) -> {noreply, State} |
+%% @doc
+%% Handling cast messages
+%%
+%% @spec handle_cast(Msg, State) -> {noreply, State} |
 %%                                      {noreply, State, Timeout} |
 %%                                      {stop, Reason, State}
-%% Description: Handling cast messages
+%% @end
 %%--------------------------------------------------------------------
 handle_cast(_Msg, State) ->
     {noreply, State}.
 
 %%--------------------------------------------------------------------
-%% Function: handle_info(Info, State) -> {noreply, State} |
+%% @doc
+%% Handling all non call/cast messages
+%%
+%% @spec handle_info(Info, State) -> {noreply, State} |
 %%                                       {noreply, State, Timeout} |
 %%                                       {stop, Reason, State}
-%% Description: Handling all non call/cast messages
+%% @end
 %%--------------------------------------------------------------------
 handle_info({'DOWN', _Ref, _Process, {mochiweb_http, Host}, Reason}, State) ->
     {stop,{Host,Reason},State};
@@ -92,20 +107,25 @@ handle_info(_Info, State) ->
     {noreply, State}.
 
 %%--------------------------------------------------------------------
-%% Function: terminate(Reason, State) -> void()
-%% Description: This function is called by a gen_server when it is about to
-%% terminate. It should be the opposite of Module:init/1 and do any necessary
-%% cleaning up. When it returns, the gen_server terminates with Reason.
-%% The return value is ignored.
+%% @doc
+%% Terminates Chatterl Web Interface, making sure to shutdown mochiweb
+%% along side it.
+%%
+%% @spec terminate({node,Reason},State) -> void()
+%% @end
 %%--------------------------------------------------------------------
-terminate(Reason, _State) ->
-    io:format("Shutting down ChatterlWeb: ~s~n",[Reason]),
+terminate({Node,Reason}, _State) ->
+    io:format("Shutting down ChatterlWeb on: ~s~n:Reason: ~s~n",[Node,Reason]),
     mochiweb_http:stop(),
     ok.
 
 %%--------------------------------------------------------------------
-%% Func: code_change(OldVsn, State, Extra) -> {ok, NewState}
-%% Description: Convert process state when code is changed
+%% @doc
+%%
+%% Convert process state when code is changed
+%% @spec code_change(OldVsn, State, Extra) -> {ok, NewState}
+%%
+%% @end
 %%--------------------------------------------------------------------
 code_change(_OldVsn, State, _Extra) ->
     {ok, State}.
