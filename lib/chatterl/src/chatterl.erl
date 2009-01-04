@@ -8,7 +8,7 @@
 %%% @end
 %%% @copyright 2008 Yomi Colledge
 %%%----------------------------------------------------------------,
--module(chatterl_app).
+-module(chatterl).
 
 -behaviour(application).
 
