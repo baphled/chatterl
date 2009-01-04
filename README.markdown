@@ -1,4 +1,4 @@
-<h1>Erlang based chat system</h1>
+<h1>Erlang based chat system vsn 0.1.1.0</h1>
 
 This system is OTP based and uses sinan (erlware) to compile it's sources, see faxien (http://www.erlware.com) for more details.
 
@@ -14,6 +14,7 @@ The main focus of this project is to create a chat system that is highly reliabl
 <h2>Features</h2>
 <ul>
 <li>Client login/logout to chatterl.</li>
+<li>Chatterl Admin Web Interface</li>
 <li>View chatterl groups.</li>
 <li>View chatterl users.</li>
 <li>Login/logout of a chatterl group.</li>
@@ -28,29 +29,33 @@ The main focus of this project is to create a chat system that is highly reliabl
 <li>User registration.</li>
 <li>FB Connect.</li>
 <li>Chat bots (AIML).</li>
-<li>Web interface/API.</li>
 <li>Chat modules handler(banning, censorship, chatbots).</li>
 </ul>
 
 <h2>Installation</h2>
 <p>To compile run:
-<pre><code>sinan build</code></pre>
-within the root directory of the source file, this will create the _build directory to which the binary files can be located.</p>
+<pre><code>sinan dist</code></pre>
+
+To install:
+<pre><code>faxien install-release _build/development/tar/chatterl-0.1.1.0.tar.gz</code></pre>
+Which will install Chatterl within your Erlware directory</p>
 
 <h2>Useage</h2>
 <b>Starting the server</b>
-Chatterl server runs as an OTP application and uses a supervisor to manage it (in later versions there will be options to spawn multiple servers, allowing for a more fault tolerant chat system). To start up the server you simply need to run the following command:
-<pre><code>application:start(chatterl).</code></pre>
+Chatterl server runs as an OTP application and uses a supervisor to manage it (in later versions there will be options to spawn multiple servers, allowing for a more fault tolerant chat system). To start up the server you simply need to run the following command from your shell (tested in unix & osx):
+<pre><code>erl -s chatterl -name foo.</code></pre>
 Which will initialise the server allowing clients to connect and groups to be created. Groups can be created on differing nodes as long as the node can communicate with the chatterl_serv.
 
 <b>Starting a group</b>
 Chatterl groups can be started on any node that can communicate with the server, this allows the user to create a number of groups on varying nodes, helping with general organisation as well a performance and reliablity. 
 
 A group can be initialised by calling the command:
+<pre><code>chatterl_groups:start("room","desription").</code></pre>
+or
 <pre><code>chatterl_serv:create("room","description").</code></pre>
 which will create a group process which users can connect to.
 
-<b>Connection to chatterl</b>
+<b>Connection to Chatterl</b>
 At the time of this writing chatterl_clients can only spawn a client per node, this will later be changed once the web interface, possibly to a parameterised module.
 For the moment node users must follow the basic OTP configurations (same cookie, valid DNS name, etc). Creating a connection to the server is done by using the following command.
 <pre><code>chatter_client:start(UserName).</code></pre>
