@@ -86,8 +86,8 @@ handle_cast(_Msg, State) ->
 %%                                       {stop, Reason, State}
 %% Description: Handling all non call/cast messages
 %%--------------------------------------------------------------------
-handle_info({'DOWN', _, _, {mochiweb_http, _}, _}, State) ->
-    {stop,normal,State};
+handle_info({'DOWN', _Ref, _Process, {mochiweb_http, Host}, Reason}, State) ->
+    {stop,{Host,Reason},State};
 handle_info(_Info, State) ->
     {noreply, State}.
 
