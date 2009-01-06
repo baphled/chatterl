@@ -18,7 +18,7 @@
 
 -behaviour(gen_server).
 
--define(CONTENT, <<"<html><head><title>Hello</title></head><body>Welcome to Chatterl</body></html>">>).
+-define(CONTENT, <<"<html><head><title>Hello</title></head><body>Welcome to <a href='/admin/'>Chatterl Admin</a></body></html>">>).
 
 %% API
 -export([start/1]).
@@ -59,8 +59,7 @@ start(Port) ->
 init([Port]) ->
     io:format("Initialising Chatterl Web Interface~n"),
     process_flag(trap_exit, true),
-    mochiweb_http:start([{port, Port}, {loop, fun(Req) ->
-						     Req:ok({"text/html", ?CONTENT}) end}]),
+    mochiweb_http:start([{port, Port}, {loop, fun dispatch_requests/1}]),
     erlang:monitor(process,mochiweb_http),
     {ok, #state{}}.
 
@@ -78,7 +77,12 @@ init([Port]) ->
 %%--------------------------------------------------------------------
 handle_call(_Request, _From, State) ->
     Reply = ok,
-    {reply, Reply, State}.
+    {reply, Reply, State};
+handle_call({Unknown, Req}, _From, State) ->
+    Req:response({404, [{"Content-Type", "text/plain"}],
+		 subst("Unknown action: ~s", [Unknown])}),
+    {reply,Req,State}.
+    
 
 %%--------------------------------------------------------------------
 %% @doc
@@ -135,3 +139,18 @@ code_change(_OldVsn, State, _Extra) ->
 %%--------------------------------------------------------------------
 %%% Internal functions
 %%--------------------------------------------------------------------
+dispatch_requests(Req) ->
+    Path = Req:get(path),
+    Action = clean_path(Path),
+    gen_server:call(?MODULE,{Action, Req}, infinity).
+
+subst(Template, Values) when is_list(Values) ->
+    list_to_binary(lists:flatten(io_lib:fwrite(Template, Values))).
+
+clean_path(Path) ->
+    case string:str(Path, "?") of
+	0 ->
+	    Path;
+	N ->
+	    string:substr(Path, 1, string:len(Path) - (N + 1))
+    end.
