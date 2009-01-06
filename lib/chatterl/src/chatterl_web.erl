@@ -79,12 +79,9 @@ init([Port]) ->
 %%                                      {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_call({Unknown, Req}, _From, State) ->
-    Req:response({"404", [{"Content-Type", "text/plain"}],
-		 subst("Unknown action: ~s~n", [Unknown])}),
-    {reply,Req,State}.
+handle_call(_Rquest, _From, State) ->
+    {reply,ok,State}.
     
-
 %%--------------------------------------------------------------------
 %% @doc
 %% Handling cast messages
@@ -140,6 +137,13 @@ code_change(_OldVsn, State, _Extra) ->
 %%--------------------------------------------------------------------
 %%% Internal functions
 %%--------------------------------------------------------------------
+handle("/send", Req) ->
+  Params = Req:parse_qs(),
+  Sender = proplists:get_value("nick", Params),
+  Addressee = proplists:get_value("to", Params),
+  Message = proplists:get_value("msg", Params),
+  chatterl_midman:send_message(Sender, Addressee, Message),
+  success(Req, ?OK).
 
 subst(Template, Values) when is_list(Values) ->
     list_to_binary(lists:flatten(io_lib:fwrite(Template, Values))).
