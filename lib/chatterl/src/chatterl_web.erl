@@ -21,7 +21,7 @@
 -define(CONTENT, <<"<html><head><title>Hello</title></head><body>Welcome to <a href='/admin/'>Chatterl Admin</a></body></html>">>).
 
 %% API
--export([start/1]).
+-export([start/1,dispatch_requests/1]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -42,6 +42,10 @@
 start(Port) ->
     gen_server:start_link({local, ?SERVER}, ?MODULE, [Port], []).
 
+dispatch_requests(Req) ->
+  Path = Req:get(path),
+  Action = clean_path(Path),
+  handle(Action, Req).
 %%====================================================================
 %% gen_server callbacks
 %%====================================================================
@@ -136,10 +140,6 @@ code_change(_OldVsn, State, _Extra) ->
 %%--------------------------------------------------------------------
 %%% Internal functions
 %%--------------------------------------------------------------------
-dispatch_requests(Req) ->
-    Path = Req:get(path),
-    Action = clean_path(Path),
-    gen_server:call({Action, Req}, infinity).
 
 subst(Template, Values) when is_list(Values) ->
     list_to_binary(lists:flatten(io_lib:fwrite(Template, Values))).
@@ -152,9 +152,8 @@ clean_path(Path) ->
 	    string:substr(Path, 1, string:len(Path) - (N + 1))
     end.
 
+error(Req, Body) when is_binary(Body) ->
+  Req:respond({500, [{"Content-Type", "text/plain"}], Body}).
 
-ttp(Term) ->
-    base64:encode_to_string(term_to_binary(Term)).
-
-ptt(PlainText) ->
-    binary_to_term(base64:decode(PlainText)).
+success(Req, Body) when is_binary(Body) ->
+  Req:respond({200, [{"Content-Type", "text/plain"}], Body}).
