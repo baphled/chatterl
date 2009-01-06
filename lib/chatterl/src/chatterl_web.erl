@@ -1,5 +1,5 @@
 %%----------------------------------------------------------------
-%%% @author  Yomi Colledge <yomi@boodah.net>
+%%% @Author  Yomi Colledge <yomi@boodah.net>
 %%% @doc Web interface for Chatterl
 %%%
 %%% Chatterl Administration web interface
@@ -75,12 +75,9 @@ init([Port]) ->
 %%                                      {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_call(_Request, _From, State) ->
-    Reply = ok,
-    {reply, Reply, State};
 handle_call({Unknown, Req}, _From, State) ->
-    Req:response({404, [{"Content-Type", "text/plain"}],
-		 subst("Unknown action: ~s", [Unknown])}),
+    Req:response({"404", [{"Content-Type", "text/plain"}],
+		 subst("Unknown action: ~s~n", [Unknown])}),
     {reply,Req,State}.
     
 
@@ -142,7 +139,7 @@ code_change(_OldVsn, State, _Extra) ->
 dispatch_requests(Req) ->
     Path = Req:get(path),
     Action = clean_path(Path),
-    gen_server:call(?MODULE,{Action, Req}, infinity).
+    gen_server:call({Action, Req}, infinity).
 
 subst(Template, Values) when is_list(Values) ->
     list_to_binary(lists:flatten(io_lib:fwrite(Template, Values))).
@@ -154,3 +151,10 @@ clean_path(Path) ->
 	N ->
 	    string:substr(Path, 1, string:len(Path) - (N + 1))
     end.
+
+
+ttp(Term) ->
+    base64:encode_to_string(term_to_binary(Term)).
+
+ptt(PlainText) ->
+    binary_to_term(base64:decode(PlainText)).
