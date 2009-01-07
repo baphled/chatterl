@@ -136,6 +136,14 @@ code_change(_OldVsn, State, _Extra) ->
 %%--------------------------------------------------------------------
 %%% Internal functions
 %%--------------------------------------------------------------------
+%%--------------------------------------------------------------------
+%% @doc
+%%
+%% Handles our RESTful resquests.
+%% @spec code_change(OldVsn, State, Extra) -> {ok, NewState}
+%%
+%% @end
+%%--------------------------------------------------------------------
 handle("/send", Req) ->
   Params = Req:parse_qs(),
   Sender = proplists:get_value("nick", Params),
@@ -155,9 +163,25 @@ handle("/connect", Req) ->
 handle(_, Req) ->
   error(Req, "").
 
+%%--------------------------------------------------------------------
+%% @doc
+%%
+%% Convert a list into binary ready to be sent back to the web client.
+%% @spec substr(Template,Values) -> <<Result>>
+%%
+%% @end
+%%--------------------------------------------------------------------
 subst(Template, Values) when is_list(Values) ->
     list_to_binary(lists:flatten(io_lib:fwrite(Template, Values))).
 
+%%--------------------------------------------------------------------
+%% @doc
+%%
+%% Cleans up a request so we only retrieve the path.
+%% @spec clean_path(Path) -> [Path]
+%%
+%% @end
+%%--------------------------------------------------------------------
 clean_path(Path) ->
     case string:str(Path, "?") of
 	0 ->
@@ -166,6 +190,14 @@ clean_path(Path) ->
 	    string:substr(Path, 1, string:len(Path) - (N + 1))
     end.
 
+%%--------------------------------------------------------------------
+%% @doc
+%%
+%% Handles our error responses.
+%% @spec substr(Template,Values) -> Response
+%%
+%% @end
+%%--------------------------------------------------------------------
 error(Req, Body) when is_binary(Body) ->
   Req:respond({500, [{"Content-Type", "text/plain"}], Body}).
 
