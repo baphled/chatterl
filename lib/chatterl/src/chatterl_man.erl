@@ -115,6 +115,7 @@ handle_info(_Info, State) ->
 %% The return value is ignored.
 %%--------------------------------------------------------------------
 terminate(_Reason, _State) ->
+    io:format("Terminating Chatterl Middle Man..."),
     ok.
 
 %%--------------------------------------------------------------------
