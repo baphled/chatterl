@@ -9,8 +9,8 @@
 %%% Eventually this will also handle adding plug-ins to the system
 %%% and activating various modules (chat bots, FB Connect, etc).
 %%%
-%%% This will be seperate from the actual REST web server which
-%%% will be used primarily for clients only.
+%%% Eventually this module will act as a backend to a admin & client
+%%% module.
 %%% @end
 %%% @copyright 2008 Yomi Akindayini
 %%%---------------------------------------------------------------
