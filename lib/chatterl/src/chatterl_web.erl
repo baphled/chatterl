@@ -205,7 +205,7 @@ error(Req, Body) when is_binary(Body) ->
 %% @doc
 %%
 %% Handles our successful responses.
-%% @spec error(Req,Body) -> tuple()
+%% @spec success(Req,Body) -> tuple()
 %%
 %% @end
 %%--------------------------------------------------------------------
