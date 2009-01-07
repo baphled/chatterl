@@ -1,5 +1,5 @@
 %%----------------------------------------------------------------
-%%% @Author  Yomi Colledge <yomi@boodah.net>
+%%% @author  Yomi Colledge <yomi@boodah.net>
 %%% @doc Web interface for Chatterl
 %%%
 %%% Chatterl Administration web interface
@@ -35,7 +35,7 @@
 %% @doc
 %% Starts the server
 %%
-%% @spec start() -> {ok,Pid} | ignore | {error,Error}
+%% @spec start(Port) -> {ok,Pid} | ignore | {error,Error}
 %% @end
 %%--------------------------------------------------------------------
 start(Port) ->
@@ -140,7 +140,7 @@ code_change(_OldVsn, State, _Extra) ->
 %% @doc
 %%
 %% Handles our RESTful resquests.
-%% @spec code_change(OldVsn, State, Extra) -> {ok, NewState}
+%% @spec handle(Action, Req) -> {ok, NewState}
 %%
 %% @end
 %%--------------------------------------------------------------------
@@ -167,7 +167,7 @@ handle(_, Req) ->
 %% @doc
 %%
 %% Convert a list into binary ready to be sent back to the web client.
-%% @spec substr(Template,Values) -> <<Result>>
+%% @spec subst(Template,Values) -> binary()
 %%
 %% @end
 %%--------------------------------------------------------------------
@@ -194,12 +194,20 @@ clean_path(Path) ->
 %% @doc
 %%
 %% Handles our error responses.
-%% @spec substr(Template,Values) -> Response
+%% @spec error(Req,Body) -> tuple()
 %%
 %% @end
 %%--------------------------------------------------------------------
 error(Req, Body) when is_binary(Body) ->
   Req:respond({500, [{"Content-Type", "text/plain"}], Body}).
 
+%%--------------------------------------------------------------------
+%% @doc
+%%
+%% Handles our successful responses.
+%% @spec error(Req,Body) -> tuple()
+%%
+%% @end
+%%--------------------------------------------------------------------
 success(Req, Body) when is_binary(Body) ->
   Req:respond({200, [{"Content-Type", "text/plain"}], Body}).
