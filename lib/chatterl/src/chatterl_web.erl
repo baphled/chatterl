@@ -139,7 +139,7 @@ code_change(_OldVsn, State, _Extra) ->
 handle("/send", Req) ->
   Params = Req:parse_qs(),
   Sender = proplists:get_value("nick", Params),
-  Addressee = proplists:get_value("to", Params),
+  Group = proplists:get_value("to", Params),
   Message = proplists:get_value("msg", Params),
   chatterl_man:send_message(Sender, Group, Message),
   success(Req, ?OK);
