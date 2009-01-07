@@ -74,7 +74,7 @@ init([Port]) ->
     WebMiddleMan = {chatterl_man, {chatterl_man, start, []},
 		    Restart, Shutdown, Type, [chatterl_man]},
 
-    {ok, {SupFlags, [WebInterface]}}.
+    {ok, {SupFlags, [WebInterface,WebMiddleMan]}}.
 
 %%%===================================================================
 %%% Internal functions

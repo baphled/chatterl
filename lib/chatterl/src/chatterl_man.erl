@@ -56,6 +56,7 @@ send_message(Client, Group, Message) ->
 %% Description: Initiates the server
 %%--------------------------------------------------------------------
 init([]) ->
+    io:format("Starting Chatterl Middle Man~n"),
     {ok, dict:new()}.
 
 %%--------------------------------------------------------------------
