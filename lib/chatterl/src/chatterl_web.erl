@@ -18,8 +18,7 @@
 
 -behaviour(gen_server).
 
--define(CONTENT, <<"<html><head><title>Hello</title></head><body>Welcome to <a href='/admin/'>Chatterl Admin</a></body></html>">>).
-
+-define(OK, <<"ok">>).
 %% API
 -export([start/1,dispatch_requests/1]).
 
@@ -142,8 +141,19 @@ handle("/send", Req) ->
   Sender = proplists:get_value("nick", Params),
   Addressee = proplists:get_value("to", Params),
   Message = proplists:get_value("msg", Params),
-  chatterl_midman:send_message(Sender, Addressee, Message),
-  success(Req, ?OK).
+  chatterl_man:send_message(Sender, Addressee, Message),
+  success(Req, ?OK);
+handle("/register", Req) ->
+  Params = Req:parse_qs(),
+  Nickname = proplists:get_value("nick", Params),
+  case chatterl_man:connect(Nickname) of
+    ok ->
+      success(Req, ?OK);
+    Error ->
+      error(Req, subst("Error: ~s", [Error]))
+  end;
+handle(_, Req) ->
+  error(Req, "").
 
 subst(Template, Values) when is_list(Values) ->
     list_to_binary(lists:flatten(io_lib:fwrite(Template, Values))).
