@@ -72,7 +72,7 @@ handle_call({connect, Nickname}, _From, State) ->
 		      process_flag(trap_exit, true),
 		      proxy_client([]) end),
       erlang:monitor(process, Pid),
-      gen_server:call({global, ?MODULE}, {connect,Nickname}, infinity),
+      gen_server:call({global, chatterl_serv}, {connect,Nickname}, infinity),
       {reply, ok, dict:store(Nickname, Pid, State)};
     {ok, _} ->
       {reply, {error, duplicate_nick_found}, State}
