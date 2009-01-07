@@ -151,6 +151,13 @@ handle("/send", Req) ->
   Message = proplists:get_value("msg", Params),
   chatterl_man:send_message(Sender, Group, Message),
   success(Req, ?OK);
+handle("/connect/" ++ Client, Req) ->
+    case chatterl_man:connect(Client) of
+	ok ->
+	    success(Req, ?OK);
+	Error ->
+	    error(Req, subst("Error: ~s", [Error]))
+    end;
 handle("/connect", Req) ->
   Params = Req:parse_qs(),
   Nickname = proplists:get_value("nick", Params),
