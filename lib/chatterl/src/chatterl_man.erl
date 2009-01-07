@@ -15,7 +15,7 @@
 -behaviour(gen_server).
 
 %% API
--export([start_link/0,connect/1,send_message/3]).
+-export([start/0,connect/1,send_message/3]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -28,10 +28,10 @@
 %%--------------------------------------------------------------------
 %% @doc Start Chatterl's middle man process.
 %%
-%% @spec start_link() -> {ok,Pid} | ignore | {error,Error}
+%% @spec start() -> {ok,Pid} | ignore | {error,Error}
 %% @end
 %%--------------------------------------------------------------------
-start_link() ->
+start() ->
     gen_server:start_link({global, ?SERVER}, ?MODULE, [], []).
 
 connect(Nickname) ->

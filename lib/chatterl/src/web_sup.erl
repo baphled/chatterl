@@ -69,7 +69,11 @@ init([Port]) ->
     Type = worker,
 
     WebInterface = {chatterl_web, {chatterl_web, start, [Port]},
-              Restart, Shutdown, Type, [chatterl_web]},
+		    Restart, Shutdown, Type, [chatterl_web]},
+    
+    WebMiddleMan = {chatterl_man, {chatterl_man, start, []},
+		    Restart, Shutdown, Type, [chatterl_man]},
+
     {ok, {SupFlags, [WebInterface]}}.
 
 %%%===================================================================
