@@ -1,5 +1,5 @@
 %%%----------------------------------------------------------------
-%%% @Author  Yomi Colledge <yomi@boodah.net>
+%%% @author  Yomi Colledge <yomi@boodah.net>
 %%% @doc Web interface for Chatterl
 %%%
 %%% Chatterl Administration web interface
@@ -26,8 +26,10 @@
 %% API
 %%====================================================================
 %%--------------------------------------------------------------------
-%% Function: start_link() -> {ok,Pid} | ignore | {error,Error}
-%% Description: Starts the server
+%% @doc Start Chatterl's middle man process.
+%%
+%% @spec start_link() -> {ok,Pid} | ignore | {error,Error}
+%% @end
 %%--------------------------------------------------------------------
 start_link() ->
     gen_server:start_link({global, ?SERVER}, ?MODULE, [], []).
