@@ -136,14 +136,7 @@ code_change(_OldVsn, State, _Extra) ->
 %%--------------------------------------------------------------------
 %%% Internal functions
 %%--------------------------------------------------------------------
-handle("/send", Req) ->
-  Params = Req:parse_qs(),
-  Sender = proplists:get_value("nick", Params),
-  Addressee = proplists:get_value("to", Params),
-  Message = proplists:get_value("msg", Params),
-  chatterl_man:send_message(Sender, Addressee, Message),
-  success(Req, ?OK);
-handle("/register", Req) ->
+handle("/connect", Req) ->
   Params = Req:parse_qs(),
   Nickname = proplists:get_value("nick", Params),
   case chatterl_man:connect(Nickname) of
