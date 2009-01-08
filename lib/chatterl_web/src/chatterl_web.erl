@@ -18,6 +18,7 @@ ensure_started(App) ->
 %% @spec start() -> ok
 %% @doc Start the chatterl_web server.
 start() ->
+    chatterl_web_deps:ensure(),
     ensure_started(crypto),
     application:start(chatterl_web).
 
