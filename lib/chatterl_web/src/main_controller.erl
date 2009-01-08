@@ -23,7 +23,7 @@ index(Params) ->
 
 %% Callbacks
 handle_request(index,Params) ->
-    S = Params#params.sid,
+    S = Params,
     {render, "main/index.html",[{sess_key,S}],Params}.
 
 
