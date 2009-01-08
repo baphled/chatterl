@@ -9,7 +9,7 @@
 -behaviour(supervisor).
 
 %% API
--export([start_link/1]).
+-export([start_link/0]).
 
 %% Supervisor callbacks
 -export([init/1]).
@@ -24,11 +24,11 @@
 %% @doc
 %% Starts the supervisor
 %%
-%% @spec start_link(Port) -> {ok, Pid} | ignore | {error, Error}
+%% @spec start_link() -> {ok, Pid} | ignore | {error, Error}
 %% @end
 %%--------------------------------------------------------------------
-start_link(Port) ->
-    supervisor:start_link({local, ?SERVER}, ?MODULE, [Port]).
+start_link() ->
+    supervisor:start_link({local, ?SERVER}, ?MODULE, []).
 
 %%%===================================================================
 %%% Supervisor callbacks
