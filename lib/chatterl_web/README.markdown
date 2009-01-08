@@ -1,4 +1,4 @@
-<h1>Erlang based chat system vsn 0.1.1.0</h1>
+<h1>Chatterl Web Interface vsn 0.1.0</h1>
 
 At the time of this writing the web interface is based on BeepBeep, which is still in its infancy, as this is the case the builds here are not fully sinan compliant, hopefully we'll have this resolved in the near future.
 
