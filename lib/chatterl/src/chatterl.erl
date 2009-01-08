@@ -1,3 +1,4 @@
+
 %%%----------------------------------------------------------------
 %%% @author Yomi Colledge <yomi@boodah.net>
 %%% @doc
@@ -45,8 +46,8 @@ start() ->
 %%      StartArgs = term()
 %% @end
 %%--------------------------------------------------------------------
-start(_StartType, StartArgs) ->
-    case chatterl_sup:start_link(StartArgs) of
+start(_StartType, _StartArgs) ->
+    case chatterl_sup:start_link() of
         {ok, Pid} ->
             {ok, Pid};
         Error ->

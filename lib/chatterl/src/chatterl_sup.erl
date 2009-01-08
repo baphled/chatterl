@@ -47,7 +47,7 @@ start_link(Port) ->
 %%                     {error, Reason}
 %% @end
 %%--------------------------------------------------------------------
-init([Port]) ->
+init([]) ->
     RestartStrategy = one_for_one,
     MaxRestarts = 5,
     MaxSecondsBetweenRestarts = 60,
@@ -60,9 +60,7 @@ init([Port]) ->
 
     Server = {server_sup, {server_sup, start_link, []},
               Restart, Shutdown, Type, [server_sup]},
-    Web = {web_sup, {web_sup, start_link, [Port]},
-              Restart, Shutdown, Type, [web_sup]},
-    {ok, {SupFlags, [Server,Web]}}.
+    {ok, {SupFlags, [Server]}}.
 
 %%%===================================================================
 %%% Internal functions
