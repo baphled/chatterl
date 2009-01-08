@@ -54,6 +54,10 @@ init([]) ->
     SessionServer = {beepbeep_session_server,
 		     {beepbeep_session_server,start,[]},
 		     permanent, 5000, worker, dynamic},
-    
-    Processes = [Web,SessionServer],
+
+    WebMiddleMan = {chatterl_mid_man,
+		     {chatterl_mid_man,start,[]},
+		     permanent, 5000, worker, dynamic},
+    Processes = [Web,SessionServer,WebMiddleMan
+],
     {ok, {{one_for_one, 10, 10}, Processes}}.

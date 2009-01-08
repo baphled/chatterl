@@ -11,7 +11,7 @@
 %%% @end
 %%% @copyright 2008 Yomi Colledge
 %%%---------------------------------------------------------------
--module(chatterl_man).
+-module(chatterl_mid_man).
 -behaviour(gen_server).
 
 %% API
