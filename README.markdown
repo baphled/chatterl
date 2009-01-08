@@ -43,7 +43,7 @@ Which will install Chatterl within your Erlware directory</p>
 <h2>Useage</h2>
 <b>Starting the server</b>
 Chatterl server runs as an OTP application and uses a supervisor to manage it (in later versions there will be options to spawn multiple servers, allowing for a more fault tolerant chat system). To start up the server you simply need to run the following command from your shell (tested in unix & osx):
-<pre><code>erl -s chatterl -name foo.</code></pre>
+<pre><code>erl -s chatterl -s reloader -name foo.</code></pre>
 Which will initialise the server allowing clients to connect and groups to be created. Groups can be created on differing nodes as long as the node can communicate with the chatterl_serv.
 
 <b>Starting a group</b>
