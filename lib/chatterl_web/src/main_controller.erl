@@ -1,5 +1,13 @@
-%% Sample Root Controller
-
+%%%----------------------------------------------------------------
+%%% @author  Yomi Colledge <yomi@boodah.net>
+%%% @doc Web interface Main Controller
+%%%
+%%% Chatterl Administration web interface controller
+%%%
+%%% Sends messages to middle man and passes the results to the view.
+%%% @end
+%%% @copyright 2008 Yomi Colledge
+%%%---------------------------------------------------------------
 -module(main_controller).
 
 -export([index/1]).
