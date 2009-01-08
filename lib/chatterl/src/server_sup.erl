@@ -1,12 +1,14 @@
 %%%----------------------------------------------------------------
-%%% @author  Yomi Colledge <yomi@boodah.net>
-%%% @doc Supervising all of our Chatterl based supervisors.
+%%% @author  Yomi Akindayini <yomi@boodah.net>
+%%% @doc Supervisor for the Chatterl server, is linked to the
+%%% main Chatterl supervisor.
 %%%
-%%% Basic supervision of chatterl_serv and its linked processes.
+%%% Handles our Chatterl server, which is in charge of passing mesages
+%%% around and managing groups.
 %%% @end
-%%% @copyright 2008 Yomi Colledge
+%%% @copyright 2008 Yomi Akindayini
 %%%----------------------------------------------------------------
--module(chatterl_sup).
+-module(server_sup).
 
 -behaviour(supervisor).
 
@@ -50,18 +52,19 @@ start_link() ->
 %% @end
 %%--------------------------------------------------------------------
 init([]) ->
-    RestartStrategy = one_for_one,
-    MaxRestarts = 5,
-    MaxSecondsBetweenRestarts = 60,
+    process_flag(trap_exit, true),
+    RestartStrategy = one_for_all,
+    MaxRestarts = 1000,
+    MaxSecondsBetweenRestarts = 3600,
 
     SupFlags = {RestartStrategy, MaxRestarts, MaxSecondsBetweenRestarts},
 
     Restart = permanent,
-    Shutdown = infinity,
-    Type = supervisor,
+    Shutdown = 2000,
+    Type = worker,
 
-    Server = {server_sup, {server_sup, start_link, []},
-              Restart, Shutdown, Type, [server_sup]},
+    Server = {'Server', {chatterl_serv, start, []},
+              Restart, Shutdown, Type, [chatterl_serv]},
     {ok, {SupFlags, [Server]}}.
 
 %%%===================================================================

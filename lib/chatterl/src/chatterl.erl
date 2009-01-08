@@ -1,3 +1,4 @@
+
 %%%----------------------------------------------------------------
 %%% @author Yomi Colledge <yomi@boodah.net>
 %%% @doc
@@ -8,17 +9,27 @@
 %%% @end
 %%% @copyright 2008 Yomi Colledge
 %%%----------------------------------------------------------------,
--module(chatterl_app).
+-module(chatterl).
 
 -behaviour(application).
 
 %% Application callbacks
--export([start/2, stop/1]).
+-export([start/0,start/2, stop/1]).
 
 %%%===================================================================
 %%% Application callbacks
 %%%===================================================================
-
+%%--------------------------------------------------------------------
+%% @doc
+%% This function is used to call initialise all essential applications
+%% linked to Chatterl and starts Chatterl itself.
+%%
+%% @spec start() -> {ok, Pid} | {ok, Pid, State} | {error, Reason}
+%% @end
+%%--------------------------------------------------------------------
+start() ->
+    mochiweb:start(),
+    application:start(?MODULE).
 %%--------------------------------------------------------------------
 %% @private
 %% @doc

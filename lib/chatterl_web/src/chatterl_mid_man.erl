@@ -1,40 +1,49 @@
-%%----------------------------------------------------------------
+%%%----------------------------------------------------------------
 %%% @author  Yomi Colledge <yomi@boodah.net>
 %%% @doc Web interface for Chatterl
 %%%
-%%% Initially will be used as a was to simply interact with Chatterl
+%%% Chatterl Administration web interface
 %%%
-%%% The idea is to use this module to handle all our web based
-%%% interaction passing them off to the nessary process and waiting
-%%% for the response.
+%%% Chatterl Web Interface middleman.
+%%%
+%%% Sends messages to Chatterl Serv and manages clients connected
+%%% to the interface.
 %%% @end
-%%% @copyright 2008 Yomi Akindayini
+%%% @copyright 2008 Yomi Colledge
 %%%---------------------------------------------------------------
-module(chatterl_web).
-
+-module(chatterl_mid_man).
 -behaviour(gen_server).
 
--define(CONTENT, <<"<html><head><title>Hello</title></head><body>Welcome to Chatterl</body></html>">>).
-
 %% API
--export([start_link/1]).
+-export([start/0,connect/1,send_message/3]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
 	 terminate/2, code_change/3]).
 
--record(state, {}).
-
+-define(SERVER, ?MODULE).
 %%====================================================================
 %% API
 %%====================================================================
 %%--------------------------------------------------------------------
-%% Function: start_link() -> {ok,Pid} | ignore | {error,Error}
-%% Description: Starts the server
+%% @doc Start Chatterl's middle man process.
+%%
+%% @spec start() -> {ok,Pid} | ignore | {error,Error}
+%% @end
 %%--------------------------------------------------------------------
-start_link(Port) ->
-    gen_server:start_link({local, ?MODULE}, ?MODULE, [Port], []).
+start() ->
+    gen_server:start_link({global, ?SERVER}, ?MODULE, [], []).
 
+connect(Nickname) ->
+  case gen_server:call({global, ?SERVER}, {connect, Nickname}) of
+    ok ->
+      ok;
+    {error, Error} ->
+      Error
+  end.
+
+send_message(Client, Group, Message) ->
+  gen_server:cast({global, ?SERVER}, {send_message, Client, Group, Message}).
 %%====================================================================
 %% gen_server callbacks
 %%====================================================================
@@ -46,10 +55,9 @@ start_link(Port) ->
 %%                         {stop, Reason}
 %% Description: Initiates the server
 %%--------------------------------------------------------------------
-init([Port]) ->
-    mochiweb_http:start([{port, Port}, {loop, fun(Req) ->
-						     Req:ok({"text/html", ?CONTENT}) end}]),
-    {ok, #state{}}.
+init([]) ->
+    io:format("Starting Chatterl Middle Man~n"),
+    {ok, dict:new()}.
 
 %%--------------------------------------------------------------------
 %% Function: %% handle_call(Request, From, State) -> {reply, Reply, State} |
@@ -60,9 +68,18 @@ init([Port]) ->
 %%                                      {stop, Reason, State}
 %% Description: Handling call messages
 %%--------------------------------------------------------------------
-handle_call(_Request, _From, State) ->
-    Reply = ok,
-    {reply, Reply, State}.
+handle_call({connect, Nickname}, _From, State) ->
+  case dict:find(Nickname, State) of
+    error ->
+      Pid = spawn(fun() ->
+		      process_flag(trap_exit, true),
+		      proxy_client([]) end),
+      erlang:monitor(process, Pid),
+      gen_server:call({global, chatterl_serv}, {connect,Nickname}, infinity),
+      {reply, ok, dict:store(Nickname, Pid, State)};
+    {ok, _} ->
+      {reply, {error, duplicate_nick_found}, State}
+  end.
 
 %%--------------------------------------------------------------------
 %% Function: handle_cast(Msg, State) -> {noreply, State} |
@@ -70,6 +87,14 @@ handle_call(_Request, _From, State) ->
 %%                                      {stop, Reason, State}
 %% Description: Handling cast messages
 %%--------------------------------------------------------------------
+handle_cast({send_message, Client, Group, Message}, State) ->
+  case dict:find(Client, State) of
+    error ->
+      ok;
+    {ok, Pid} ->
+      Pid ! {send_message, Client, Group, Message}
+  end,
+  {noreply, State};
 handle_cast(_Msg, State) ->
     {noreply, State}.
 
@@ -90,7 +115,7 @@ handle_info(_Info, State) ->
 %% The return value is ignored.
 %%--------------------------------------------------------------------
 terminate(_Reason, _State) ->
-    mochiweb_http:stop(),
+    io:format("Terminating Chatterl Middle Man..."),
     ok.
 
 %%--------------------------------------------------------------------
@@ -103,3 +128,12 @@ code_change(_OldVsn, State, _Extra) ->
 %%--------------------------------------------------------------------
 %%% Internal functions
 %%--------------------------------------------------------------------
+proxy_client(Messages) ->
+    receive
+	{send_message, Client,Group, Message} ->
+	    gen_server:call({global,Group},{send_msg,Client,Message}),
+	    proxy_client(Messages);
+	stop ->
+	    io:format("Proxy stopping...~n"),
+	    ok
+    end.
