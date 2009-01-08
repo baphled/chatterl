@@ -13,4 +13,4 @@
   {registered, []},
   {mod, {chatterl_web_app, []}},
   {env, []},
-  {applications, [kernel, stdlib, crypto]}]}.
+  {applications, [kernel, stdlib, crypto, mochiweb]}]}.
