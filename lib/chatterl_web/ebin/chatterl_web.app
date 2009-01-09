@@ -4,13 +4,11 @@
   {modules, [
     chatterl_web,
     chatterl_mid_man,
-    chatterl_web_web,	
-    chatterl_web_app,
+    chatterl_web_web,
     chatterl_web_sup,
     chatterl_web_deps,
     main_controller
   ]},
-  {registered, []},
-  {mod, {chatterl_web_app, []}},
-  {env, []},
+  {registered, [chatterl_web,beepbeep_session_server]},
+  {mod, {chatterl_web, []}},
   {applications, [kernel, stdlib, crypto, mochiweb]}]}.

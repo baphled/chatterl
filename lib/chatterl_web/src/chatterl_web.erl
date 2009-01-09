@@ -1,30 +1,29 @@
 %% @author author <yomi@boodah.net>
 %% @copyright 2009 Yomi Colledge.
 
-%% @doc TEMPLATE.
+%% @doc Callbacks for the chatterl_web application.
 
 -module(chatterl_web).
 -author('author <yomi@boodah.net>').
--export([start/0, stop/0]).
 
-ensure_started(App) ->
-    case application:start(App) of
-        ok ->
-            ok;
-        {error, {already_started, App}} ->
-            ok
-    end.
-        
+-behaviour(application).
+-export([start/0,start/2,stop/1]).
+
 %% @spec start() -> ok
 %% @doc Start the chatterl_web server.
 start() ->
+    crypto:start(),
+    mochiweb:start(),
     chatterl_web_deps:ensure(),
-    ensure_started(crypto),
-    application:start(chatterl_web).
+    application:start(?MODULE).
 
-%% @spec stop() -> ok
-%% @doc Stop the chatterl_web server.
-stop() ->
-    Res = application:stop(chatterl_web),
-    application:stop(crypto),
+%% @spec start(_Type, _StartArgs) -> ServerRet
+%% @doc application start callback for chatterl_web.
+start(_Type, _StartArgs) ->
+    chatterl_web_sup:start_link().
+
+%% @spec stop(_State) -> ServerRet
+%% @doc application stop callback for chatterl_web.
+stop(_State) ->
+    Res = chatterl_web_sup:stop(),
     Res.
