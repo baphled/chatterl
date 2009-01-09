@@ -25,7 +25,7 @@ index(Params) ->
 handle_request(index,Params) ->
     S = Params#params.sid,
     Groups = chatterl_mid_man:list_groups(),
-    {render, "main/index.html",[{sess_key,S},{groups,Groups},Params}.
+    {render, "main/index.html",[{sess_key,S},{groups,Groups}],Params}.
 
 
 %% Callback filter
