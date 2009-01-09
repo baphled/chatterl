@@ -9,6 +9,6 @@
     chatterl_web_deps,
     main_controller
   ]},
-  {registered, [chatterl_web,beepbeep_session_server]},
+  {registered, [chatterl_web]},
   {mod, {chatterl_web, []}},
   {applications, [kernel, stdlib, crypto, mochiweb]}]}.
