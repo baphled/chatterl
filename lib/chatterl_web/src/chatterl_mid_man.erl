@@ -15,7 +15,7 @@
 -behaviour(gen_server).
 
 %% API
--export([start/0,connect/1,send_message/3]).
+-export([start/0,connect/1,list_groups/0,send_message/3]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -44,6 +44,9 @@ connect(Nickname) ->
 
 send_message(Client, Group, Message) ->
   gen_server:cast({global, ?SERVER}, {send_message, Client, Group, Message}).
+
+list_groups() ->
+    gen_server:call({global, chatterl_serv}, list_groups, infinity).
 %%====================================================================
 %% gen_server callbacks
 %%====================================================================
