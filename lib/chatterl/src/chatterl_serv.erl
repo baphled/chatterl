@@ -110,19 +110,7 @@ create(Group, Description) ->
 %% @end
 %%--------------------------------------------------------------------
 drop(Group) ->
-    case group_exists(Group) of
-	     true -> 
-		 case gen_server:call({global, ?MODULE}, {get_group, Group}, infinity) of
-		     {_Description,Pid} ->
-			 gen_server:call(Pid, stop),
-			 gen_server:call({global, ?MODULE}, {remove_pid, Group}, infinity),
-			 unlink(Pid),
-			 {ok, "Group Dropped"};
-		     {error, Error} ->
-			 {error, Error}
-		 end;
-	     false -> {error, "Group not valid"}
-    end.
+    gen_server:call({global,?MODULE},{drop,Group},infinity).
 
 %%--------------------------------------------------------------------
 %% @doc
@@ -259,12 +247,15 @@ handle_call({create, Group, Description}, _From, State) ->
 		end
 	end,
     {reply, Reply, State#chatterl{ groups=NewTree }};
-handle_call({remove_pid, Group}, _From, State) ->
+handle_call({drop, Group}, _From, State) ->
     {Reply, NewTree} =
 	case gb_trees:is_defined(Group, State#chatterl.groups) of
 	    true ->
 		io:format("Dropping group: ~p~n",[Group]),
-		{gb_trees:lookup(Group, State#chatterl.groups),
+		{value,{_Desc,Pid}} = gb_trees:lookup(Group, State#chatterl.groups),
+		gen_server:call(Pid, stop),
+		unlink(Pid),
+		{{ok, "Group Dropped"},
 		 gb_trees:delete(Group, State#chatterl.groups)};
 	    false ->
 		{{error, {"can not find",Group}},
