@@ -40,7 +40,7 @@
 %% @end
 %%--------------------------------------------------------------------
 start() ->
-    io:format("Starting ~p...~n",[?APP]),
+    io:format("Starting ~s...~n",[?APP]),
     gen_server:start_link({global, ?SERVER}, ?MODULE, [], []).
 
 %%--------------------------------------------------------------------
@@ -159,7 +159,7 @@ list_groups() ->
 %%--------------------------------------------------------------------
 init([]) ->
     process_flag(trap_exit, true),
-    io:format("Initialising ~p...~n",[?APP]),
+    io:format("Initialising ~s...~n",[?APP]),
     {ok, #chatterl{
        groups = gb_trees:empty(),
        users = gb_trees:empty()
@@ -178,7 +178,7 @@ init([]) ->
 %% @end
 %%--------------------------------------------------------------------
 handle_call(stop, _From, State) ->
-    io:format("Processing shut down ~p~n", [?APP]),
+    io:format("Processing shut down ~s~n", [?APP]),
     {stop, normal, stopped, State};
 handle_call(list_groups, _Client, State) ->
     {reply, gb_trees:keys(State#chatterl.groups), State};
@@ -192,20 +192,21 @@ handle_call(list_users, _From, State) ->
     Reply = gb_trees:keys(State#chatterl.users),
     {reply, Reply, State};
 handle_call({connect,User}, From, State) ->
-    {Reply, NewTree} = case gb_trees:is_defined(User, State#chatterl.users) of
-			   false-> 
-			       io:format("~p connected to ~p~n", [User,?MODULE]),
-			       {{ok, "connected"},
-			gb_trees:insert(User, {User,From}, State#chatterl.users)};
-			   true -> {{error, "Unable to connect."},
-				    State#chatterl.users}
-		       end,
+    {Reply, NewTree} = 
+	case gb_trees:is_defined(User, State#chatterl.users) of
+	    false-> 
+		io:format("~s connected to ~s~n", [User,?MODULE]),
+		{{ok, "connected"},
+		 gb_trees:insert(User, {User,From}, State#chatterl.users)};
+	    true -> {{error, "Unable to connect."},
+		     State#chatterl.users}
+	end,
     {reply, Reply, State#chatterl{ users = NewTree }};
 handle_call({disconnect, User}, _From, State) ->
      {Reply,NewTree} =
 	case gb_trees:is_defined(User, State#chatterl.users) of
 	    true -> 
-		io:format("~p disconnecting...~n", [User]),
+		io:format("~s disconnecting...~n", [User]),
 		{{ok, "User dropped"},
 		 gb_trees:delete(User, State#chatterl.users)};
 	    false -> 
@@ -220,7 +221,7 @@ handle_call({disconnect, User, Groups}, _From, State) ->
 		lists:foreach(
 		  fun(Group) ->
 			  {Name,Pid} = Group,
-			  io:format("~p disconnecting from ~p...~n", [User,Name]),
+			  io:format("~s disconnecting from ~s...~n", [User,Name]),
 			  gen_server:call(Pid, {drop, User}, infinity) end,
 		  Groups),
 		{{ok, "User dropped"}, gb_trees:delete(User, State#chatterl.users)};
@@ -241,7 +242,7 @@ handle_call({create, Group, Description}, _From, State) ->
 			 State#chatterl.groups};
 		    {ok,GroupPid} ->
 			link(GroupPid),
-			io:format("Group created: ~p~n",[Group]),
+			io:format("Group created: ~s~n",[Group]),
 			{{ok, GroupPid},
 			 gb_trees:insert(Group, {Description, GroupPid}, State#chatterl.groups)}
 		end
@@ -251,7 +252,7 @@ handle_call({drop, Group}, _From, State) ->
     {Reply, NewTree} =
 	case gb_trees:is_defined(Group, State#chatterl.groups) of
 	    true ->
-		io:format("Dropping group: ~p~n",[Group]),
+		io:format("Dropping group: ~s~n",[Group]),
 		{value,{_Desc,Pid}} = gb_trees:lookup(Group, State#chatterl.groups),
 		gen_server:call(Pid, stop),
 		unlink(Pid),
@@ -367,7 +368,7 @@ shutdown_groups(GroupNames) ->
     io:format("Shutting down groups~n"),
     lists:foreach(
       fun(GroupName) ->
-	      io:format("Dropping group ~p...~n",[GroupName]),
+	      io:format("Dropping group ~s...~n",[GroupName]),
 	      gen_server:call({global,GroupName},stop,infinity)
       end,
       GroupNames).
