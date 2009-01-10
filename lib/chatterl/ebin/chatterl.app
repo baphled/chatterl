@@ -4,6 +4,7 @@
   [{description, "Erlang based chat system."},
    {vsn, "0.1.1.0"},
    {modules, [chatterl,
+	     chatterl_gateway,
    	     chatterl_groups,
 	     chatterl_client,
 	     chatterl_serv,
