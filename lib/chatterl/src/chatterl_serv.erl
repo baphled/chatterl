@@ -99,19 +99,7 @@ group_description(Group) ->
 %% @end
 %%--------------------------------------------------------------------
 create(Group, Description) ->
-    case gen_server:call({global, ?MODULE}, {create, Group, Description}, infinity) of
-	{ok, Group} ->
-	    case chatterl_groups:start(Group, Description) of
-		{error, Error} ->
-		    {error, Error};
-		{ok,GroupPid} -> 
-		    gen_server:call({global, ?MODULE}, {add_pid, Group,GroupPid}, infinity),
-		    link(GroupPid),
-		    {ok, GroupPid}
-	    end;
-	_ -> io:format("Unable create group: ~p~n", [Group]),
-	     {error, "Unable to create group"}
-    end.
+    gen_server:call({global,?MODULE},{create,Group,Description},infinity).
 
 %%--------------------------------------------------------------------
 %% @doc
@@ -205,7 +193,7 @@ handle_call(stop, _From, State) ->
     io:format("Processing shut down ~p~n", [?APP]),
     {stop, normal, stopped, State};
 handle_call(list_groups, _Client, State) ->
-    {reply, gb_trees:values(State#chatterl.groups), State};
+    {reply, gb_trees:keys(State#chatterl.groups), State};
 handle_call({get_group, Group}, _From, State) ->
     Reply = case gb_trees:lookup(Group, State#chatterl.groups) of
 		{value, Value} -> Value;
@@ -252,27 +240,24 @@ handle_call({disconnect, User, Groups}, _From, State) ->
 		{{error, "Unable to drop group."},State#chatterl.users}
 	end,
     {reply, Reply, State#chatterl{ users = NewTree }};
-handle_call({create, Group, _Description}, _From, State) ->
-    Reply =
+handle_call({create, Group, Description}, _From, State) ->
+    {Reply, NewTree} =
 	case gb_trees:is_defined(Group, State#chatterl.groups) of
 	    true ->		
 		{error, "Group already created"};
  	    false ->
-		io:format("Group created: ~p~n",[Group]),
-		{ok, Group}
+		case chatterl_groups:start(Group, Description) of
+		    {error, Error} ->
+			{{error, Error},
+			 State#chatterl.groups};
+		    {ok,GroupPid} ->
+			link(GroupPid),
+			io:format("Group created: ~p~n",[Group]),
+			{{ok, GroupPid},
+			 gb_trees:insert(Group, {Description, GroupPid}, State#chatterl.groups)}
+		end
 	end,
-    {reply, Reply, State};
-handle_call({add_pid, Group, GroupPid}, _From, State) ->
-    {Reply,NewTree} = 
-	case gb_trees:is_defined(Group, State#chatterl.groups) of
-	    true ->
-		{{error, "Groups already created"},
-		 State#chatterl.groups};
-	    false ->
-		{{ok, "Created group..."},
-		 gb_trees:insert(Group, {Group, GroupPid}, State#chatterl.groups)}
-	end,
-    {reply, Reply, State#chatterl{ groups = NewTree }};
+    {reply, Reply, State#chatterl{ groups=NewTree }};
 handle_call({remove_pid, Group}, _From, State) ->
     {Reply, NewTree} =
 	case gb_trees:is_defined(Group, State#chatterl.groups) of

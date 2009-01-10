@@ -20,7 +20,6 @@
 index(Params) ->
     gen_controller:call(?MODULE,index,Params).
 
-
 %% Callbacks
 handle_request(index,Params) ->
     S = Params#params.sid,
