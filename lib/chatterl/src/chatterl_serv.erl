@@ -113,7 +113,7 @@ drop(Group) ->
     case group_exists(Group) of
 	     true -> 
 		 case gen_server:call({global, ?MODULE}, {get_group, Group}, infinity) of
-		     {Group,Pid} ->
+		     {_Description,Pid} ->
 			 gen_server:call(Pid, stop),
 			 gen_server:call({global, ?MODULE}, {remove_pid, Group}, infinity),
 			 unlink(Pid),
@@ -244,7 +244,8 @@ handle_call({create, Group, Description}, _From, State) ->
     {Reply, NewTree} =
 	case gb_trees:is_defined(Group, State#chatterl.groups) of
 	    true ->		
-		{error, "Group already created"};
+		{{error, "Group already created"},
+		 State#chatterl.groups};
  	    false ->
 		case chatterl_groups:start(Group, Description) of
 		    {error, Error} ->
