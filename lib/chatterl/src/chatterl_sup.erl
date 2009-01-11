@@ -11,7 +11,7 @@
 -behaviour(supervisor).
 
 %% API
--export([start_link/0]).
+-export([start_link/1]).
 
 %% Supervisor callbacks
 -export([init/1]).
@@ -26,11 +26,11 @@
 %% @doc
 %% Starts the supervisor
 %%
-%% @spec start_link() -> {ok, Pid} | ignore | {error, Error}
+%% @spec start_link(Port) -> {ok, Pid} | ignore | {error, Error}
 %% @end
 %%--------------------------------------------------------------------
-start_link() ->
-    supervisor:start_link({local, ?SERVER}, ?MODULE, []).
+start_link(Port) ->
+    supervisor:start_link({local, ?SERVER}, ?MODULE, [Port]).
 
 %%%===================================================================
 %%% Supervisor callbacks
@@ -49,7 +49,7 @@ start_link() ->
 %%                     {error, Reason}
 %% @end
 %%--------------------------------------------------------------------
-init([]) ->
+init([Port]) ->
     RestartStrategy = one_for_one,
     MaxRestarts = 5,
     MaxSecondsBetweenRestarts = 60,
@@ -60,7 +60,7 @@ init([]) ->
     Shutdown = infinity,
     Type = supervisor,
 
-    Server = {server_sup, {server_sup, start_link, []},
+    Server = {server_sup, {server_sup, start_link, [Port]},
               Restart, Shutdown, Type, [server_sup]},
     {ok, {SupFlags, [Server]}}.
 

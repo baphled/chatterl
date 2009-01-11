@@ -12,6 +12,6 @@
 	     server_sup]},
    {registered,[chatterl.groups, chatterl,serv, chatterl_sup]},
    {applications, [kernel, stdlib]},
-   {mod, {chatterl,[]}},
+   {mod, {chatterl,[9000]}},
    {start_phases, []}]}.
 

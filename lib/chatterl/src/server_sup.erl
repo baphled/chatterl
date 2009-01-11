@@ -13,7 +13,7 @@
 -behaviour(supervisor).
 
 %% API
--export([start_link/0]).
+-export([start_link/1]).
 
 %% Supervisor callbacks
 -export([init/1]).
@@ -28,11 +28,11 @@
 %% @doc
 %% Starts the supervisor
 %%
-%% @spec start_link() -> {ok, Pid} | ignore | {error, Error}
+%% @spec start_link(Port) -> {ok, Pid} | ignore | {error, Error}
 %% @end
 %%--------------------------------------------------------------------
-start_link() ->
-    supervisor:start_link({local, ?SERVER}, ?MODULE, []).
+start_link(Port) ->
+    supervisor:start_link({local, ?SERVER}, ?MODULE, [Port]).
 
 %%%===================================================================
 %%% Supervisor callbacks
@@ -51,7 +51,7 @@ start_link() ->
 %%                     {error, Reason}
 %% @end
 %%--------------------------------------------------------------------
-init([]) ->
+init([Port]) ->
     process_flag(trap_exit, true),
     RestartStrategy = one_for_all,
     MaxRestarts = 1000,
@@ -63,9 +63,13 @@ init([]) ->
     Shutdown = 2000,
     Type = worker,
 
-    Server = {'Server', {chatterl_serv, start, []},
+    Server = {chatterl_serv, {chatterl_serv, start, []},
               Restart, Shutdown, Type, [chatterl_serv]},
-    {ok, {SupFlags, [Server]}}.
+
+    %% Ideally we want this supervisor to be optional
+    Gateway = {chatterl_gateway, {chatterl_gateway, start, [Port]},
+              Restart, Shutdown, Type, [chatterl_gateway]},
+    {ok, {SupFlags, [Server,Gateway]}}.
 
 %%%===================================================================
 %%% Internal functions
