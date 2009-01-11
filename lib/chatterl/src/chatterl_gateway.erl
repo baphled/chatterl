@@ -164,18 +164,6 @@ handle("/", Req) ->
     Response = to_json(#carrier{ type=error, message="Illegal method"}),
     error(Req,{"text/json",Response}).
 
-    
-%%--------------------------------------------------------------------
-%% @doc
-%%
-%% Convert a list into binary ready to be sent back to the web client.
-%% @spec subst(Template,Values) -> binary()
-%%
-%% @end
-%%--------------------------------------------------------------------
-subst(Template, Values) when is_list(Values) ->
-    list_to_binary(lists:flatten(io_lib:fwrite(Template, Values))).
-
 %%--------------------------------------------------------------------
 %% @doc
 %%
