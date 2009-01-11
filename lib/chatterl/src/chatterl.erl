@@ -14,7 +14,7 @@
 -behaviour(application).
 
 %% Application callbacks
--export([start/0,start/2, stop/1]).
+-export([start/0,start/2, stop/1,stop/0]).
 
 %%%===================================================================
 %%% Application callbacks
@@ -30,6 +30,10 @@
 start() ->
     mochiweb:start(),
     application:start(?MODULE).
+
+stop() ->
+    application:stop(?MODULE),
+    mochiweb:stop().
 %%--------------------------------------------------------------------
 %% @private
 %% @doc
@@ -46,8 +50,8 @@ start() ->
 %%      StartArgs = term()
 %% @end
 %%--------------------------------------------------------------------
-start(_StartType, _StartArgs) ->
-    case chatterl_sup:start_link() of
+start(_StartType, Port) ->
+    case chatterl_sup:start_link(Port) of
         {ok, Pid} ->
             {ok, Pid};
         Error ->
