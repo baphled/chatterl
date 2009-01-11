@@ -149,17 +149,20 @@ handle("/send", Req) ->
   Group = proplists:get_value("to", Params),
   Message = proplists:get_value("msg", Params),
   chatterl_man:send_message(Sender, Group, Message),
-  success(Req, ?OK);
+  success(Req, {"text/plain",?OK});
 %% Need to refactor so the request goes to chatterl_serv
 handle("/connect/" ++ Client,Req) ->
     case gen_server:call({global,chatterl_serv},{connect,Client}) of
 	{ok,_} ->
-	    success(Req, to_json(#carrier{ type=success, message=Client ++ "now connected"}));
+	    Response = to_json(#carrier{ type=success, message=Client ++ "now connected"}),
+	    success(Req, {"text/json",Response});
 	{error,Error} ->
-	    error(Req, to_json(#carrier{ type="Fail", message=Error}))
+	    Response = to_json(#carrier{ type="Fail", message=Error}),
+	    error(Req, {"text/json",Response})
     end;
 handle(_, Req) ->
-    error(Req,to_json(#carrier{ type='Error', message="Illegal method"})).
+    Response = to_json(#carrier{ type='Error', message="Illegal method"}),
+    error(Req,{"text/json",Response}).
 
     
 %%--------------------------------------------------------------------
@@ -212,8 +215,8 @@ error(Req, Body) when is_list(Body) ->
 %%
 %% @end
 %%--------------------------------------------------------------------
-success(Req, Body) when is_list(Body) ->
-  Req:respond({200, [{"Content-Type", "text/plain"}], list_to_binary(Body)}).
+success(Req, {ContentType,Body}) when is_list(Body) ->
+  Req:respond({200, [{"Content-Type", ContentType}], list_to_binary(Body)}).
 
 to_json(Doc) ->
     case Doc of
@@ -221,3 +224,6 @@ to_json(Doc) ->
 	    mochijson:encode({array, [Type,Message]});
 	_ -> io:format("Illegal message~n")
     end.
+
+xml_to_list(Xml,Prolog) ->
+  lists:flatten(xmerl:export_simple([Xml],xmerl_xml,[{prolog,Prolog}])).
