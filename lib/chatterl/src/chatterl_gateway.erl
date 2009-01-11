@@ -24,6 +24,7 @@
 
 -record(state, {}).
 -record(messages, {client,message}).
+%% Record used to pass our basic messages from the gateway to chatterl_web
 -record(carrier, {type,message}).
 -define(SERVER, ?MODULE).
 %%====================================================================
@@ -153,11 +154,9 @@ handle("/send", Req) ->
 handle("/connect/" ++ Client,Req) ->
     case gen_server:call({global,chatterl_serv},{connect,Client}) of
 	{ok,_} ->
-	    io:format("Connected~n"),
-	    success(Req, to_json(#carrier{ type="Success", message="Connected"}));
-	Error ->
-	    %error(Req, subst("Error: ~s", [Error]))
-	    error(Req, to_json(#carrier{ type='Fail', message=Error}))
+	    success(Req, to_json(#carrier{ type=success, message=Client ++ "now connected"}));
+	{error,Error} ->
+	    error(Req, to_json(#carrier{ type="Fail", message=Error}))
     end;
 handle(_, Req) ->
     error(Req,to_json(#carrier{ type='Error', message="Illegal method"})).
@@ -200,8 +199,8 @@ clean_path(Path) ->
 %%
 %% @end
 %%--------------------------------------------------------------------
-error(Req, Body) when is_binary(Body) ->
-  Req:respond({500, [{"Content-Type", "text/plain"}], Body}).
+error(Req, Body) when is_list(Body) ->
+  Req:respond({500, [{"Content-Type", "text/plain"}], list_to_binary(Body)}).
 
 %%--------------------------------------------------------------------
 %% @doc
@@ -213,8 +212,8 @@ error(Req, Body) when is_binary(Body) ->
 %%
 %% @end
 %%--------------------------------------------------------------------
-success(Req, Body) when is_binary(Body) ->
-  Req:respond({200, [{"Content-Type", "text/plain"}], Body}).
+success(Req, Body) when is_list(Body) ->
+  Req:respond({200, [{"Content-Type", "text/plain"}], list_to_binary(Body)}).
 
 to_json(Doc) ->
     case Doc of
