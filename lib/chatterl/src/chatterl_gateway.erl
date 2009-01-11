@@ -16,7 +16,7 @@
 
 -define(OK, <<"ok">>).
 %% API
--export([start/1,dispatch_requests/1]).
+-export([start/1,dispatch_requests/1,xml_to_list/2]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -154,14 +154,14 @@ handle("/send", Req) ->
 handle("/connect/" ++ Client,Req) ->
     case gen_server:call({global,chatterl_serv},{connect,Client}) of
 	{ok,_} ->
-	    Response = to_json(#carrier{ type=success, message=Client ++ "now connected"}),
+	    Response = to_json(#carrier{ type=success, message=Client ++ " now connected"}),
 	    success(Req, {"text/json",Response});
 	{error,Error} ->
-	    Response = to_json(#carrier{ type="Fail", message=Error}),
-	    error(Req, {"text/json",Response})
+	    Response = to_json(#carrier{ type=fail, message=Error}),
+	    success(Req, {"text/json",Response})
     end;
-handle(_, Req) ->
-    Response = to_json(#carrier{ type='Error', message="Illegal method"}),
+handle("/", Req) ->
+    Response = to_json(#carrier{ type=error, message="Illegal method"}),
     error(Req,{"text/json",Response}).
 
     
@@ -202,8 +202,8 @@ clean_path(Path) ->
 %%
 %% @end
 %%--------------------------------------------------------------------
-error(Req, Body) when is_list(Body) ->
-  Req:respond({500, [{"Content-Type", "text/plain"}], list_to_binary(Body)}).
+error(Req, {ContentType,Body}) when is_list(Body) ->
+  Req:respond({500, [{"Content-Type", ContentType}], list_to_binary(Body)}).
 
 %%--------------------------------------------------------------------
 %% @doc
@@ -224,6 +224,17 @@ to_json(Doc) ->
 	    mochijson:encode({array, [Type,Message]});
 	_ -> io:format("Illegal message~n")
     end.
+
+%% Generic message
+xml_message(Record) ->
+    case Record of
+	{carrier, Type, Message} ->
+	    xml_to_list(xml_tuple(list_to_atom(Type),Message),[]);
+	_ -> io:format("Unmatched record.~n")
+    end.
+
+xml_tuple(Type,Message) ->
+    {chatterl, [], [message,[],[{Type,[Message]}]]}.
 
 xml_to_list(Xml,Prolog) ->
   lists:flatten(xmerl:export_simple([Xml],xmerl_xml,[{prolog,Prolog}])).
