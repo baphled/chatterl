@@ -24,8 +24,12 @@
 -behaviour(gen_server).
 
 %% API
--export([start/1,stop/0,join/1,drop/1,connected_to/0,list_users/1,list_groups/0]).
--export([name/0,private_msg/2,send_msg/2]).
+%% Client based
+-export([start/1,stop/0,private_msg/2,send_msg/2]).
+%% Group based
+-export([name/0,join/1,drop/1,connected_to/0,list_groups/0]).
+%% Server based
+-export([list_users/1]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -138,6 +142,9 @@ send_msg(Group,Msg) ->
 %% @doc
 %% Sends a private message to a connected client.
 %%
+%% As this method makes a call to the clients recieve_msg, this seems
+%% like the best way to go about it.
+%%
 %% @spec private_msg(Client,Msg) -> {ok,Pid} | ignore | {error,Error}
 %% @end
 %%--------------------------------------------------------------------
@@ -211,17 +218,6 @@ handle_call({group_msg,Group,Msg},_From,State) ->
 			{ok,group_msg_sent};
 		    {error, Error} ->
 			{error, Error}
-		end
-	end,
-    {reply,Reply,State};
-handle_call({private_msg,Client,Msg},_From,State) ->
-    Reply =
-	case gen_server:call({global, chatterl_serv}, {user_lookup, Client}, infinity) of
-	    {error, Error} -> {error, Error};
-	    {ok, _ClientName, ClientPid} ->
-		case gen_server:call(ClientPid, {receive_msg, erlang:now(), State#client.name, Msg}, infinity) of
-		    ok -> {ok, msg_sent};
-		    _ -> {error, "Unable to send message!"}
 		end
 	end,
     {reply,Reply,State};

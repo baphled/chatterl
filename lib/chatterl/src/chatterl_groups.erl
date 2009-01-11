@@ -74,7 +74,7 @@ stop() ->
 %%--------------------------------------------------------------------
 init([Name,Description]) ->
     process_flag(trap_exit, true),
-    io:format("Initialising ~p...~n", [Name]),
+    io:format("Initialising ~s...~n", [Name]),
     {ok,
      #group{
        name = Name,
@@ -95,7 +95,7 @@ init([Name,Description]) ->
 %% @end
 %%--------------------------------------------------------------------
 handle_call(stop, _From, State) ->
-    io:format("Processing shut down ~p~n", [State#group.name]),
+    io:format("Processing shut down ~s~n", [State#group.name]),
     {stop, normal, stopped, State};
 handle_call(name, _From, State) ->
     Result = State#group.name,
@@ -114,7 +114,7 @@ handle_call({join, User}, From, State) ->
 	    true ->
 		{{error, "Already joined"}, State#group.users};
 	    false ->
-		io:format("~p joined ~p~n", [User,State#group.name]),
+		io:format("~s joined ~s~n", [User,State#group.name]),
 		{{ok, "User added"}, gb_trees:insert(User, {User,From}, State#group.users)}
 	end,
     {reply, Reply, State#group{users=NewTree}};
@@ -122,7 +122,7 @@ handle_call({drop, User}, _From, State) ->
     {Reply, NewTree} =
 	case gb_trees:is_defined(User, State#group.users) of
 	    true ->
-		io:format("~p disconnected from group:~p~n",[User,State#group.name]),
+		io:format("~s disconnected from group:~s~n",[User,State#group.name]),
 		{{ok, dropped},gb_trees:delete(User, State#group.users)};
 	    false ->
 		{{error, "Not connected"}, State#group.users}
@@ -133,7 +133,7 @@ handle_call({send_msg,User,Message},_From,State) ->
 	case gb_trees:is_defined(Message, State#group.messages) of
 	    false ->
 		CreatedOn = erlang:now(),
-		io:format("~p: ~p~n", [User,Message]),
+		io:format("~s: ~s~n", [User,Message]),
 		determine_user_action(State#group.name,{receive_msg,{CreatedOn,User,Message}},
 				      gb_trees:values(State#group.users)),
 		{{ok, msg_sent},
@@ -187,7 +187,7 @@ terminate(Reason, State) ->
 	true ->
 	    io:format("No users to inform of shutdown~n")
     end,
-    io:format("Shutdown ~p:~nReason:~p~n",[State#group.name,Reason]),
+    io:format("Shutdown ~s:~nReason:~s~n",[State#group.name,Reason]),
     {shutdown, State#group.name}.
 
 %%--------------------------------------------------------------------
@@ -217,12 +217,12 @@ code_change(_OldVsn, State, _Extra) ->
 determine_user_action(GroupName,{Action,PayLoad},UsersList) ->
     case Action of
 	drop_group ->
-	    GroupMsg = "Sending disconnect message to ~p~n",
+	    GroupMsg = "Sending disconnect message to ~s~n",
 	    send_msg_to_users({drop_group,GroupName},UsersList,GroupMsg);
 	receive_msg ->
 	    case PayLoad of
 		{CreatedOn,Sender,Message} ->
-		    GroupMsg = "Sending to users ~p~n",
+		    GroupMsg = "Sending to users ~s~n",
 		    send_msg_to_users({receive_msg, CreatedOn,Sender,Message},UsersList,GroupMsg);
 		_ ->
 		    {error, "Illegal payload format"}
@@ -247,7 +247,7 @@ send_msg_to_users(PayLoad,UsersList,GroupMsg) ->
 	      case gen_server:call({global, chatterl_serv},
 				   {user_lookup, Client}, infinity) of
 		  {error, Error} ->
-		      io:format("Error: ~p~n",[Error]);
+		      io:format("Error: ~s~n",[Error]);
 		  {ok, ClientName, ClientPid} ->
 		      io:format(GroupMsg,
 				[ClientName]),
