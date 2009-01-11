@@ -23,7 +23,8 @@
 	 terminate/2, code_change/3]).
 
 -record(state, {}).
--record(messages, {name,message}).
+-record(messages, {client,message}).
+-record(carrier, {title,message}).
 -define(SERVER, ?MODULE).
 %%====================================================================
 %% API
@@ -154,11 +155,13 @@ handle("/connect/" ++ Client,Req) ->
 	ok ->
 	    success(Req, ?OK);
 	Error ->
-	    error(Req, subst("Error: ~s", [Error]))
+	    %error(Req, subst("Error: ~s", [Error]))
+	    error(Req, to_json(#carrier{ title='Error', message=Error}))
     end;
 handle(_, Req) ->
-  error(Req, "").
+    error(Req,to_json(#carrier{ title='Error', message="Illegal meth"})).
 
+    
 %%--------------------------------------------------------------------
 %% @doc
 %%
@@ -212,8 +215,9 @@ error(Req, Body) when is_binary(Body) ->
 success(Req, Body) when is_binary(Body) ->
   Req:respond({200, [{"Content-Type", "text/plain"}], Body}).
 
-build_msg(Doc) ->
-    [ {name, Doc#messages.name}, {msg, Doc#messages.message}].
- 
-to_json(Doc) ->
-    mochijson:encode({struct, build_msg(Doc)}).
+to_json(Doc) when is_tuple(Doc) ->
+    case Doc of
+	{carrier, Type, Message} ->
+	    mochijson:encode({array, [Type,Message]});
+	_ -> io:format("Illegal message~n")
+    end.
