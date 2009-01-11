@@ -132,18 +132,7 @@ drop(Group) ->
 %% @end
 %%--------------------------------------------------------------------
 send_msg(Group,Msg) ->
-    case gen_server:call({global, chatterl_serv}, {get_group, Group}, infinity) of
-	false ->
-	    {error, "Unable to send message"};
-	{GroupName, GroupPid} ->
-	    {name,Client} = gen_server:call(chatterl_client, client_name, infinity),
-	    case gen_server:call(GroupPid, {send_msg, Client, Msg}, infinity) of
-		{ok, msg_sent} ->
-		    io:format("Sent message to: ~p~n",[GroupName]);
-		{error, Error} ->
-		    {error, Error}
-	    end
-    end.
+    gen_server:call(?MODULE,{group_msg,Group,Msg},infinity).
 
 %%--------------------------------------------------------------------
 %% @doc
@@ -222,6 +211,17 @@ handle_call({group_msg,Group,Msg},_From,State) ->
 			{ok,group_msg_sent};
 		    {error, Error} ->
 			{error, Error}
+		end
+	end,
+    {reply,Reply,State};
+handle_call({private_msg,Client,Msg},_From,State) ->
+    Reply =
+	case gen_server:call({global, chatterl_serv}, {user_lookup, Client}, infinity) of
+	    {error, Error} -> {error, Error};
+	    {ok, _ClientName, ClientPid} ->
+		case gen_server:call(ClientPid, {receive_msg, erlang:now(), State#client.name, Msg}, infinity) of
+		    ok -> {ok, msg_sent};
+		    _ -> {error, "Unable to send message!"}
 		end
 	end,
     {reply,Reply,State};
