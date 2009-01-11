@@ -24,7 +24,7 @@
 
 -record(state, {}).
 -record(messages, {client,message}).
--record(carrier, {title,message}).
+-record(carrier, {type,message}).
 -define(SERVER, ?MODULE).
 %%====================================================================
 %% API
@@ -151,15 +151,16 @@ handle("/send", Req) ->
   success(Req, ?OK);
 %% Need to refactor so the request goes to chatterl_serv
 handle("/connect/" ++ Client,Req) ->
-    case chatterl_man:connect(Client) of
-	ok ->
-	    success(Req, ?OK);
+    case gen_server:call({global,chatterl_serv},{connect,Client}) of
+	{ok,_} ->
+	    io:format("Connected~n"),
+	    success(Req, to_json(#carrier{ type="Success", message="Connected"}));
 	Error ->
 	    %error(Req, subst("Error: ~s", [Error]))
-	    error(Req, to_json(#carrier{ title='Error', message=Error}))
+	    error(Req, to_json(#carrier{ type='Fail', message=Error}))
     end;
 handle(_, Req) ->
-    error(Req,to_json(#carrier{ title='Error', message="Illegal meth"})).
+    error(Req,to_json(#carrier{ type='Error', message="Illegal method"})).
 
     
 %%--------------------------------------------------------------------
@@ -215,7 +216,7 @@ error(Req, Body) when is_binary(Body) ->
 success(Req, Body) when is_binary(Body) ->
   Req:respond({200, [{"Content-Type", "text/plain"}], Body}).
 
-to_json(Doc) when is_tuple(Doc) ->
+to_json(Doc) ->
     case Doc of
 	{carrier, Type, Message} ->
 	    mochijson:encode({array, [Type,Message]});
