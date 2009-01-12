@@ -163,8 +163,18 @@ handle("/connect/" ++ Client,Req) ->
 handle(_, Req) ->
     error(Req,{"text/xml",get_record("error", "Illegal method")}).
 
+%%--------------------------------------------------------------------
+%% @doc
+%%
+%% Builds and returns our carrier message, which is used to pass responses
+%% back to the client.
+%% @spec clean_path(Path) -> [Path]
+%%
+%% @end
+%%--------------------------------------------------------------------
 get_record(Type,Message) ->
     #carrier{ type=Type, message=Message}.
+
 %%--------------------------------------------------------------------
 %% @doc
 %%
@@ -272,7 +282,10 @@ to_json(Doc) ->
 %%--------------------------------------------------------------------
 %% @doc
 %%
-%% Cleans up a request so we only retrieve the path.
+%% Generatese out actual XML message.
+%%
+%% Takes the record and converts it into a tuple which can be further
+%% converted into a valid XML format using tuple_to_xml.
 %% @spec clean_path(Path) -> [Path]
 %%
 %% @end
@@ -280,15 +293,15 @@ to_json(Doc) ->
 xml_message(Record) ->
     case Record of
 	{carrier, Type, Message} ->
-	    xml_to_list(xml_tuple(Type,Message),[]);
+	    tuple_to_xml(xml_tuple(Type,Message),[]);
 	_ -> io:format("Unmatched record.~n")
     end.
 
 %%--------------------------------------------------------------------
 %% @doc
 %%
-%% Cleans up a request so we only retrieve the path.
-%% @spec clean_path(Path) -> [Path]
+%% Prepares our tuple used to generate our XML.
+%% @spec xml_tuple(Type,Message) -> {XmlBody}
 %%
 %% @end
 %%--------------------------------------------------------------------
@@ -297,11 +310,11 @@ xml_tuple(Type,Message) ->
 
 %%--------------------------------------------------------------------
 %% @doc
-%%
-%% Cleans up a request so we only retrieve the path.
-%% @spec clean_path(Path) -> [Path]
+%% Converts a tuple into XML.
+%% 
+%% @spec tuple_to_xml(Xml,Prolog) -> [XML]
 %%
 %% @end
 %%--------------------------------------------------------------------
-xml_to_list(Xml,Prolog) ->
-  lists:flatten(xmerl:export_simple([Xml],xmerl_xml,[{prolog,Prolog}])).
+tuple_to_xml(XmlTuple,Prolog) ->
+  lists:flatten(xmerl:export_simple([XmlTuple],xmerl_xml,[{prolog,Prolog}])).
