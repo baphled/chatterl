@@ -48,7 +48,7 @@
 %% @end
 %%--------------------------------------------------------------------
 start(Client) ->
-    gen_server:start_link({local, ?MODULE}, ?MODULE, [Client], []).
+    gen_server:start_link({local, Client}, ?MODULE, [Client], []).
 
 %%--------------------------------------------------------------------
 %% @doc

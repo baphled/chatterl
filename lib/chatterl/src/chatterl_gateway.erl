@@ -160,6 +160,18 @@ code_change(_OldVsn, State, _Extra) ->
 %%   chatterl_man:send_message(Sender, Group, Message),
 %%   success(Req, {"text/plain",?OK});
 %% Need to refactor so the request goes to chatterl_serv
+handle("/join/" ++ Group,Req) ->
+    Params = Req:parse_qs(),
+    Client = proplists:get_value("client", Params),
+    ContentType = "text/xml",
+    Record = 
+	case gen_server:call({global,Group},{join,Client}) of
+	    {ok,_} ->
+		get_record("success",Client ++ " joined group");
+	    {error,Error} ->
+		get_record("fail",Error)
+	end,
+    send_response(Req,{ContentType,Record});
 handle("/connect/" ++ Client,Req) ->
     ContentType = "text/xml",
     Record = 

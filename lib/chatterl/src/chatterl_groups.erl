@@ -110,7 +110,7 @@ handle_call(list_users, _From, State) ->
     {reply, Reply, State};
 handle_call({join, User}, From, State) ->
     {Reply, NewTree} =
-	case gb_trees:is_defined(User, State#group.users) of
+	case gb_trees:is_defined(User, State#group.users) andalso User /= undefined of
 	    true ->
 		{{error, "Already joined"}, State#group.users};
 	    false ->
