@@ -393,7 +393,9 @@ loop_xml_tuple(Type,Message) ->
 %% @private
 %% @doc
 %% Converts a tuple into XML.
-%% 
+%%
+%% Inspired by the below link.
+%% @see http://arandomurl.com/post/Simple-XML-in-Erlang
 %% @spec tuple_to_xml(Xml,Prolog) -> [XML]
 %%
 %% @end
