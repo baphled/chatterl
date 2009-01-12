@@ -332,7 +332,7 @@ loop_carrier(CarrierRecord) ->
 %% @end
 %%--------------------------------------------------------------------
 xml_tuple(Type,Message) ->
-    {chatterl,[],[{message,[],[{list_to_atom(Type),[],[Message]}]}]}.
+    {chatterl,[],[{response,[],[{list_to_atom(Type),[],[Message]}]}]}.
 
 result_xml_tuple(Type,Message) ->
     {list_to_atom(Type),[],[Message]}.
