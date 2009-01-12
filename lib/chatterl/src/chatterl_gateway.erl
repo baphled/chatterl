@@ -2,7 +2,8 @@
 %%% @author  Yomi Colledge <yomi@boodah.net>
 %%% @doc Web interface for Chatterl
 %%%
-%%% Chatterl Web Gateway
+%%% Chatterl Web Gateway, allowing Web based clients to interact
+%%% with Chatterl over a RESTful API.
 %%%
 %%% Allows Chatterl to interface with any web-based interface
 %%% Using JSON and XML, sending the requests off to the chatterl_serv
@@ -14,7 +15,6 @@
 
 -behaviour(gen_server).
 
--define(OK, <<"ok">>).
 %% API
 -export([start/1,dispatch_requests/1,tuple_to_xml/2]).
 
@@ -160,23 +160,6 @@ code_change(_OldVsn, State, _Extra) ->
 %%   chatterl_man:send_message(Sender, Group, Message),
 %%   success(Req, {"text/plain",?OK});
 %% Need to refactor so the request goes to chatterl_serv
-handle("/join/" ++ Group,Req) ->
-    Params = Req:parse_qs(),
-    Client = proplists:get_value("client", Params),
-    ContentType = "text/xml",
-    case gen_server:call({global,chatterl_serv},{group_exists,Group}) of
-	true ->
-	    Record = 
-		case gen_server:call({global,Group},{join,Client}) of
-		    {ok,_} ->
-			get_record("success",Client ++ " joined group");
-		    {error,Error} ->
-			get_record("fail",Error)
-		end;
-	false ->
-	    Record = get_record("error","Group: "++ Group ++ " doesn't exist")
-    end,
-    send_response(Req,{ContentType,Record});
 handle("/connect/" ++ Client,Req) ->
     ContentType = "text/xml",
     Record = 
@@ -215,6 +198,37 @@ handle("/groups/list",Req) ->
 		{"success",get_record("groups",GroupsList)}
     end,
     send_response(Req,{"text/xml",get_record(Type,Result)});
+handle("/groups/join/" ++ Group,Req) ->
+    ContentType = "text/xml",
+    Params = Req:parse_qs(),
+    Client = proplists:get_value("client", Params),
+    Name = case Client of
+	       undefined -> atom_to_list(Client);
+	       _ -> Client
+	   end,
+    Record = 
+	case gen_server:call({global,chatterl_serv},{group_exists,Group}) of
+	    true ->
+		case gen_server:call({global,chatterl_serv},{user_exists,Client}) of
+		    true ->
+			case gen_server:call({global,Group},{join,Client}) of
+			    {ok,_} ->
+				get_record("success",Client ++ " joined group");
+			    {error,Error} ->
+				get_record("fail",Error)
+			end;
+		    false ->
+			Name = 
+			    case Client of
+				undefined -> atom_to_list(Client);
+				_ -> Client
+			    end,
+			get_record("error","Client:" ++Name ++" doesn't exist")
+		end;
+	    false ->
+		get_record("error","Group: "++ Group ++ " doesn't exist")
+	end,
+    send_response(Req,{ContentType,Record});
 handle(Unknown, Req) ->
     send_response(Req,{"text/xml",get_record("error", "Unknown command: " ++Unknown)}).
 %%--------------------------------------------------------------------
