@@ -154,15 +154,14 @@ handle("/send", Req) ->
 handle("/connect/" ++ Client,Req) ->
     case gen_server:call({global,chatterl_serv},{connect,Client}) of
 	{ok,_} ->
-	    Response = to_json(#carrier{ type=success, message=Client ++ " now connected"}),
+	    Response = to_json(#carrier{ type="success", message=Client ++ " now connected"}),
 	    success(Req, {"text/json",Response});
 	{error,Error} ->
-	    Response = to_json(#carrier{ type=fail, message=Error}),
+	    Response = to_json(#carrier{ type="fail", message=Error}),
 	    success(Req, {"text/json",Response})
     end;
-handle("/", Req) ->
-    Response = to_json(#carrier{ type=error, message="Illegal method"}),
-    error(Req,{"text/json",Response}).
+handle(_, Req) ->
+    error(Req,{"text/xml",#carrier{ type="error", message="Illegal method"}}).
 
 %%--------------------------------------------------------------------
 %% @doc
@@ -190,8 +189,15 @@ clean_path(Path) ->
 %%
 %% @end
 %%--------------------------------------------------------------------
-error(Req, {ContentType,Body}) when is_list(Body) ->
-  Req:respond({500, [{"Content-Type", ContentType}], list_to_binary(Body)}).
+error(Req, {ContentType,Record}) ->
+    Response = 
+	case ContentType of
+	    "text/json" ->
+		to_json(Record);
+	    "text/xml" ->
+		xml_message(Record)
+	end,
+  Req:respond({500, [{"Content-Type", ContentType}], list_to_binary(Response)}).
 
 %%--------------------------------------------------------------------
 %% @doc
@@ -217,12 +223,12 @@ to_json(Doc) ->
 xml_message(Record) ->
     case Record of
 	{carrier, Type, Message} ->
-	    xml_to_list(xml_tuple(list_to_atom(Type),Message),[]);
+	    xml_to_list(xml_tuple(Type,Message),[]);
 	_ -> io:format("Unmatched record.~n")
     end.
 
 xml_tuple(Type,Message) ->
-    {chatterl, [], [message,[],[{Type,[Message]}]]}.
+    {chatterl,[],[message,[],{list_to_atom(Type),[Message]}]}.
 
 xml_to_list(Xml,Prolog) ->
   lists:flatten(xmerl:export_simple([Xml],xmerl_xml,[{prolog,Prolog}])).
