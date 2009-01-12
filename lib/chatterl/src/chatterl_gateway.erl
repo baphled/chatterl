@@ -40,6 +40,14 @@
 start(Port) ->
     gen_server:start_link({local, ?SERVER}, ?MODULE, [Port], []).
 
+%%--------------------------------------------------------------------
+%% @doc
+%% Dispatches our requests to the relevant handle.
+%%
+%% Uses clean_path to determine what the action is.
+%% @spec start(Port) -> {ok,Pid} | ignore | {error,Error}
+%% @end
+%%--------------------------------------------------------------------
 dispatch_requests(Req) ->
   Path = Req:get(path),
   Action = clean_path(Path),
