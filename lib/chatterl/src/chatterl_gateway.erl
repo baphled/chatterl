@@ -161,8 +161,10 @@ handle("/connect/" ++ Client,Req) ->
 	    success(Req, {"text/json",Response})
     end;
 handle(_, Req) ->
-    error(Req,{"text/xml",#carrier{ type="error", message="Illegal method"}}).
+    error(Req,{"text/xml",get_record("error", "Illegal method")}).
 
+get_record(Type,Message) ->
+    #carrier{ type=Type, message=Message}.
 %%--------------------------------------------------------------------
 %% @doc
 %%
