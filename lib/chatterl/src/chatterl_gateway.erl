@@ -143,25 +143,25 @@ code_change(_OldVsn, State, _Extra) ->
 %%
 %% @end
 %%--------------------------------------------------------------------
-handle("/send", Req) ->
-  Params = Req:parse_qs(),
-  Sender = proplists:get_value("nick", Params),
-  Group = proplists:get_value("to", Params),
-  Message = proplists:get_value("msg", Params),
-  chatterl_man:send_message(Sender, Group, Message),
-  success(Req, {"text/plain",?OK});
+%% handle("/send", Req) ->
+%%   Params = Req:parse_qs(),
+%%   Sender = proplists:get_value("nick", Params),
+%%   Group = proplists:get_value("to", Params),
+%%   Message = proplists:get_value("msg", Params),
+%%   chatterl_man:send_message(Sender, Group, Message),
+%%   success(Req, {"text/plain",?OK});
 %% Need to refactor so the request goes to chatterl_serv
 handle("/connect/" ++ Client,Req) ->
-    case gen_server:call({global,chatterl_serv},{connect,Client}) of
-	{ok,_} ->
-	    Response = to_json(get_record("success",Client ++ " now connected")),
-	    success(Req, {"text/json",Response});
-	{error,Error} ->
-	    Response = to_json(get_record("fail",Error)),
-	    success(Req, {"text/json",Response})
-    end;
+    Record = 
+	case gen_server:call({global,chatterl_serv},{connect,Client}) of
+	    {ok,_} ->
+		get_record("success",Client ++ " now connected");
+	    {error,Error} ->
+		get_record("fail",Error)
+	end,
+    send_response(Req,{ContentType,Record}).
 handle(_, Req) ->
-    error(Req,{"text/xml",get_record("error", "Illegal method")}).
+    send_response(Req,{"text/xml",get_record("error", "Illegal method")}).
 
 %%--------------------------------------------------------------------
 %% @private
@@ -210,14 +210,14 @@ success(Req, {ContentType,Body}) when is_list(Body) ->
 %% @private
 %% @doc
 %%
-%% Handles our error responses.
+%% Handlesour error responses.
 %%
-%% Will eventually be JSON and XML based
-%% @spec error(Req,Body) -> tuple()
+%% Sends responses based on the content type, which are JSON and XML.
+%% @spec send_response(Req,Body) -> tuple()
 %%
 %% @end
 %%--------------------------------------------------------------------
-error(Req, {ContentType,Record}) when is_list(ContentType) ->
+send_response(Req, {ContentType,Record}) when is_list(ContentType) ->
     Response = get_response_body(ContentType,Record),
     Code = get_response_code(Record),
     %% If we cant construct the code or have an illegal content type, we need to
