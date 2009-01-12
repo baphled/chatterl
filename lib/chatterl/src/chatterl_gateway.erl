@@ -173,21 +173,21 @@ handle("/connect/" ++ Client,Req) ->
 handle("/users/list",Req) ->
     Result =
 	case gen_server:call({global,chatterl_serv},list_users) of
-	    [] -> "No Users";
+	    [] -> get_record("users","");
 	    Users -> 
 		UsersList = [get_record("user",User)||User <- Users],
 		get_record("users",UsersList)
     end,
-    send_response(Req,{"text/xml", get_record("success",Result)});
+    send_response(Req,{"text/xml", Result});
 handle("/groups/list",Req) ->
     Result = 
 	case gen_server:call({global,chatterl_serv},list_groups) of
-	    [] -> "No Groups";
+	    [] -> get_record("groups","");
 	    Groups -> 
 		GroupsList = [get_record("group",Group)||Group <- Groups],
 		get_record("groups",GroupsList)
     end,
-    send_response(Req,{"text/xml", get_record("success",Result)});
+    send_response(Req,{"text/xml", Result});
 handle(Unknown, Req) ->
     send_response(Req,{"text/xml",get_record("error", "Unknown command: " ++Unknown)}).
 %%--------------------------------------------------------------------
