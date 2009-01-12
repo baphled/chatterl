@@ -189,7 +189,7 @@ clean_path(Path) ->
 %%
 %% @end
 %%--------------------------------------------------------------------
-error(Req, {ContentType,Record}) ->
+error(Req, {ContentType,Record}) when is_list(ContentType) ->
     Response = 
 	case ContentType of
 	    "text/json" ->
@@ -197,8 +197,27 @@ error(Req, {ContentType,Record}) ->
 	    "text/xml" ->
 		xml_message(Record)
 	end,
-  Req:respond({500, [{"Content-Type", ContentType}], list_to_binary(Response)}).
+    Code = 
+	case Record of
+	    {carrier,Type,_Message} ->
+		case Type of
+		    "fail" -> 500;
+		    "success" -> 200;
+		    _ -> 500
+		end
+	end,
+  Req:respond({Code, [{"Content-Type", ContentType}], list_to_binary(Response)}).
 
+get_response_code(Record) ->
+    case Record of
+	{carrier,Type,_Message} ->
+	    case Type of
+		"fail" -> 500;
+		"success" -> 200;
+		_ -> 500
+	    end;
+	_-> io:format("Illegal Code set ~s~n",[Record])
+    end.
 %%--------------------------------------------------------------------
 %% @doc
 %%
@@ -212,6 +231,14 @@ error(Req, {ContentType,Record}) ->
 success(Req, {ContentType,Body}) when is_list(Body) ->
   Req:respond({200, [{"Content-Type", ContentType}], list_to_binary(Body)}).
 
+%%--------------------------------------------------------------------
+%% @doc
+%%
+%% Cleans up a request so we only retrieve the path.
+%% @spec clean_path(Path) -> [Path]
+%%
+%% @end
+%%--------------------------------------------------------------------
 to_json(Doc) ->
     case Doc of
 	{carrier, Type, Message} ->
@@ -219,7 +246,14 @@ to_json(Doc) ->
 	_ -> io:format("Illegal message~n")
     end.
 
-%% Generic message
+%%--------------------------------------------------------------------
+%% @doc
+%%
+%% Cleans up a request so we only retrieve the path.
+%% @spec clean_path(Path) -> [Path]
+%%
+%% @end
+%%--------------------------------------------------------------------
 xml_message(Record) ->
     case Record of
 	{carrier, Type, Message} ->
@@ -227,8 +261,24 @@ xml_message(Record) ->
 	_ -> io:format("Unmatched record.~n")
     end.
 
+%%--------------------------------------------------------------------
+%% @doc
+%%
+%% Cleans up a request so we only retrieve the path.
+%% @spec clean_path(Path) -> [Path]
+%%
+%% @end
+%%--------------------------------------------------------------------
 xml_tuple(Type,Message) ->
     {chatterl,[],[message,[],{list_to_atom(Type),[Message]}]}.
 
+%%--------------------------------------------------------------------
+%% @doc
+%%
+%% Cleans up a request so we only retrieve the path.
+%% @spec clean_path(Path) -> [Path]
+%%
+%% @end
+%%--------------------------------------------------------------------
 xml_to_list(Xml,Prolog) ->
   lists:flatten(xmerl:export_simple([Xml],xmerl_xml,[{prolog,Prolog}])).
