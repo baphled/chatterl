@@ -308,8 +308,8 @@ xml_message(Record) ->
 	      {carrier, Type, Result} ->		
 		  case Type of
 		      "groups" ->
-			  ResultList = [result_xml_tuple(DataType,Data) || {carrier,DataType,Data} <- Result],
-			  [NewResult] = Data,
+			  TempData = [result_xml_tuple(DataType,Data) || {carrier,DataType,Data} <- Result],
+			  [ResultList] = TempData,
 			  tuple_to_xml(xml_tuple(Type,ResultList),[]);
 			  %tuple_to_xml(xml_tuple(Type,loop_xml_results(Result,[])),[]);
 		      "error" ->
