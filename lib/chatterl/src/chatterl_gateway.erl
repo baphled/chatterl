@@ -157,18 +157,18 @@ handle("/connect/" ++ Client,Req) ->
 	    Response = to_json(get_record("success",Client ++ " now connected")),
 	    success(Req, {"text/json",Response});
 	{error,Error} ->
-	    Response = to_json(#carrier{ type="fail", message=Error}),
+	    Response = to_json(get_record("fail",Error)),
 	    success(Req, {"text/json",Response})
     end;
 handle(_, Req) ->
     error(Req,{"text/xml",get_record("error", "Illegal method")}).
 
 %%--------------------------------------------------------------------
+%% @private
 %% @doc
 %%
-%% Builds and returns our carrier message, which is used to pass responses
-%% back to the client.
-%% @spec clean_path(Path) -> [Path]
+%% Builds and returns our carrier message.
+%% @spec get_record(Type,Message) -> Record
 %%
 %% @end
 %%--------------------------------------------------------------------
@@ -176,6 +176,7 @@ get_record(Type,Message) ->
     #carrier{ type=Type, message=Message}.
 
 %%--------------------------------------------------------------------
+%% @private
 %% @doc
 %%
 %% Cleans up a request so we only retrieve the path.
@@ -192,6 +193,7 @@ clean_path(Path) ->
     end.
 
 %%--------------------------------------------------------------------
+%% @private
 %% @doc
 %%
 %% Handles our successful responses.
@@ -205,6 +207,7 @@ success(Req, {ContentType,Body}) when is_list(Body) ->
   Req:respond({200, [{"Content-Type", ContentType}], list_to_binary(Body)}).
 
 %%--------------------------------------------------------------------
+%% @private
 %% @doc
 %%
 %% Handles our error responses.
@@ -222,6 +225,7 @@ error(Req, {ContentType,Record}) when is_list(ContentType) ->
     Req:respond({Code, [{"Content-Type", ContentType}], list_to_binary(Response)}).
 
 %%--------------------------------------------------------------------
+%% @private
 %% @doc
 %%
 %% Gets the actual response body to return to the client.
@@ -243,6 +247,7 @@ get_response_body(ContentType,Record) ->
     end.
 
 %%--------------------------------------------------------------------
+%% @private
 %% @doc
 %%
 %% Gets our response code depending on the type of message passed by 
@@ -266,10 +271,11 @@ get_response_code(Record) ->
     end.
 
 %%--------------------------------------------------------------------
+%% @private
 %% @doc
 %%
 %% Converts our carrier Record into a JSON format.
-%% @spec clean_path(Path) -> [Path]
+%% @spec to_json(Record) -> JSON
 %%
 %% @end
 %%--------------------------------------------------------------------
@@ -281,13 +287,14 @@ to_json(Record) ->
     end.
 
 %%--------------------------------------------------------------------
+%% @private
 %% @doc
 %%
 %% Generatese out actual XML message.
 %%
 %% Takes the record and converts it into a tuple which can be further
 %% converted into a valid XML format using tuple_to_xml.
-%% @spec clean_path(Path) -> [Path]
+%% @spec xml_message(Record) -> XML
 %%
 %% @end
 %%--------------------------------------------------------------------
@@ -299,6 +306,7 @@ xml_message(Record) ->
     end.
 
 %%--------------------------------------------------------------------
+%% @private
 %% @doc
 %%
 %% Prepares our tuple used to generate our XML.
@@ -310,6 +318,7 @@ xml_tuple(Type,Message) ->
     {chatterl,[],[message,[],{list_to_atom(Type),[Message]}]}.
 
 %%--------------------------------------------------------------------
+%% @private
 %% @doc
 %% Converts a tuple into XML.
 %% 
