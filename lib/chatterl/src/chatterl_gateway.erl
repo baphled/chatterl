@@ -402,3 +402,24 @@ loop_xml_tuple(Type,Message) ->
 %%--------------------------------------------------------------------
 tuple_to_xml(XmlTuple,Prolog) ->
   lists:flatten(xmerl:export_simple([XmlTuple],xmerl_xml,[{prolog,Prolog}])).
+
+%%--------------------------------------------------------------------
+%% @private
+%% @doc
+%% Strips out whitespaces out of out XML tuple.
+%%
+%% Extracted from the link below.
+%% @see http://arandomurl.com/post/Simple-XML-in-Erlang
+%% @spec tuple_to_xml(Xml,Prolog) -> [XML]
+%%
+%% @end
+%%--------------------------------------------------------------------
+strip_whitespace({El,Attr,Children}) ->
+  NChild = lists:filter(fun(X) ->
+    case X of
+    " " -> false;
+    _   -> true
+    end
+  end,Children),
+  Ch = lists:map(fun(X) -> strip_whitespace(X) end,NChild),
+  {El,Attr,Ch};
