@@ -170,6 +170,15 @@ handle("/connect/" ++ Client,Req) ->
 		get_record("fail",Error)
 	end,
     send_response(Req,{ContentType,Record});
+handle("users/list",Req) ->
+    Result =
+	case gen_server:call({global,chatterl_serv},list_users) of
+	    [] -> "No Users";
+	    Users -> 
+		UsersList = [get_record("user",User)||User <- Users],
+		get_record("users",UsersList)
+    end,
+    send_response(Req,{"text/xml", get_record("success",Result)});
 handle("/groups/list",Req) ->
     Result = 
 	case gen_server:call({global,chatterl_serv},list_groups) of
@@ -179,8 +188,8 @@ handle("/groups/list",Req) ->
 		get_record("groups",GroupsList)
     end,
     send_response(Req,{"text/xml", get_record("success",Result)});
-handle(_, Req) ->
-    send_response(Req,{"text/xml",get_record("error", "Illegal method")}).
+handle(Unknown, Req) ->
+    send_response(Req,{"text/xml",get_record("error", "Unknown command: " ++Unknown)}).
 %%--------------------------------------------------------------------
 %% @private
 %% @doc
