@@ -152,6 +152,7 @@ code_change(_OldVsn, State, _Extra) ->
 %%   success(Req, {"text/plain",?OK});
 %% Need to refactor so the request goes to chatterl_serv
 handle("/connect/" ++ Client,Req) ->
+    ContentType = "text/xml",
     Record = 
 	case gen_server:call({global,chatterl_serv},{connect,Client}) of
 	    {ok,_} ->
@@ -159,7 +160,7 @@ handle("/connect/" ++ Client,Req) ->
 	    {error,Error} ->
 		get_record("fail",Error)
 	end,
-    send_response(Req,{ContentType,Record}).
+    send_response(Req,{ContentType,Record});
 handle(_, Req) ->
     send_response(Req,{"text/xml",get_record("error", "Illegal method")}).
 
