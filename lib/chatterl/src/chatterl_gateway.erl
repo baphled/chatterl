@@ -148,7 +148,7 @@ code_change(_OldVsn, State, _Extra) ->
 %% @doc
 %%
 %% Handles our RESTful resquests.
-%% @spec handle(Action, Req) -> {ok, NewState}
+%% @spec handle(Action, Req) -> void()
 %%
 %% @end
 %%--------------------------------------------------------------------
@@ -426,7 +426,7 @@ loop_xml_tuple(Type,Message) ->
 %% Converts a tuple into XML.
 %%
 %% Inspired by the below link.
-%% @see http://arandomurl.com/post/Simple-XML-in-Erlang
+%% @link http://arandomurl.com/post/Simple-XML-in-Erlang
 %% @spec tuple_to_xml(Xml,Prolog) -> [XML]
 %%
 %% @end
@@ -440,7 +440,7 @@ tuple_to_xml(XmlTuple,Prolog) ->
 %% Strips out whitespaces out of out XML tuple.
 %%
 %% Extracted from the link below.
-%% @see http://arandomurl.com/post/Simple-XML-in-Erlang
+%% @link http://arandomurl.com/post/Simple-XML-in-Erlang
 %% @spec tuple_to_xml(Xml,Prolog) -> [XML]
 %%
 %% @end
