@@ -192,7 +192,7 @@ handle("/users/list",Req) ->
 handle("/groups/list",Req) ->
     Result = 
 	case gen_server:call({global,chatterl_serv},list_groups) of
-	    [] -> get_record("groups","No Groups");
+	    [] -> get_record("groups","");
 	    Groups -> 
 		GroupsList = [get_record("group",Group)||Group <- Groups],
 		get_record("groups",GroupsList)
@@ -335,7 +335,8 @@ xml_message(CarrierRecord) ->
 		    tuple_to_xml(xml_tuple(Type,RecordList),[]);
 		_ -> io:format("dont know ~s~n",[Type])
 	    end;
-	_ -> tuple_to_xml(xml_tuple(MessageType,Message),[])
+	_ -> io:format(Message), 
+	    tuple_to_xml(xml_tuple_single(MessageType,Message),[])
     end.
 
 %%--------------------------------------------------------------------

@@ -226,7 +226,7 @@ handle_call({disconnect, User, Groups}, _From, State) ->
 		  Groups),
 		{{ok, "User dropped"}, gb_trees:delete(User, State#chatterl.users)};
 	    false -> 
-		{{error, "Unable to drop group."},State#chatterl.users}
+		{{error, "Unable to drop user."},State#chatterl.users}
 	end,
     {reply, Reply, State#chatterl{ users = NewTree }};
 handle_call({create, Group, Description}, _From, State) ->
