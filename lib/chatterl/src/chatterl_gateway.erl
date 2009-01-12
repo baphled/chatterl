@@ -16,7 +16,7 @@
 
 -define(OK, <<"ok">>).
 %% API
--export([start/1,dispatch_requests/1]).
+-export([start/1,dispatch_requests/1,xml_tuple/2]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -171,15 +171,17 @@ handle("/connect/" ++ Client,Req) ->
 	end,
     send_response(Req,{ContentType,Record});
 handle("/groups/list",Req) ->
-    Result = case gen_server:call({global,chatterl_serv},list_groups) of
-	[] -> "No Groups";
-	Results -> Results
+    Result = 
+	case gen_server:call({global,chatterl_serv},list_groups) of
+	    [] -> "No Groups";
+	    Groups -> 
+		GroupsList = [get_record("group",Group)||Group <- Groups],
+		Records = get_record("groups",GroupsList),
+		io:format(Records)
     end,
-    io:format("~s",[Result]),
     send_response(Req,{"text/xml", get_record("success",Result)});
 handle(_, Req) ->
     send_response(Req,{"text/xml",get_record("error", "Illegal method")}).
-
 %%--------------------------------------------------------------------
 %% @private
 %% @doc
@@ -301,8 +303,8 @@ to_json(Record) ->
 %%--------------------------------------------------------------------
 xml_message(Record) ->
     case Record of
-	{carrier, Type, Message} ->
-	    tuple_to_xml(xml_tuple(Type,Message),[]);
+	{carrier, Type, Result} ->
+	    tuple_to_xml(xml_tuple(Type,Result),[]);
 	_ -> io:format("Unmatched record.~n")
     end.
 
