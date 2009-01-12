@@ -16,7 +16,7 @@
 
 -define(OK, <<"ok">>).
 %% API
--export([start/1,dispatch_requests/1,xml_to_list/2]).
+-export([start/1,dispatch_requests/1]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -154,7 +154,7 @@ handle("/send", Req) ->
 handle("/connect/" ++ Client,Req) ->
     case gen_server:call({global,chatterl_serv},{connect,Client}) of
 	{ok,_} ->
-	    Response = to_json(#carrier{ type="success", message=Client ++ " now connected"}),
+	    Response = to_json(get_record("success",Client ++ " now connected")),
 	    success(Req, {"text/json",Response});
 	{error,Error} ->
 	    Response = to_json(#carrier{ type="fail", message=Error}),
@@ -238,7 +238,8 @@ get_response_body(ContentType,Record) ->
 	    to_json(Record);
 	"text/xml" ->
 	    xml_message(Record);
-	_ -> xml_message(#carrier{ type="error", message="Illegal method"})
+	
+	_ -> xml_message(get_record("error","Illegal method"))
     end.
 
 %%--------------------------------------------------------------------
@@ -267,13 +268,13 @@ get_response_code(Record) ->
 %%--------------------------------------------------------------------
 %% @doc
 %%
-%% Cleans up a request so we only retrieve the path.
+%% Converts our carrier Record into a JSON format.
 %% @spec clean_path(Path) -> [Path]
 %%
 %% @end
 %%--------------------------------------------------------------------
-to_json(Doc) ->
-    case Doc of
+to_json(Record) ->
+    case Record of
 	{carrier, Type, Message} ->
 	    mochijson:encode({array, [Type,Message]});
 	_ -> io:format("Illegal message~n")
