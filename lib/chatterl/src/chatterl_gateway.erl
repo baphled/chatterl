@@ -176,8 +176,7 @@ handle("/groups/list",Req) ->
 	    [] -> "No Groups";
 	    Groups -> 
 		GroupsList = [get_record("group",Group)||Group <- Groups],
-		Records = get_record("groups",GroupsList),
-		io:format(Records)
+		get_record("groups",GroupsList)
     end,
     send_response(Req,{"text/xml", get_record("success",Result)});
 handle(_, Req) ->
@@ -297,18 +296,33 @@ to_json(Record) ->
 %%
 %% Takes the record and converts it into a tuple which can be further
 %% converted into a valid XML format using tuple_to_xml.
+%% {carrier,"groups",[{carrier,"group","nu"},{carrier,"group","nu2"}]}
+
 %% @spec xml_message(Record) -> XML
 %%
 %% @end
 %%--------------------------------------------------------------------
 xml_message(Record) ->
-    case Record of
-	{carrier, Type, Result} ->
-	    %{groups,[],[{group,[],["Nu"]}]}
-	    tuple_to_xml(xml_tuple(Type,Result),[]);
-	_ -> io:format("Unmatched record.~n")
-    end.
+    {carrier, MessageType, Message} = Record,
+    case Message of
+	      {carrier, Type, Result} ->		
+		  case Type of
+		      "groups" ->
+			  Data = loop_xml_results(Result,[]),
+			  [NewData] = Data,
+			  tuple_to_xml(xml_tuple(Type,NewData),[]);
+		      "error" ->
+			  tuple_to_xml(xml_tuple(Type,Result),[]);
+		      _ -> io:format("dont know ~s~n",[Type])
+		  end;
+	      _ -> tuple_to_xml(xml_tuple(MessageType,Message),[])
+	  end.
 
+loop_xml_results([Carrier|Carriers],Result) ->
+    {carrier,Type,Data} = Carrier,
+    loop_xml_results(Carriers,[result_xml_tuple(Type,Data)|Result]);
+loop_xml_results([],Result) ->
+    Result.
 %%--------------------------------------------------------------------
 %% @private
 %% @doc
@@ -321,6 +335,8 @@ xml_message(Record) ->
 xml_tuple(Type,Message) ->
     {chatterl,[],[{message,[],[{list_to_atom(Type),[],[Message]}]}]}.
 
+result_xml_tuple(Type,Message) ->
+    {list_to_atom(Type),[],[Message]}.
 %%--------------------------------------------------------------------
 %% @private
 %% @doc
