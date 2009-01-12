@@ -311,7 +311,6 @@ xml_message(Record) ->
 			  TempData = [result_xml_tuple(DataType,Data) || {carrier,DataType,Data} <- Result],
 			  [ResultList] = TempData,
 			  tuple_to_xml(xml_tuple(Type,ResultList),[]);
-			  %tuple_to_xml(xml_tuple(Type,loop_xml_results(Result,[])),[]);
 		      "error" ->
 			  tuple_to_xml(xml_tuple(Type,Result),[]);
 		      _ -> io:format("dont know ~s~n",[Type])
@@ -319,22 +318,6 @@ xml_message(Record) ->
 	      _ -> tuple_to_xml(xml_tuple(MessageType,Message),[])
 	  end.
 
-
-%%--------------------------------------------------------------------
-%% @private
-%% @doc
-%%
-%% Prepares our tuple used to generate lists in our XML.
-%% @spec loop_xml_results(Carriers,Result) -> XMLTuplesList
-%%
-%% @end
-%%--------------------------------------------------------------------
-loop_xml_results([Carrier|Carriers],Result) ->
-    {carrier,Type,Data} = Carrier,
-    loop_xml_results(Carriers,[result_xml_tuple(Type,Data)|Result]);
-loop_xml_results([],Result) ->
-    [Response] = Result,
-    Response.
 %%--------------------------------------------------------------------
 %% @private
 %% @doc
