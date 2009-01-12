@@ -302,22 +302,25 @@ to_json(Record) ->
 %%
 %% @end
 %%--------------------------------------------------------------------
-xml_message(Record) ->
-    {carrier, MessageType, Message} = Record,
+xml_message(CarrierRecord) ->
+    {carrier, MessageType, Message} = CarrierRecord,
     case Message of
-	      {carrier, Type, Result} ->		
+	      {carrier, Type, Record} ->		
 		  case Type of
 		      "groups" ->
-			  TempData = [result_xml_tuple(DataType,Data) || {carrier,DataType,Data} <- Result],
-			  [ResultList] = TempData,
-			  tuple_to_xml(xml_tuple(Type,ResultList),[]);
+			  RecordList = loop_carrier(Record),
+			  tuple_to_xml(xml_tuple(Type,RecordList),[]);
 		      "error" ->
-			  tuple_to_xml(xml_tuple(Type,Result),[]);
+			  tuple_to_xml(xml_tuple(Type,Record),[]);
 		      _ -> io:format("dont know ~s~n",[Type])
 		  end;
 	      _ -> tuple_to_xml(xml_tuple(MessageType,Message),[])
 	  end.
 
+loop_carrier(CarrierRecord) ->
+    TempData = [result_xml_tuple(DataType,Data) || {carrier,DataType,Data} <- CarrierRecord],
+    [ResultList] = TempData,
+    ResultList.
 %%--------------------------------------------------------------------
 %% @private
 %% @doc
