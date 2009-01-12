@@ -362,7 +362,7 @@ loop_carrier(CarrierRecord) ->
 %%
 %% @end
 %%--------------------------------------------------------------------
-xml_tuple(Type,Message) ->
+xml_tuple(Type,Message) when is_list(Message) ->
     [Data] = Message,
     {chatterl,[],[{message,[],[{list_to_atom(Type),[],Data}]}]}.
 
@@ -422,4 +422,4 @@ strip_whitespace({El,Attr,Children}) ->
     end
   end,Children),
   Ch = lists:map(fun(X) -> strip_whitespace(X) end,NChild),
-  {El,Attr,Ch};
+  {El,Attr,Ch}.
