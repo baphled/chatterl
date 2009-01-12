@@ -170,15 +170,25 @@ handle("/connect/" ++ Client,Req) ->
 		get_record("fail",Error)
 	end,
     send_response(Req,{ContentType,Record});
+handle("/disconnect/" ++ Client,Req) ->
+    ContentType = "text/xml",
+    Record = 
+	case gen_server:call({global,chatterl_serv},{disconnect,Client}) of
+	    {ok,Message} ->
+		get_record("success",Message);
+	    {error,Error} ->
+		get_record("fail",Error)
+	end,
+    send_response(Req,{ContentType,Record});
 handle("/users/list",Req) ->
     Result =
 	case gen_server:call({global,chatterl_serv},list_users) of
-	    [] -> "No Users";
+	    [] -> get_record("error","No Users");
 	    Users -> 
 		UsersList = [get_record("user",User)||User <- Users],
 		get_record("users",UsersList)
     end,
-    send_response(Req,{"text/xml", get_record("success",Result)});
+    send_response(Req,{"text/xml", Result});
 handle("/groups/list",Req) ->
     Result = 
 	case gen_server:call({global,chatterl_serv},list_groups) of
@@ -301,12 +311,13 @@ to_json(Record) ->
 %% @private
 %% @doc
 %%
-%% Generatese out actual XML message.
+%% Generates out actual XML message.
 %%
 %% Takes the record and converts it into a tuple which can be further
 %% converted into a valid XML format using tuple_to_xml.
-%% {carrier,"groups",[{carrier,"group","nu"},{carrier,"group","nu2"}]}
-
+%% Example of XML tuple structure.
+%% <code>{carrier,"groups",[{carrier,"group","nu"},{carrier,"group","nu2"}]}</code>
+%%
 %% @spec xml_message(Record) -> XML
 %%
 %% @end
@@ -322,11 +333,11 @@ xml_message(CarrierRecord) ->
 		"users" ->
 		    RecordList = loop_carrier(Record),
 		    tuple_to_xml(xml_tuple(Type,RecordList),[]);
-		"error" ->
-		    tuple_to_xml(xml_tuple(Type,Record),[]);
 		_ -> io:format("dont know ~s~n",[Type])
 	    end;
-	_ -> tuple_to_xml(xml_tuple(MessageType,Message),[])
+	_ -> 
+	    io:format(Message),
+	    tuple_to_xml(xml_tuple_single(MessageType,Message),[])
     end.
 
 %%--------------------------------------------------------------------
@@ -357,6 +368,8 @@ xml_tuple(Type,Message) ->
     [Data] = Message,
     {chatterl,[],[{message,[],[{list_to_atom(Type),[],Data}]}]}.
 
+xml_tuple_single(Type,Message) ->
+    {chatterl,[],[{message,[],[{list_to_atom(Type),[],[Message]}]}]}.
 %%--------------------------------------------------------------------
 %% @private
 %% @doc
@@ -368,6 +381,7 @@ xml_tuple(Type,Message) ->
 %%--------------------------------------------------------------------
 loop_xml_tuple(Type,Message) ->
     {list_to_atom(Type),[],[Message]}.
+
 %%--------------------------------------------------------------------
 %% @private
 %% @doc
