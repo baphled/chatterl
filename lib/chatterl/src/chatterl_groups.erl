@@ -114,8 +114,13 @@ handle_call({join, User}, From, State) ->
 	    true ->
 		{{error, "Already joined"}, State#group.users};
 	    false ->
-		io:format("~s joined ~s~n", [User,State#group.name]),
-		{{ok, "User added"}, gb_trees:insert(User, {User,From}, State#group.users)}
+		case User /= undefined of
+		    true -> io:format("~s joined ~s~n", [User,State#group.name]),
+			    {{ok, "User added"}, 
+			     gb_trees:insert(User, {User,From}, State#group.users)};
+		    false ->io:format("~s not a valid user",[undefined]),
+			    	{{error, "Invalid user name"}, State#group.users}
+		end
 	end,
     {reply, Reply, State#group{users=NewTree}};
 handle_call({drop, User}, _From, State) ->

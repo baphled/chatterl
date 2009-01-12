@@ -164,13 +164,18 @@ handle("/join/" ++ Group,Req) ->
     Params = Req:parse_qs(),
     Client = proplists:get_value("client", Params),
     ContentType = "text/xml",
-    Record = 
-	case gen_server:call({global,Group},{join,Client}) of
-	    {ok,_} ->
-		get_record("success",Client ++ " joined group");
-	    {error,Error} ->
-		get_record("fail",Error)
-	end,
+    case gen_server:call({global,chatterl_serv},{group_exists,Group}) of
+	true ->
+	    Record = 
+		case gen_server:call({global,Group},{join,Client}) of
+		    {ok,_} ->
+			get_record("success",Client ++ " joined group");
+		    {error,Error} ->
+			get_record("fail",Error)
+		end;
+	false ->
+	    Record = get_record("error","Group: "++ Group ++ " doesn't exist")
+    end,
     send_response(Req,{ContentType,Record});
 handle("/connect/" ++ Client,Req) ->
     ContentType = "text/xml",
