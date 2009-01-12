@@ -16,7 +16,7 @@
 
 -define(OK, <<"ok">>).
 %% API
--export([start/1,dispatch_requests/1,xml_tuple/2]).
+-export([start/1,dispatch_requests/1,tuple_to_xml/2]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -318,7 +318,7 @@ xml_message(Record) ->
 %% @end
 %%--------------------------------------------------------------------
 xml_tuple(Type,Message) ->
-    {chatterl,[],[message,[],{list_to_atom(Type),[Message]}]}.
+    {chatterl,[],[message,[],[Type,[Message]]]}.
 
 %%--------------------------------------------------------------------
 %% @private
