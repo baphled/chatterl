@@ -304,6 +304,7 @@ to_json(Record) ->
 xml_message(Record) ->
     case Record of
 	{carrier, Type, Result} ->
+	    %{groups,[],[{group,[],["Nu"]}]}
 	    tuple_to_xml(xml_tuple(Type,Result),[]);
 	_ -> io:format("Unmatched record.~n")
     end.
@@ -318,7 +319,7 @@ xml_message(Record) ->
 %% @end
 %%--------------------------------------------------------------------
 xml_tuple(Type,Message) ->
-    {chatterl,[],[message,[],[Type,[Message]]]}.
+    {chatterl,[],[{message,[],[{list_to_atom(Type),[],[Message]}]}]}.
 
 %%--------------------------------------------------------------------
 %% @private
