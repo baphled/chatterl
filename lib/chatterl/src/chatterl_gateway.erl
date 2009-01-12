@@ -152,14 +152,6 @@ code_change(_OldVsn, State, _Extra) ->
 %%
 %% @end
 %%--------------------------------------------------------------------
-%% handle("/send", Req) ->
-%%   Params = Req:parse_qs(),
-%%   Sender = proplists:get_value("nick", Params),
-%%   Group = proplists:get_value("to", Params),
-%%   Message = proplists:get_value("msg", Params),
-%%   chatterl_man:send_message(Sender, Group, Message),
-%%   success(Req, {"text/plain",?OK});
-%% Need to refactor so the request goes to chatterl_serv
 handle("/connect/" ++ Client,Req) ->
     ContentType = "text/xml",
     Record = 
@@ -274,9 +266,9 @@ get_response_code(Record) ->
     case Record of
 	{carrier,Type,_Message} ->
 	    case Type of
-		"fail" -> 500;
+		"fail" -> 200;
 		"success" -> 200;
-		"error" -> 200;
+		"error" -> 500;
 		_ -> 500
 	    end
     end.
