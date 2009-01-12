@@ -152,6 +152,14 @@ code_change(_OldVsn, State, _Extra) ->
 %%
 %% @end
 %%--------------------------------------------------------------------
+%% handle("/send", Req) ->
+%%   Params = Req:parse_qs(),
+%%   Sender = proplists:get_value("nick", Params),
+%%   Group = proplists:get_value("to", Params),
+%%   Message = proplists:get_value("msg", Params),
+%%   chatterl_man:send_message(Sender, Group, Message),
+%%   success(Req, {"text/plain",?OK});
+%% Need to refactor so the request goes to chatterl_serv
 handle("/connect/" ++ Client,Req) ->
     ContentType = "text/xml",
     Record = 
@@ -165,21 +173,21 @@ handle("/connect/" ++ Client,Req) ->
 handle("/users/list",Req) ->
     Result =
 	case gen_server:call({global,chatterl_serv},list_users) of
-	    [] -> get_record("users","");
+	    [] -> "No Users";
 	    Users -> 
 		UsersList = [get_record("user",User)||User <- Users],
 		get_record("users",UsersList)
     end,
-    send_response(Req,{"text/xml", Result});
+    send_response(Req,{"text/xml", get_record("success",Result)});
 handle("/groups/list",Req) ->
     Result = 
 	case gen_server:call({global,chatterl_serv},list_groups) of
-	    [] -> get_record("groups","");
+	    [] -> "No Groups";
 	    Groups -> 
 		GroupsList = [get_record("group",Group)||Group <- Groups],
 		get_record("groups",GroupsList)
     end,
-    send_response(Req,{"text/xml", Result});
+    send_response(Req,{"text/xml", get_record("success",Result)});
 handle(Unknown, Req) ->
     send_response(Req,{"text/xml",get_record("error", "Unknown command: " ++Unknown)}).
 %%--------------------------------------------------------------------
@@ -266,9 +274,9 @@ get_response_code(Record) ->
     case Record of
 	{carrier,Type,_Message} ->
 	    case Type of
-		"fail" -> 200;
+		"fail" -> 500;
 		"success" -> 200;
-		"error" -> 500;
+		"error" -> 200;
 		_ -> 500
 	    end
     end.
@@ -306,22 +314,36 @@ to_json(Record) ->
 xml_message(CarrierRecord) ->
     {carrier, MessageType, Message} = CarrierRecord,
     case Message of
-	      {carrier, Type, Record} ->		
-		  case Type of
-		      "groups" ->
-			  RecordList = loop_carrier(Record),
-			  tuple_to_xml(xml_tuple(Type,RecordList),[]);
-		      "error" ->
-			  tuple_to_xml(xml_tuple(Type,Record),[]);
-		      _ -> io:format("dont know ~s~n",[Type])
-		  end;
-	      _ -> tuple_to_xml(xml_tuple(MessageType,Message),[])
-	  end.
+	{carrier, Type, Record} ->		
+	    case Type of
+		"groups" ->
+		    RecordList = loop_carrier(Record),
+		    tuple_to_xml(xml_tuple(Type,RecordList),[]);
+		"users" ->
+		    RecordList = loop_carrier(Record),
+		    tuple_to_xml(xml_tuple(Type,RecordList),[]);
+		"error" ->
+		    tuple_to_xml(xml_tuple(Type,Record),[]);
+		_ -> io:format("dont know ~s~n",[Type])
+	    end;
+	_ -> tuple_to_xml(xml_tuple(MessageType,Message),[])
+    end.
 
+%%--------------------------------------------------------------------
+%% @private
+%% @doc
+%%
+%% Loops over the record carrier building the tuple structure need to
+%% build out XML.
+%% @spec loop_carrier(Carrier) -> XMLTuple
+%%
+%% @end
+%%--------------------------------------------------------------------
 loop_carrier(CarrierRecord) ->
-    TempData = [result_xml_tuple(DataType,Data) || {carrier,DataType,Data} <- CarrierRecord],
-    [ResultList] = TempData,
-    ResultList.
+    Result = [loop_xml_tuple(DataType,Data) || {carrier,DataType,Data} <- CarrierRecord],
+    Response = [Result],
+    Response.
+
 %%--------------------------------------------------------------------
 %% @private
 %% @doc
@@ -332,9 +354,19 @@ loop_carrier(CarrierRecord) ->
 %% @end
 %%--------------------------------------------------------------------
 xml_tuple(Type,Message) ->
-    {chatterl,[],[{response,[],[{list_to_atom(Type),[],[Message]}]}]}.
+    [Data] = Message,
+    {chatterl,[],[{message,[],[{list_to_atom(Type),[],Data}]}]}.
 
-result_xml_tuple(Type,Message) ->
+%%--------------------------------------------------------------------
+%% @private
+%% @doc
+%%
+%% Prepares our tuple used to generate our XML.
+%% @spec loop_xml_tuple(Type,Message) -> XmlTuple
+%%
+%% @end
+%%--------------------------------------------------------------------
+loop_xml_tuple(Type,Message) ->
     {list_to_atom(Type),[],[Message]}.
 %%--------------------------------------------------------------------
 %% @private
