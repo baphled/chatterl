@@ -170,7 +170,7 @@ handle("/connect/" ++ Client,Req) ->
 		get_record("fail",Error)
 	end,
     send_response(Req,{ContentType,Record});
-handle("users/list",Req) ->
+handle("/users/list",Req) ->
     Result =
 	case gen_server:call({global,chatterl_serv},list_users) of
 	    [] -> "No Users";
