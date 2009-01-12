@@ -188,7 +188,7 @@ handle("/users/list",Req) ->
 		UsersList = [get_record("user",User)||User <- Users],
 		{"success",get_record("users",UsersList)}
     end,
-    send_response(Req,{"text/xml", get_record(Type,Result)});
+    send_response(Req,{"text/xml",get_record(Type,Result)});
 handle("/groups/list",Req) ->
     {Type,Result} = 
 	case gen_server:call({global,chatterl_serv},list_groups) of
@@ -197,7 +197,7 @@ handle("/groups/list",Req) ->
 		GroupsList = [get_record("group",Group)||Group <- Groups],
 		{"success",get_record("groups",GroupsList)}
     end,
-    send_response(Req,{"text/xml", get_record(Type,Result)});
+    send_response(Req,{"text/xml",get_record(Type,Result)});
 handle(Unknown, Req) ->
     send_response(Req,{"text/xml",get_record("error", "Unknown command: " ++Unknown)}).
 %%--------------------------------------------------------------------
@@ -366,6 +366,15 @@ xml_tuple(Type,Message) ->
     [Data] = Message,
     {chatterl,[],[{message,[],[{list_to_atom(Type),[],Data}]}]}.
 
+%%--------------------------------------------------------------------
+%% @private
+%% @doc
+%%
+%% Prepares our tuple used to generate our sinlge XML elements.
+%% @spec xml_tuple_single(Type,Message) -> {XmlBody}
+%%
+%% @end
+%%--------------------------------------------------------------------
 xml_tuple_single(Type,Message) ->
     {chatterl,[],[{message,[],[{list_to_atom(Type),[],[Message]}]}]}.
 %%--------------------------------------------------------------------
