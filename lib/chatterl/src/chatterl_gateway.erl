@@ -197,17 +197,18 @@ error(Req, {ContentType,Record}) when is_list(ContentType) ->
 	    "text/xml" ->
 		xml_message(Record)
 	end,
-    Code = 
-	case Record of
-	    {carrier,Type,_Message} ->
-		case Type of
-		    "fail" -> 500;
-		    "success" -> 200;
-		    _ -> 500
-		end
-	end,
-  Req:respond({Code, [{"Content-Type", ContentType}], list_to_binary(Response)}).
+    Code = get_response_code(Record),
+    %% If we cant construct the code or have an illegal content type, we need to
+    %% send an illegal method message back to the client.
+    Req:respond({Code, [{"Content-Type", ContentType}], list_to_binary(Response)}).
 
+handle_response(ContentType) ->
+    case ContentType of
+	"text/json" ->
+	    to_json(Record);
+	"text/xml" ->
+	    xml_message(Record)
+    end.
 get_response_code(Record) ->
     case Record of
 	{carrier,Type,_Message} ->
