@@ -183,16 +183,16 @@ handle("/disconnect/" ++ Client,Req) ->
 handle("/users/list",Req) ->
     Result =
 	case gen_server:call({global,chatterl_serv},list_users) of
-	    [] -> get_record("error","No Users");
+	    [] -> get_record("users","");
 	    Users -> 
 		UsersList = [get_record("user",User)||User <- Users],
 		get_record("users",UsersList)
     end,
-    send_response(Req,{"text/xml", Result});
+    send_response(Req,{"text/xml", get_record("success",Result)});
 handle("/groups/list",Req) ->
     Result = 
 	case gen_server:call({global,chatterl_serv},list_groups) of
-	    [] -> "No Groups";
+	    [] -> get_record("groups","No Groups");
 	    Groups -> 
 		GroupsList = [get_record("group",Group)||Group <- Groups],
 		get_record("groups",GroupsList)
@@ -335,7 +335,7 @@ xml_message(CarrierRecord) ->
 		    tuple_to_xml(xml_tuple(Type,RecordList),[]);
 		_ -> io:format("dont know ~s~n",[Type])
 	    end;
-	_ -> tuple_to_xml(xml_tuple_single(MessageType,Message),[])
+	_ -> tuple_to_xml(xml_tuple(MessageType,Message),[])
     end.
 
 %%--------------------------------------------------------------------
