@@ -182,46 +182,6 @@ clean_path(Path) ->
 %%--------------------------------------------------------------------
 %% @doc
 %%
-%% Handles our error responses.
-%%
-%% Will eventually be JSON and XML based
-%% @spec error(Req,Body) -> tuple()
-%%
-%% @end
-%%--------------------------------------------------------------------
-error(Req, {ContentType,Record}) when is_list(ContentType) ->
-    Response = 
-	case ContentType of
-	    "text/json" ->
-		to_json(Record);
-	    "text/xml" ->
-		xml_message(Record)
-	end,
-    Code = get_response_code(Record),
-    %% If we cant construct the code or have an illegal content type, we need to
-    %% send an illegal method message back to the client.
-    Req:respond({Code, [{"Content-Type", ContentType}], list_to_binary(Response)}).
-
-handle_response(ContentType) ->
-    case ContentType of
-	"text/json" ->
-	    to_json(Record);
-	"text/xml" ->
-	    xml_message(Record)
-    end.
-get_response_code(Record) ->
-    case Record of
-	{carrier,Type,_Message} ->
-	    case Type of
-		"fail" -> 500;
-		"success" -> 200;
-		_ -> 500
-	    end;
-	_-> io:format("Illegal Code set ~s~n",[Record])
-    end.
-%%--------------------------------------------------------------------
-%% @doc
-%%
 %% Handles our successful responses.
 %%
 %% Will eventually be JSON and XML based
@@ -231,6 +191,66 @@ get_response_code(Record) ->
 %%--------------------------------------------------------------------
 success(Req, {ContentType,Body}) when is_list(Body) ->
   Req:respond({200, [{"Content-Type", ContentType}], list_to_binary(Body)}).
+
+%%--------------------------------------------------------------------
+%% @doc
+%%
+%% Handles our error responses.
+%%
+%% Will eventually be JSON and XML based
+%% @spec error(Req,Body) -> tuple()
+%%
+%% @end
+%%--------------------------------------------------------------------
+error(Req, {ContentType,Record}) when is_list(ContentType) ->
+    Response = get_response_body(ContentType,Record),
+    Code = get_response_code(Record),
+    %% If we cant construct the code or have an illegal content type, we need to
+    %% send an illegal method message back to the client.
+    Req:respond({Code, [{"Content-Type", ContentType}], list_to_binary(Response)}).
+
+%%--------------------------------------------------------------------
+%% @doc
+%%
+%% Gets the actual response body to return to the client.
+%%
+%% Responses are either in JSON or XML, if the wrong content type is passed
+%% the client will recieve an error in XML format.
+%% @spec get_response_body(ContentType,Record) -> [ResponseBody]
+%%
+%% @end
+%%--------------------------------------------------------------------
+get_response_body(ContentType,Record) ->
+    case ContentType of
+	"text/json" ->
+	    to_json(Record);
+	"text/xml" ->
+	    xml_message(Record);
+	_ -> xml_message(#carrier{ type="error", message="Illegal method"})
+    end.
+
+%%--------------------------------------------------------------------
+%% @doc
+%%
+%% Gets our response code depending on the type of message passed by 
+%% the carrier record.
+%%
+%% 
+%% @spec get_response_code(Record) -> integer()
+%%
+%% @end
+%%--------------------------------------------------------------------
+get_response_code(Record) ->
+    case Record of
+	{carrier,Type,_Message} ->
+	    case Type of
+		"fail" -> 500;
+		"success" -> 200;
+		"error" -> 200;
+		_ -> 500
+	    end;
+	_-> io:format("Illegal Code set ~s~n",[Record])
+    end.
 
 %%--------------------------------------------------------------------
 %% @doc
