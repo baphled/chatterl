@@ -197,20 +197,6 @@ clean_path(Path) ->
 %% @private
 %% @doc
 %%
-%% Handles our successful responses.
-%%
-%% Will eventually be JSON and XML based
-%% @spec success(Req,Body) -> tuple()
-%%
-%% @end
-%%--------------------------------------------------------------------
-success(Req, {ContentType,Body}) when is_list(Body) ->
-  Req:respond({200, [{"Content-Type", ContentType}], list_to_binary(Body)}).
-
-%%--------------------------------------------------------------------
-%% @private
-%% @doc
-%%
 %% Handlesour error responses.
 %%
 %% Sends responses based on the content type, which are JSON and XML.
