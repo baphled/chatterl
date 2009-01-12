@@ -45,13 +45,14 @@ start(Port) ->
 %% Dispatches our requests to the relevant handle.
 %%
 %% Uses clean_path to determine what the action is.
-%% @spec start(Port) -> {ok,Pid} | ignore | {error,Error}
+%% @spec dispatch_requests(Request) -> void()
 %% @end
 %%--------------------------------------------------------------------
 dispatch_requests(Req) ->
   Path = Req:get(path),
   Action = clean_path(Path),
   handle(Action, Req).
+
 %%====================================================================
 %% gen_server callbacks
 %%====================================================================
@@ -60,7 +61,7 @@ dispatch_requests(Req) ->
 %% @doc
 %% Initiates the server
 %%
-%% Function: init(Args) -> {ok, State} |
+%% Function: init(Port) -> {ok, State} |
 %%                         {ok, State, Timeout} |
 %%                         ignore               |
 %%                         {stop, Reason}
@@ -169,6 +170,13 @@ handle("/connect/" ++ Client,Req) ->
 		get_record("fail",Error)
 	end,
     send_response(Req,{ContentType,Record});
+handle("/groups/list",Req) ->
+    Result = case gen_server:call({global,chatterl_serv},list_groups) of
+	[] -> "No Groups";
+	Results -> Results
+    end,
+    io:format("~s",[Result]),
+    send_response(Req,{"text/xml", get_record("success",Result)});
 handle(_, Req) ->
     send_response(Req,{"text/xml",get_record("error", "Illegal method")}).
 
@@ -205,7 +213,7 @@ clean_path(Path) ->
 %% @private
 %% @doc
 %%
-%% Handlesour error responses.
+%% Handles our all responses.
 %%
 %% Sends responses based on the content type, which are JSON and XML.
 %% @spec send_response(Req,Body) -> tuple()
@@ -237,8 +245,7 @@ get_response_body(ContentType,Record) ->
 	    to_json(Record);
 	"text/xml" ->
 	    xml_message(Record);
-	
-	_ -> xml_message(get_record("error","Illegal method"))
+	_ -> xml_message(get_record("error","Illegal content type!"))
     end.
 
 %%--------------------------------------------------------------------
@@ -261,8 +268,7 @@ get_response_code(Record) ->
 		"success" -> 200;
 		"error" -> 200;
 		_ -> 500
-	    end;
-	_-> io:format("Illegal Code set ~s~n",[Record])
+	    end
     end.
 
 %%--------------------------------------------------------------------
