@@ -335,8 +335,7 @@ xml_message(CarrierRecord) ->
 		    tuple_to_xml(xml_tuple(Type,RecordList),[]);
 		_ -> io:format("dont know ~s~n",[Type])
 	    end;
-	_ -> io:format(Message), 
-	    tuple_to_xml(xml_tuple_single(MessageType,Message),[])
+	_ -> tuple_to_xml(xml_tuple_single(MessageType,Message),[])
     end.
 
 %%--------------------------------------------------------------------
