@@ -154,17 +154,16 @@ code_change(_OldVsn, State, _Extra) ->
 %%--------------------------------------------------------------------
 handle("/connect/" ++ Client,Req) ->
     ContentType = "text/xml",
-    {Cookies,Record} = 
-	case gen_server:call({global,chatterl_serv},{connect,Client}) of
-	    {ok,_} ->
-		SessionId = "ze_key",
-		H = mochiweb_cookies:cookie("sid", SessionId, [{path, "/"}]), 
-		{H,get_record("success",Client ++ " now connected")};
-	    {error,Error} ->
-		io:format(Req:get_cookie()),
-		{Req:get_cookie(),get_record("fail",Error)}
-	end,
-    send_cookie_response(Req,Cookies,{ContentType,Record});
+    case gen_server:call({global,chatterl_serv},{connect,Client}) of
+	{ok,_} ->
+	    % Need to make this secure, once nailed down.
+	    SessionId = "ze_key",
+	    Cookies = mochiweb_cookies:cookie("sid", SessionId, [{path, "/"}]),
+	    send_cookie_response(Req,Cookies,
+				 {ContentType,get_record("success",Client++" now connected")});
+	{error,Error} ->
+	    send_response(Req,{ContentType,get_record("fail",Error)})
+    end;
 handle("/disconnect/" ++ Client,Req) ->
     ContentType = "text/xml",
     Record = 
