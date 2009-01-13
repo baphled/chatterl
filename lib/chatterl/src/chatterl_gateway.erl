@@ -170,9 +170,7 @@ handle("/disconnect/" ++ Client,Req) ->
     ContentType = "text/xml",
     case gen_server:call({global,chatterl_serv},{disconnect,Client}) of
 	{ok,Message} ->
-	    clean_cookies(Req),
-	    io:format(Req),
-	    send_response(Req,{ContentType,get_record("success",Message)});
+	    send_response(Req, {ContentType,get_record("success",Message)});
 	{error,Error} ->
 	    send_response(Req,{ContentType,get_record("failure",Error)})
     end;
@@ -466,26 +464,3 @@ strip_whitespace({El,Attr,Children}) ->
   end,Children),
   Ch = lists:map(fun(X) -> strip_whitespace(X) end,NChild),
   {El,Attr,Ch}.
-
-clean_cookies(Req) ->
-    MochiList = mochiweb_headers:to_list(Req:get(headers)),
-    ToLowerString = fun(Key) ->
-        String = if is_atom(Key) ->
-            atom_to_list(Key);
-        true ->
-            Key
-        end,
-        string:to_lower(String)
-    end,
-    Headers = [{ToLowerString(Key), Value} || {Key,Value} <- MochiList],
-    ToDelete = [ "cookie" ],
-    FilteredHeaders = lists:foldr(fun proplists:delete/2, Headers, ToDelete),
-    io:format("Dropping cookies~n"),
-    [ Req:get(path) ]
-    ++ ["Params" | proplist_flatten(lists:sort(Req:parse_qs()))]
-    ++ ["Headers" | proplist_flatten(lists:sort(FilteredHeaders))].
-
-% depth first serialization
-proplist_flatten([]) -> [];
-proplist_flatten([ { Key, Value } | Rest ]) ->
-    [ Key, Value | proplist_flatten(Rest) ].
