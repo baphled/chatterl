@@ -156,26 +156,33 @@ code_change(_OldVsn, State, _Extra) ->
 %%
 %% @end
 %%--------------------------------------------------------------------
-handle("/send", Req) ->
+handle("/send/" ++Group, Req) ->
     Params = Req:parse_qs(),
     Sender = proplists:get_value("client", Params),
-    Group = proplists:get_value("group", Params),
+    %Group = proplists:get_value("group", Params),
     Message = proplists:get_value("msg", Params),
     Record = 
-	case gen_server:call(Sender,{group_msg,Group,Message}, infinity) of
-	    {ok,Msg} -> 
-		get_record("success",Msg);
-	    {error,Error} ->
-		get_record("failure",Error)
+	case gen_server:call({global,chatterl_serv},{user_exists,Sender}) of
+	    true ->
+		case gen_server:call({global,chatterl_serv},{group_exists,Group}) of
+		    true ->
+			case gen_server:call(Sender,{group_msg,Group,Message}, infinity) of
+			    {ok,Msg} -> 
+				get_record("success",Msg);
+			    {error,Error} ->
+				get_record("failure",Error)
+			end;
+		    false ->
+			get_record("failure", Group ++ " doesn't exist")
+		    end;
+	    false ->
+		get_record("failure", Sender ++ " not connected!")
 	end,
     send_response(Req,{"text/xml",Record});
 handle("/connect/" ++ Client,Req) ->
     ContentType = "text/xml",
     case gen_server:call({global,chatterl_serv},{connect,Client}) of
 	{ok,_} ->
-	    %SessionId = generate_session_id(),
-	    %Cookie1 = mochiweb_cookies:cookie("sid", SessionId, [{path, "/"}]),
-	    %% Want to assign both, will need to work out how.
 	    send_response(Req,{ContentType,get_record("success",Client++" now connected")});
 	{error,Error} ->
 	    send_response(Req,{ContentType,get_record("failure",Error)})

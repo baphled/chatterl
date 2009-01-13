@@ -285,6 +285,7 @@ terminate(Reason, State) ->
 		    {disconnect,State#client.name,GroupsList}, infinity),
     io:format("~p is disconnecting...~p~n", [State#client.name,Reason]),
     ok.
+
 %%--------------------------------------------------------------------
 %% @doc
 %% Convert process state when code is changed
