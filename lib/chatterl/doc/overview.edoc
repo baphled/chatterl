@@ -5,6 +5,7 @@
 <ul>
 	<li>{@section Description}</li>
 	<li>{@section Installing Chatterl}</li>
+	<li>{@section Running Chatterl}</li>
 	<li>{@section Features}</li>
 	<li>{@section Future Features}</li>
 	<li>{@section Useage}</li>
@@ -28,10 +29,14 @@ cd _/build/development/tar &amp;&amp;
 sudo faxien install-release chatterl-0.1.1.0.tar.gz</code></pre>
 
 The above presumes that you have Sinan configured &amp; installed, if you haven't refer to erlware.
-You will need to change to cookie &amp; name values to something else, doing so should drop you into the erlang shell &amp; ready to run the Chatterl application. To run a client on a different machine you will need to do the above if  (making sure that the -sname is not the same as any other connected nodes &amp; that the cookie is the same) if connecting on the same box simply cd to the ebin directory and run the following command:
-<pre><code>erl -name bar -setcookie abc</code></pre>
+You will need to change to cookie &amp; name values to something else, doing so should drop you into the erlang shell &amp; ready to run the Chatterl application. 
 
-From here you will need to make sure that they nodes can connect via:
+== Running Chatterl ==
+To run a client on a different machine you will need to do the above if  (making sure that the -sname is not the same as any other connected nodes &amp; that the cookie is the same) if connecting on the same box simply cd to the ebin directory and run the following command:
+<pre><code>erl -s chatterl -s reloader -name bar -setcookie abc</code></pre>
+Bar being the name you want use to identify the erlang node.
+
+From here you will need to make sure that they nodes can connect using the below command from another node:
 <pre><code>net_adm:ping(foo@bar.net).</code></pre>
 
 Where foo is the node name &amp; bar.net is the tld of the node box (indicated within yout hosts file or dns server).
