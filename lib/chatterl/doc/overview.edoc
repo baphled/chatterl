@@ -39,8 +39,8 @@ Once you receive the infamous pong response you are ready to roll.
 
 == Features ==
 <ul>
-    <li>Client login/logout to Chatterl.</li>
     <li>Chatterl Web Interface Gateway API (CWIGA).</li>
+    <li>Client login/logout to Chatterl.</li>
     <li>List Chatterl groups.</li>
     <li> List Chatterl users.</li>
     <li> Login/logout of a chatterl group.</li>
