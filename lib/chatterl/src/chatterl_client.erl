@@ -48,7 +48,7 @@
 %% @end
 %%--------------------------------------------------------------------
 start(Client) ->
-    gen_server:start_link({local, Client}, ?MODULE, [Client], []).
+    gen_server:start_link({global, Client}, ?MODULE, [Client], []).
 
 %%--------------------------------------------------------------------
 %% @doc
@@ -61,7 +61,7 @@ start(Client) ->
 %% @end
 %%--------------------------------------------------------------------
 stop() ->
-    gen_server:call(?MODULE, stop, infinity).
+    gen_server:call(self(), stop, infinity).
 
 %%--------------------------------------------------------------------
 %% @doc
@@ -71,7 +71,7 @@ stop() ->
 %% @end
 %%--------------------------------------------------------------------
 name() ->
-    gen_server:call(chatterl_client, client_name, infinity).
+    gen_server:call(self(), client_name, infinity).
 
 %%--------------------------------------------------------------------
 %% @doc
@@ -81,7 +81,7 @@ name() ->
 %% @end
 %%--------------------------------------------------------------------
 connected_to() ->
-    gen_server:call(chatterl_client, groups, infinity).
+    gen_server:call(self(), groups, infinity).
 
 %%--------------------------------------------------------------------
 %% @doc
