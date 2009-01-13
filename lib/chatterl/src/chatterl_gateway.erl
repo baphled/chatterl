@@ -161,7 +161,7 @@ handle("/connect/" ++ Client,Req) ->
 	    Cookie1 = mochiweb_cookies:cookie("sid", SessionId, [{path, "/"}]),
 	    Cookie2 = mochiweb_cookies:cookie("client", Client, [{path, "/"}]),
 	    %% Want to assign both, will need to work out how.
-	    send_cookie_response(Req,Cookie1,
+	    send_cookie_response(Req,Cookie2,
 				 {ContentType,get_record("success",Client++" now connected")});
 	{error,Error} ->
 	    send_response(Req,{ContentType,get_record("failure",Error)})
@@ -170,6 +170,8 @@ handle("/disconnect/" ++ Client,Req) ->
     ContentType = "text/xml",
     case gen_server:call({global,chatterl_serv},{disconnect,Client}) of
 	{ok,Message} ->
+	    clean_cookies(Req),
+	    io:format(Req),
 	    send_response(Req,{ContentType,get_record("success",Message)});
 	{error,Error} ->
 	    send_response(Req,{ContentType,get_record("failure",Error)})
@@ -284,6 +286,7 @@ send_response(Req, {ContentType,Record}) when is_list(ContentType) ->
 send_cookie_response(Req, Cookie,{ContentType,Record}) when is_list(ContentType) ->
     Response = get_response_body(ContentType,Record),
     Code = get_response_code(Record),
+    io:format("Setting up cookie...~n"),
     Req:respond({Code, [{"Content-Type", ContentType},Cookie], list_to_binary(Response)}).
     
 %%--------------------------------------------------------------------
@@ -324,8 +327,8 @@ get_response_code(Record) ->
 	{carrier,Type,_Message} ->
 	    case Type of
 		"failure" -> 200;
-		"success" -> 500;
-		"error" -> 200;
+		"success" -> 200;
+		"error" -> 500;
 		_ -> 500
 	    end
     end.
@@ -463,3 +466,26 @@ strip_whitespace({El,Attr,Children}) ->
   end,Children),
   Ch = lists:map(fun(X) -> strip_whitespace(X) end,NChild),
   {El,Attr,Ch}.
+
+clean_cookies(Req) ->
+    MochiList = mochiweb_headers:to_list(Req:get(headers)),
+    ToLowerString = fun(Key) ->
+        String = if is_atom(Key) ->
+            atom_to_list(Key);
+        true ->
+            Key
+        end,
+        string:to_lower(String)
+    end,
+    Headers = [{ToLowerString(Key), Value} || {Key,Value} <- MochiList],
+    ToDelete = [ "cookie" ],
+    FilteredHeaders = lists:foldr(fun proplists:delete/2, Headers, ToDelete),
+    io:format("Dropping cookies~n"),
+    [ Req:get(path) ]
+    ++ ["Params" | proplist_flatten(lists:sort(Req:parse_qs()))]
+    ++ ["Headers" | proplist_flatten(lists:sort(FilteredHeaders))].
+
+% depth first serialization
+proplist_flatten([]) -> [];
+proplist_flatten([ { Key, Value } | Rest ]) ->
+    [ Key, Value | proplist_flatten(Rest) ].
