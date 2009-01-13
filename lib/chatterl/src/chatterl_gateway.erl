@@ -156,10 +156,9 @@ code_change(_OldVsn, State, _Extra) ->
 %%
 %% @end
 %%--------------------------------------------------------------------
-handle("/send/" ++Group, Req) ->
+handle("/send/" ++ Group, Req) ->
     Params = Req:parse_qs(),
     Sender = proplists:get_value("client", Params),
-    %Group = proplists:get_value("group", Params),
     Message = proplists:get_value("msg", Params),
     Record = 
 	case gen_server:call({global,chatterl_serv},{user_exists,Sender}) of
