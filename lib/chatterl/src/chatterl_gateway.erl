@@ -475,3 +475,11 @@ strip_whitespace({El,Attr,Children}) ->
   end,Children),
   Ch = lists:map(fun(X) -> strip_whitespace(X) end,NChild),
   {El,Attr,Ch}.
+
+
+log(Req) ->
+ Ip = Req:get(peer),
+ spawn(?MODULE, dolog, [Req, Ip]).
+
+dolog(Req, Ip) ->
+ stat_logger:log("~p ~p", [Ip, Req:get(path)]).
