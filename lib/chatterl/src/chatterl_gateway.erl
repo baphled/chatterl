@@ -261,7 +261,7 @@ clean_path(Path) ->
 %% Handles our all responses.
 %%
 %% Sends responses based on the content type, which are JSON and XML.
-%% @spec send_response(Req,Body) -> tuple()
+%% @spec send_response(Req,{ContentType,Record}) -> void()
 %%
 %% @end
 %%--------------------------------------------------------------------
@@ -269,10 +269,23 @@ send_response(Req, {ContentType,Record}) when is_list(ContentType) ->
     Response = get_response_body(ContentType,Record),
     Code = get_response_code(Record),
     Req:respond({Code, [{"Content-Type", ContentType}], list_to_binary(Response)}).
+
+%%--------------------------------------------------------------------
+%% @private
+%% @doc
+%%
+%% Handles our all responses, setting the cookies that need storing.
+%%
+%% Sends responses based on the content type, which are JSON and XML.
+%% @spec send_cookie_response(Req,Cookie,{ContentType,Record}) -> void()
+%%
+%% @end
+%%--------------------------------------------------------------------
 send_cookie_response(Req, Cookie,{ContentType,Record}) when is_list(ContentType) ->
     Response = get_response_body(ContentType,Record),
     Code = get_response_code(Record),
     Req:respond({Code, [{"Content-Type", ContentType},Cookie], list_to_binary(Response)}).
+
 %%--------------------------------------------------------------------
 %% @private
 %% @doc
