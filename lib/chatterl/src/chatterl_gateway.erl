@@ -162,7 +162,7 @@ handle("/connect/" ++ Client,Req) ->
 	    send_cookie_response(Req,Cookies,
 				 {ContentType,get_record("success",Client++" now connected")});
 	{error,Error} ->
-	    send_response(Req,{ContentType,get_record("fail",Error)})
+	    send_response(Req,{ContentType,get_record("failure",Error)})
     end;
 handle("/disconnect/" ++ Client,Req) ->
     ContentType = "text/xml",
@@ -171,7 +171,7 @@ handle("/disconnect/" ++ Client,Req) ->
 	    {ok,Message} ->
 		get_record("success",Message);
 	    {error,Error} ->
-		get_record("fail",Error)
+		get_record("failure",Error)
 	end,
     send_response(Req,{ContentType,Record});
 handle("/users/list",Req) ->
@@ -209,7 +209,7 @@ handle("/groups/join/" ++ Group,Req) ->
 			    {ok,_} ->
 				get_record("success",Client ++ " joined group");
 			    {error,Error} ->
-				get_record("fail",Error)
+				get_record("failure",Error)
 			end;
 		    false ->
 			Name = 
@@ -323,8 +323,8 @@ get_response_code(Record) ->
     case Record of
 	{carrier,Type,_Message} ->
 	    case Type of
-		"fail" -> 500;
-		"success" -> 200;
+		"failure" -> 200;
+		"success" -> 500;
 		"error" -> 200;
 		_ -> 500
 	    end
@@ -404,7 +404,7 @@ loop_carrier(CarrierRecord) ->
 %%--------------------------------------------------------------------
 xml_tuple(Type,Message) when is_list(Message) ->
     [Data] = Message,
-    {chatterl,[],[{message,[],[{list_to_atom(Type),[],Data}]}]}.
+    {chatterl,[],[{response,[],[{list_to_atom(Type),[],Data}]}]}.
 
 %%--------------------------------------------------------------------
 %% @private

@@ -8,6 +8,7 @@
 	<li>{@section Features}</li>
 	<li>{@section Future Features}</li>
 	<li>{@section Useage}</li>
+	<li>{@section CWIGA}</li>
 </ul>
 
 == Description ==
@@ -39,6 +40,7 @@ Once you receive the infamous pong response you are ready to roll.
 == Features ==
 <ul>
     <li>Client login/logout to Chatterl.</li>
+    <li>Chatterl Web Interface Gateway API (CWIGA).</li>
     <li>List Chatterl groups.</li>
     <li> List Chatterl users.</li>
     <li> Login/logout of a chatterl group.</li>
@@ -53,16 +55,96 @@ Once you receive the infamous pong response you are ready to roll.
     <li> User registration.</li>
     <li> FB Connect.</li>
     <li> Chat bots (AIML based).</li>
-    <li> Web interface/API.</li>
+    <li> Web interface.</li>
     <li> Chat modules handler(banning, censorship, chatbots).</li>
 </ul>
 
 == Useage ==
+At the moment of this writing there are two ways to interact with Chatterl, through a Erlang shell or via CWIGA, which gives you the ability to interact with Chatterl via a RESTful API.
+
+== CWIGA ==
+CWIGA handles all interaction with Chatterl, though for the moment the basics have only been implemented. It can respond in both XML and JSON (at the moment of  writing only XML is functional), all XML message come in the following format:
+
+<b>XML Structure</b>
+
+CWIGA responds with three types of responses:
+<ul>
+	<li>Success</li>
+	<li>Failure</li>
+	<li>Error</li>
+</ul>
+
+<b>Success</b>
+When ever a response has been successfully retrieved from Chatter.
+
+<b>Failure</b>
+When a Chatterl responds with a failure (user cannot connect), CWIGA in turn responds with failure.
+
+<b>Error</b>
+If some kind of error CWIGA responds with an error.
+
+CWIGA commands are as follows:
+<ul>
+	<li>List Users.</li>
+	<li>List Groups.</li>
+	<li>Connect to Chatterl.</li>
+	<li>Disconnect to Chatterl.</li>
+	<li>Join a Group.</li>
+	<li>Drop from a Group.</li>
+</ul>
+
+<b>XML Layout</b>
+All CWIGA responses follow the same format for simplicity and ease of use. There are three basic response format that can be retrieved from CWIGA:
+<ul>
+	<li>Empty</li>
+	<li>Populated</li>
+	<li>Messages</li>
+</ul>
+
+<b>Empty</b>
+Empty responses are structured as displayed below:
+<pre><code>&lt;chatterl&gt;
+	&lt;response&gt;
+		&lt;users/&gt;
+	&lt;/response&gt;
+&lt;/chatterl&gt;</code></pre>
+
+<b>Populated</b>
+Populated lists are have the following structure:
+When CWIGA has a number of result it creates a structure simular to below:
+<pre><code>&lt;chatterl&gt;
+	&lt;response&gt;
+		&lt;users&gt;
+			&lt;user&gt;noobie&lt;/user&gt;
+			&lt;user&gt;noobiz&lt;/user&gt;
+			&lt;user&gt;nooby&lt;/user&gt;
+			&lt;user&gt;noobz&lt;/user&gt;
+		&lt;/users&gt;
+	&lt;/response&gt;
+&lt;/chatterl&gt;</code></pre>
+
+<b>Messages</b>
+There are a couple of reasons for receiving messages, the first two being used for success &amp; failures (which are used for simple interactions with CWIGA). The other time is when CWIGA has come across an error, messages are formatted in the following format:
+<pre><code>
+&lt;chatterl&gt;
+	&lt;message&gt;
+		&lt;failure&gt;Unable to connect.&lt;/failure&gt;
+	&lt;/message&gt;
+&lt;/chatterl&gt;
+</code></pre>
+<b>List Users</b>
+<pre><code>http://CWIGAURL:9000/users/list</code></pre>
+This will give the client a list of users connected to Chatterl.
+
+
+== Shell interaction ==
 <b>Starting the server</b> -
 Chatterl server runs as an OTP application and uses a supervisor to manage it (in later versions there will be options to spawn multiple servers, allowing for a more fault tolerant chat system). To start up the server you simply need to run the following command:
 <pre><code>erl -s chatterl</code></pre>
 
-Which will initialise the server and the admin web interface allowing clients to connect and groups to be created and admin the ability to manage the system. Groups can be created on differing nodes as long as the node can communicate with the chatterl_serv.
+Which will initialise the server and CWIGA The backend allowing clients to connect and groups to be created and admin the ability to manage the system. Groups can be created on differing nodes as long as the node can communicate with the chatterl_serv.
+
+CWIGA allows for developers to interact with the API, giving them the ability use the basic CRUD functionalities of Chatterl as well as handle clients along with thier messages and other functionality.
 
 <b>Starting a group</b> -
 Chatterl groups can be started on any node that can communicate with the server, this allows the user to create a number of groups on varying nodes, helping with general organisation as well a performance and reliablity.
