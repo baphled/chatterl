@@ -162,14 +162,16 @@ code_change(_OldVsn, State, _Extra) ->
 %% Need to refactor so the request goes to chatterl_serv
 handle("/connect/" ++ Client,Req) ->
     ContentType = "text/xml",
-    Record = 
+    {Cookies,Record} = 
 	case gen_server:call({global,chatterl_serv},{connect,Client}) of
 	    {ok,_} ->
-		get_record("success",Client ++ " now connected");
+		SessionId = "ze_key",
+		H = mochiweb_cookies:cookie("sid", SessionId, [{path, "/"}]), 
+		{H,get_record("success",Client ++ " now connected")};
 	    {error,Error} ->
-		get_record("fail",Error)
+		{nil,get_record("fail",Error)}
 	end,
-    send_response(Req,{ContentType,Record});
+    send_cookie_response(Req,Cookies,{ContentType,Record});
 handle("/disconnect/" ++ Client,Req) ->
     ContentType = "text/xml",
     Record = 
@@ -190,6 +192,7 @@ handle("/users/list",Req) ->
     end,
     send_response(Req,{"text/xml",get_record(Type,Result)});
 handle("/groups/list",Req) ->
+    io:format(Req:parse_cookie()),
     {Type,Result} = 
 	case gen_server:call({global,chatterl_serv},list_groups) of
 	    [] -> {"success",get_record("groups","")};
@@ -274,10 +277,11 @@ clean_path(Path) ->
 send_response(Req, {ContentType,Record}) when is_list(ContentType) ->
     Response = get_response_body(ContentType,Record),
     Code = get_response_code(Record),
-    %% If we cant construct the code or have an illegal content type, we need to
-    %% send an illegal method message back to the client.
     Req:respond({Code, [{"Content-Type", ContentType}], list_to_binary(Response)}).
-
+send_cookie_response(Req, Cookie,{ContentType,Record}) when is_list(ContentType) ->
+    Response = get_response_body(ContentType,Record),
+    Code = get_response_code(Record),
+    Req:respond({Code, [{"Content-Type", ContentType},Cookie], list_to_binary(Response)}).
 %%--------------------------------------------------------------------
 %% @private
 %% @doc
