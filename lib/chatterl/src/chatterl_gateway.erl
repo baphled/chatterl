@@ -198,7 +198,14 @@ handle("/disconnect/" ++ Client,Req) ->
 	{error,Error} ->
 	    send_response(Req,{ContentType,get_record("failure",Error)})
     end;
-handle("/users/list",Req) ->
+handle("/users/list." ++ Ext ,Req) ->
+    ContentType = 
+	case Ext of
+	    "json" ->
+		"text/plain";
+	    "xml" ->
+		"text/xml"
+	end,
     {Type,Result} =
 	case gen_server:call({global,chatterl_serv},list_users) of
 	    [] -> {"success",get_record("users","")};
@@ -206,7 +213,7 @@ handle("/users/list",Req) ->
 		UsersList = [get_record("user",User)||User <- Users],
 		{"success",get_record("users",UsersList)}
     end,
-    send_response(Req,{"text/xml",get_record(Type,Result)});
+    send_response(Req,Ext,{ContentType,get_record(Type,Result)});
 handle("/groups/list",Req) ->
     {Type,Result} = 
 	case gen_server:call({global,chatterl_serv},list_groups) of
@@ -302,6 +309,10 @@ send_response(Req, {ContentType,Record}) when is_list(ContentType) ->
     Code = get_response_code(Record),
     Req:respond({Code, [{"Content-Type", ContentType}], list_to_binary(Response)}).
 
+send_response(Req, Ext, {ContentType,Record}) when is_list(ContentType) ->
+    Response = get_response_body(ContentType,Record),
+    Code = get_response_code(Record),
+    Req:respond({Code, [{"Content-Type", ContentType}], list_to_binary(Response)}).
 %%--------------------------------------------------------------------
 %% @private
 %% @doc
@@ -432,7 +443,7 @@ xml_tuple(Type,Message) when is_list(Message) ->
 %% @end
 %%--------------------------------------------------------------------
 xml_tuple_single(Type,Message) ->
-    {chatterl,[],[{message,[],[{list_to_atom(Type),[],[Message]}]}]}.
+    {chatterl,[],[{response,[],[{list_to_atom(Type),[],[Message]}]}]}.
 
 %%--------------------------------------------------------------------
 %% @private
