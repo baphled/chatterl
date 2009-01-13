@@ -105,6 +105,8 @@ handle_call(description, _From, State) ->
     Result = State#group.description,
     Reply = {description, Result},
     {reply, Reply, State};
+handle_call(poll_messages, _From, State) ->
+    {reply, gb_trees:values(State#group.messages), State};
 handle_call(list_users, _From, State) ->
     Reply = gb_trees:values(State#group.users),
     {reply, Reply, State};
