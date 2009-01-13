@@ -52,6 +52,7 @@ start(Port) ->
 %% @end
 %%--------------------------------------------------------------------
 dispatch_requests(Req) ->
+  %log(Req),
   Path = Req:get(path),
   Action = clean_path(Path),
   handle(Action, Req).
@@ -89,7 +90,10 @@ init([Port]) ->
 %%                                      {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_call(_Rquest, _From, State) ->
+handle_call({dolog,Req,Ip},_From,State) ->
+    stat_logger:log("~p ~p~n", [Ip, Req:get(path)]),
+    {reply,ok,State};
+handle_call(_Request, _From, State) ->
     {reply,ok,State}.
     
 %%--------------------------------------------------------------------
@@ -429,6 +433,7 @@ xml_tuple(Type,Message) when is_list(Message) ->
 %%--------------------------------------------------------------------
 xml_tuple_single(Type,Message) ->
     {chatterl,[],[{message,[],[{list_to_atom(Type),[],[Message]}]}]}.
+
 %%--------------------------------------------------------------------
 %% @private
 %% @doc
@@ -476,10 +481,15 @@ strip_whitespace({El,Attr,Children}) ->
   Ch = lists:map(fun(X) -> strip_whitespace(X) end,NChild),
   {El,Attr,Ch}.
 
-
+%%--------------------------------------------------------------------
+%% @private
+%% @doc
+%%
+%% Logs all our requests.
+%% @spec loop_xml_tuple(Type,Message) -> XmlTuple
+%%
+%% @end
+%%--------------------------------------------------------------------
 log(Req) ->
  Ip = Req:get(peer),
- spawn(?MODULE, dolog, [Req, Ip]).
-
-dolog(Req, Ip) ->
- stat_logger:log("~p ~p", [Ip, Req:get(path)]).
+ gen_server:call(?MODULE, {dolog, Req, Ip}).
