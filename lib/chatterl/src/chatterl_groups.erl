@@ -186,7 +186,7 @@ handle_info(Info, State) ->
 terminate(Reason, State) ->
     case gb_trees:is_empty(State#group.users) of
 	false ->
-	    gen_server:call({global,chatterl_serv}, {remove_pid,State#group.name},infinity),
+	    gen_server:call({global,chatterl_serv}, {drop_group,State#group.name},infinity),
 	    determine_user_action(State#group.name,{drop_group,[]},
 				  gb_trees:values(State#group.users));
 	true ->

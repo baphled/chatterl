@@ -167,11 +167,11 @@ handle("/send/" ++ Group, Req) ->
     Record = 
 	case gen_server:call({global,chatterl_serv},{user_exists,Sender}) of
 	    true ->
-		case gen_server:call({global,chatterl_serv},{group_exists,Group}) of
-		    true ->
-			case gen_server:call(Sender,{group_msg,Group,Message}, infinity) of
+		case gen_server:call({global,chatterl_serv},{get_group,Group}) of
+		    {GroupName,GroupPid} ->
+			case gen_server:call(GroupPid,{send_msg,Sender,Message}, infinity) of
 			    {ok,Msg} -> 
-				get_record("success",Msg);
+				get_record("success",atom_to_list(Msg));
 			    {error,Error} ->
 				get_record("failure",Error)
 			end;
