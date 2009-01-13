@@ -157,7 +157,7 @@ handle("/connect/" ++ Client,Req) ->
     case gen_server:call({global,chatterl_serv},{connect,Client}) of
 	{ok,_} ->
 	    % Need to make this secure, once nailed down.
-	    SessionId = "ze_key",
+	    SessionId = generate_session_id(),
 	    Cookie1 = mochiweb_cookies:cookie("sid", SessionId, [{path, "/"}]),
 	    Cookie2 = mochiweb_cookies:cookie("client", Client, [{path, "/"}]),
 	    %% Want to assign both, will need to work out how.
@@ -172,7 +172,10 @@ handle("/disconnect/" ++ Client,Req) ->
 	{ok,Message} ->
 	    send_response(Req, {ContentType,get_record("success",Message)});
 	{error,Error} ->
-	    send_response(Req,{ContentType,get_record("failure",Error)})
+	    %Cookie = mochiweb_cookies:cookie("", "NoKey", [{path, "/"}]),
+	    LocalTime = calendar:universal_time_to_local_time({{2007, 5, 15}, {13, 45, 33}}),
+	    Cookie2 = mochiweb_cookies:cookie("client", Client, [{max_age, -111}, {local_time, LocalTime}]),
+	    send_cookie_response(Req,Cookie2,{ContentType,get_record("failure",Error)})
     end;
 handle("/users/list",Req) ->
     {Type,Result} =
@@ -287,6 +290,31 @@ send_cookie_response(Req, Cookie,{ContentType,Record}) when is_list(ContentType)
     io:format("Setting up cookie...~n"),
     Req:respond({Code, [{"Content-Type", ContentType},Cookie], list_to_binary(Response)}).
     
+%%--------------------------------------------------------------------
+%% @private
+%% @doc
+%%
+%% Generates session id.
+%%
+%% @end
+%%--------------------------------------------------------------------
+generate_session_id() ->
+    Data = crypto:rand_bytes(2048),
+    Sha_list = binary_to_list(crypto:sha(Data)),
+    Id = lists:flatten(list_to_hex(Sha_list)),
+    Id.
+
+%% Convert Integer from the SHA to Hex
+list_to_hex(L)->
+       lists:map(fun(X) -> int_to_hex(X) end, L).
+ 
+int_to_hex(N) when N < 256 -> 
+       [hex(N div 16), hex(N rem 16)].
+ 
+hex(N) when N < 10 ->
+       $0+N;
+hex(N) when N >= 10, N < 16 ->
+       $a + (N-10).
 %%--------------------------------------------------------------------
 %% @private
 %% @doc
