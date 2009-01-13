@@ -152,14 +152,6 @@ code_change(_OldVsn, State, _Extra) ->
 %%
 %% @end
 %%--------------------------------------------------------------------
-%% handle("/send", Req) ->
-%%   Params = Req:parse_qs(),
-%%   Sender = proplists:get_value("nick", Params),
-%%   Group = proplists:get_value("to", Params),
-%%   Message = proplists:get_value("msg", Params),
-%%   chatterl_man:send_message(Sender, Group, Message),
-%%   success(Req, {"text/plain",?OK});
-%% Need to refactor so the request goes to chatterl_serv
 handle("/connect/" ++ Client,Req) ->
     ContentType = "text/xml",
     {Cookies,Record} = 
@@ -169,7 +161,8 @@ handle("/connect/" ++ Client,Req) ->
 		H = mochiweb_cookies:cookie("sid", SessionId, [{path, "/"}]), 
 		{H,get_record("success",Client ++ " now connected")};
 	    {error,Error} ->
-		{nil,get_record("fail",Error)}
+		io:format(Req:get_cookie()),
+		{Req:get_cookie(),get_record("fail",Error)}
 	end,
     send_cookie_response(Req,Cookies,{ContentType,Record});
 handle("/disconnect/" ++ Client,Req) ->
@@ -192,7 +185,6 @@ handle("/users/list",Req) ->
     end,
     send_response(Req,{"text/xml",get_record(Type,Result)});
 handle("/groups/list",Req) ->
-    io:format(Req:parse_cookie()),
     {Type,Result} = 
 	case gen_server:call({global,chatterl_serv},list_groups) of
 	    [] -> {"success",get_record("groups","")};
@@ -359,19 +351,20 @@ to_json(Record) ->
 %%--------------------------------------------------------------------
 xml_message(CarrierRecord) ->
     {carrier, MessageType, Message} = CarrierRecord,
-    case Message of
+    XMLTuple = case Message of
 	{carrier, Type, Record} ->		
 	    case Type of
 		"groups" ->
 		    RecordList = loop_carrier(Record),
-		    tuple_to_xml(xml_tuple(Type,RecordList),[]);
+		    xml_tuple(Type,RecordList);
 		"users" ->
 		    RecordList = loop_carrier(Record),
-		    tuple_to_xml(xml_tuple(Type,RecordList),[]);
+		    xml_tuple(Type,RecordList);
 		_ -> io:format("dont know ~s~n",[Type])
 	    end;
-	_ -> tuple_to_xml(xml_tuple_single(MessageType,Message),[])
-    end.
+	_ -> xml_tuple_single(MessageType,Message)
+    end,
+    tuple_to_xml(XMLTuple,[]).
 
 %%--------------------------------------------------------------------
 %% @private
