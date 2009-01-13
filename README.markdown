@@ -1,7 +1,6 @@
 <h1>The chatterl application</h1>
-<p>Copyright � 2008 Yomi Colledge</p>
+<p>Copyright &copy; 2008 Yomi Colledge</p>
 <p><b>Version:</b> Jan 13 2009 03:34:49</p>
-<p><b>Authors:</b> Yomi Colledge (<a href="mailto:yomi@boodah.net"><tt>yomi@boodah.net</tt></a>).</p>
 
 <ul>
 	<li><a href="#Description">Description</a></li>
