@@ -66,7 +66,7 @@ CWIGA handles all interaction with Chatterl, though for the moment the basics ha
 
 <ul>
 	<li>{@section XML Structure}</li>
-	<li>{@section CWIGA Commands}</li>
+	<li>{@section CWIGA Calls}</li>
 </ul>
 
 == XML Structure ==
@@ -137,7 +137,7 @@ There are a couple of reasons for receiving messages, the first two being used f
 &lt;/chatterl&gt;
 </code></pre>
 
-== CWIGA Commands ==
+== CWIGA Calls ==
 All commands apart from connect require the client to connect, without it, they will receive an erorr (at the moment this is not true).
 
 <b>Connect</b>
