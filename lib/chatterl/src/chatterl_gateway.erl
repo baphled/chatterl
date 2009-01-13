@@ -435,7 +435,7 @@ loop_xml_tuple(Type,Message) ->
 %% Converts a tuple into XML.
 %%
 %% Inspired by the below link.
-%% @link http://arandomurl.com/post/Simple-XML-in-Erlang
+%% <a target="_blank" href="http://arandomurl.com/post/Simple-XML-in-Erlang">Link</a>
 %% @spec tuple_to_xml(Xml,Prolog) -> [XML]
 %%
 %% @end
@@ -449,8 +449,8 @@ tuple_to_xml(XmlTuple,Prolog) ->
 %% Strips out whitespaces out of out XML tuple.
 %%
 %% Extracted from the link below.
-%% @link http://arandomurl.com/post/Simple-XML-in-Erlang
-%% @spec tuple_to_xml(Xml,Prolog) -> [XML]
+%% <a target="_blank" href="http://arandomurl.com/post/Simple-XML-in-Erlang">Link</a>
+%% @spec strip_whitespace(XMLTuple) -> [XML]
 %%
 %% @end
 %%--------------------------------------------------------------------
