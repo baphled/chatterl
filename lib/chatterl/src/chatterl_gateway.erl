@@ -158,22 +158,22 @@ handle("/connect/" ++ Client,Req) ->
 	{ok,_} ->
 	    % Need to make this secure, once nailed down.
 	    SessionId = "ze_key",
-	    Cookies = mochiweb_cookies:cookie("sid", SessionId, [{path, "/"}]),
-	    send_cookie_response(Req,Cookies,
+	    Cookie1 = mochiweb_cookies:cookie("sid", SessionId, [{path, "/"}]),
+	    Cookie2 = mochiweb_cookies:cookie("client", Client, [{path, "/"}]),
+	    %% Want to assign both, will need to work out how.
+	    send_cookie_response(Req,Cookie1,
 				 {ContentType,get_record("success",Client++" now connected")});
 	{error,Error} ->
 	    send_response(Req,{ContentType,get_record("failure",Error)})
     end;
 handle("/disconnect/" ++ Client,Req) ->
     ContentType = "text/xml",
-    Record = 
-	case gen_server:call({global,chatterl_serv},{disconnect,Client}) of
-	    {ok,Message} ->
-		get_record("success",Message);
-	    {error,Error} ->
-		get_record("failure",Error)
-	end,
-    send_response(Req,{ContentType,Record});
+    case gen_server:call({global,chatterl_serv},{disconnect,Client}) of
+	{ok,Message} ->
+	    send_response(Req,{ContentType,get_record("success",Message)});
+	{error,Error} ->
+	    send_response(Req,{ContentType,get_record("failure",Error)})
+    end;
 handle("/users/list",Req) ->
     {Type,Result} =
 	case gen_server:call({global,chatterl_serv},list_users) of
@@ -285,7 +285,7 @@ send_cookie_response(Req, Cookie,{ContentType,Record}) when is_list(ContentType)
     Response = get_response_body(ContentType,Record),
     Code = get_response_code(Record),
     Req:respond({Code, [{"Content-Type", ContentType},Cookie], list_to_binary(Response)}).
-
+    
 %%--------------------------------------------------------------------
 %% @private
 %% @doc
