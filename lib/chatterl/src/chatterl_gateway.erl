@@ -8,6 +8,9 @@
 %%% Allows Chatterl to interface with any web-based interface
 %%% Using JSON and XML, sending the requests off to the chatterl_serv
 %%% module.
+%%% 
+%%% All calls to CWIGA will only be allowed via a specified IP, which
+%%% will be defined with the configuration file.
 %%% @end
 %%% @copyright 2008 Yomi Akindayini
 %%%---------------------------------------------------------------
@@ -148,21 +151,32 @@ code_change(_OldVsn, State, _Extra) ->
 %% @doc
 %%
 %% Handles our RESTful resquests.
+%%
 %% @spec handle(Action, Req) -> void()
 %%
 %% @end
 %%--------------------------------------------------------------------
+handle("/send", Req) ->
+    Params = Req:parse_qs(),
+    Sender = proplists:get_value("client", Params),
+    Group = proplists:get_value("group", Params),
+    Message = proplists:get_value("msg", Params),
+    Record = 
+	case gen_server:call(Sender,{group_msg,Group,Message}, infinity) of
+	    {ok,Msg} -> 
+		get_record("success",Msg);
+	    {error,Error} ->
+		get_record("failure",Error)
+	end,
+    send_response(Req,{"text/xml",Record});
 handle("/connect/" ++ Client,Req) ->
     ContentType = "text/xml",
     case gen_server:call({global,chatterl_serv},{connect,Client}) of
 	{ok,_} ->
-	    % Need to make this secure, once nailed down.
-	    SessionId = generate_session_id(),
-	    Cookie1 = mochiweb_cookies:cookie("sid", SessionId, [{path, "/"}]),
-	    Cookie2 = mochiweb_cookies:cookie("client", Client, [{path, "/"}]),
+	    %SessionId = generate_session_id(),
+	    %Cookie1 = mochiweb_cookies:cookie("sid", SessionId, [{path, "/"}]),
 	    %% Want to assign both, will need to work out how.
-	    send_cookie_response(Req,Cookie2,
-				 {ContentType,get_record("success",Client++" now connected")});
+	    send_response(Req,{ContentType,get_record("success",Client++" now connected")});
 	{error,Error} ->
 	    send_response(Req,{ContentType,get_record("failure",Error)})
     end;
@@ -172,10 +186,7 @@ handle("/disconnect/" ++ Client,Req) ->
 	{ok,Message} ->
 	    send_response(Req, {ContentType,get_record("success",Message)});
 	{error,Error} ->
-	    %Cookie = mochiweb_cookies:cookie("", "NoKey", [{path, "/"}]),
-	    LocalTime = calendar:universal_time_to_local_time({{2007, 5, 15}, {13, 45, 33}}),
-	    Cookie2 = mochiweb_cookies:cookie("client", Client, [{max_age, -111}, {local_time, LocalTime}]),
-	    send_cookie_response(Req,Cookie2,{ContentType,get_record("failure",Error)})
+	    send_response(Req,{ContentType,get_record("failure",Error)})
     end;
 handle("/users/list",Req) ->
     {Type,Result} =
@@ -206,28 +217,36 @@ handle("/groups/join/" ++ Group,Req) ->
     Record = 
 	case gen_server:call({global,chatterl_serv},{group_exists,Group}) of
 	    true ->
-		case gen_server:call({global,chatterl_serv},{user_exists,Client}) of
-		    true ->
-			case gen_server:call({global,Group},{join,Client}) of
-			    {ok,_} ->
-				get_record("success",Client ++ " joined group");
-			    {error,Error} ->
-				get_record("failure",Error)
-			end;
-		    false ->
-			Name = 
-			    case Client of
-				undefined -> atom_to_list(Client);
-				_ -> Client
-			    end,
-			get_record("error","Client:" ++Name ++" doesn't exist")
-		end;
+		generate_record(Group,Client);
 	    false ->
 		get_record("error","Group: "++ Group ++ " doesn't exist")
 	end,
     send_response(Req,{ContentType,Record});
 handle(Unknown, Req) ->
     send_response(Req,{"text/xml",get_record("error", "Unknown command: " ++Unknown)}).
+
+generate_record(Group,Client) ->
+    case gen_server:call({global,chatterl_serv},{group_exists,Group}) of
+	true ->
+	    case gen_server:call({global,chatterl_serv},{user_exists,Client}) of
+		true ->
+		    case gen_server:call({global,Group},{join,Client}) of
+			{ok,_} ->
+			    get_record("success",Client ++ " joined group");
+			{error,Error} ->
+			    get_record("failure",Error)
+		    end;
+		false ->
+		    Name = 
+			case Client of
+			    undefined -> atom_to_list(Client);
+			    _ -> Client
+			end,
+		    get_record("error","Client:" ++Name ++" doesn't exist")
+	    end;
+	false ->
+	    get_record("error","Group: "++ Group ++ " doesn't exist")
+    end.
 %%--------------------------------------------------------------------
 %% @private
 %% @doc
@@ -273,48 +292,6 @@ send_response(Req, {ContentType,Record}) when is_list(ContentType) ->
     Code = get_response_code(Record),
     Req:respond({Code, [{"Content-Type", ContentType}], list_to_binary(Response)}).
 
-%%--------------------------------------------------------------------
-%% @private
-%% @doc
-%%
-%% Handles our all responses, setting the cookies that need storing.
-%%
-%% Sends responses based on the content type, which are JSON and XML.
-%% @spec send_cookie_response(Req,Cookie,{ContentType,Record}) -> void()
-%%
-%% @end
-%%--------------------------------------------------------------------
-send_cookie_response(Req, Cookie,{ContentType,Record}) when is_list(ContentType) ->
-    Response = get_response_body(ContentType,Record),
-    Code = get_response_code(Record),
-    io:format("Setting up cookie...~n"),
-    Req:respond({Code, [{"Content-Type", ContentType},Cookie], list_to_binary(Response)}).
-    
-%%--------------------------------------------------------------------
-%% @private
-%% @doc
-%%
-%% Generates session id.
-%%
-%% @end
-%%--------------------------------------------------------------------
-generate_session_id() ->
-    Data = crypto:rand_bytes(2048),
-    Sha_list = binary_to_list(crypto:sha(Data)),
-    Id = lists:flatten(list_to_hex(Sha_list)),
-    Id.
-
-%% Convert Integer from the SHA to Hex
-list_to_hex(L)->
-       lists:map(fun(X) -> int_to_hex(X) end, L).
- 
-int_to_hex(N) when N < 256 -> 
-       [hex(N div 16), hex(N rem 16)].
- 
-hex(N) when N < 10 ->
-       $0+N;
-hex(N) when N >= 10, N < 16 ->
-       $a + (N-10).
 %%--------------------------------------------------------------------
 %% @private
 %% @doc

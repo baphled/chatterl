@@ -136,7 +136,7 @@ drop(Group) ->
 %% @end
 %%--------------------------------------------------------------------
 send_msg(Group,Msg) ->
-    gen_server:call(?MODULE,{group_msg,Group,Msg},infinity).
+    gen_server:call(self(),{group_msg,Group,Msg},infinity).
 
 %%--------------------------------------------------------------------
 %% @doc
@@ -356,7 +356,7 @@ determine_group_action(Action,Group) ->
 %% @end
 %%--------------------------------------------------------------------
 group_action(GroupCall,ClientCall,GroupPid) ->
-    case gen_server:call(chatterl_client, client_name, infinity) of
+    case gen_server:call(self(), client_name, infinity) of
 	{name, Client} ->
 	    case gen_server:call(GroupPid, {GroupCall, Client}, infinity) of
 		{ok, _Msg} ->
