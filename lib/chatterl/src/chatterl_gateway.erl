@@ -224,7 +224,7 @@ handle("/groups/join/" ++ Group,ContentType,Req) ->
     Record = 
 	case gen_server:call({global,chatterl_serv},{group_exists,Group}) of
 	    true ->
-		generate_record(Group,Name);
+		generate_record(Group,join,Name);
 	    false ->
 		get_record("error","Group: "++ Group ++ " doesn't exist")
 	end,
@@ -244,16 +244,21 @@ handle(Unknown, ContentType,Req) ->
 %%
 %% @end
 %%--------------------------------------------------------------------
-generate_record(Group,Client) ->
+generate_record(Group,Payload,Client) ->
     case gen_server:call({global,chatterl_serv},{group_exists,Group}) of
 	true ->
 	    case gen_server:call({global,chatterl_serv},{user_exists,Client}) of
 		true ->
-		    case gen_server:call({global,Group},{join,Client}) of
-			{ok,_} ->
-			    get_record("success",Client ++ " joined group");
-			{error,Error} ->
-			    get_record("failure",Error)
+		    %% Check payload here
+		    case Payload of
+			join ->
+			    case gen_server:call({global,Group},{join,Client}) of
+				{ok,_} ->
+				    get_record("success",Client ++ " joined group");
+				{error,Error} ->
+				    get_record("failure",Error)
+			    end;
+			_ -> io:format("Unrecognised payload: ~s~n",[Payload])
 		    end;
 		false ->
 		    Name = 
