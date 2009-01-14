@@ -197,12 +197,12 @@ get_content_type(Type) ->
 %% @end
 %%--------------------------------------------------------------------
 handle("/connect/" ++ Client,ContentType,Req) ->
+    {Type,Record} =
     case gen_server:call({global,chatterl_serv},{connect,Client}) of
-	{ok,_} -> send_response(Req,{get_content_type(ContentType),
-				     build_carrier("success",Client++" now connected")});
-	{error,Error} -> send_response(Req,{get_content_type(ContentType),
-					    build_carrier("failure",Error)})
-    end;
+	{ok,_} -> {"success",Client++" now connected"};
+	{error,Error} -> {"failure",Error}
+    end,
+    send_response(Req,{{get_content_type(ContentType),build_carrier(Type,Record)}});
 handle("/disconnect/" ++ Client,ContentType,Req) ->
     case gen_server:call({global,chatterl_serv},{disconnect,Client}) of
 	{ok,Message} -> send_response(Req, {get_content_type(ContentType),
@@ -397,6 +397,7 @@ get_response_body(ContentType,Record) ->
 	    json_message(Record);
 	"text/xml" ->
 	    xml_message(Record);
+	_ -> json_message(build_carrier("error","Illegal content type!"))
     end.
 
 %%--------------------------------------------------------------------
