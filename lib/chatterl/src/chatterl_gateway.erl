@@ -214,6 +214,20 @@ handle("/groups/list",ContentType,Req) ->
 		{"success",get_record("groups",GroupsList)}
     end,
     send_response(Req,{get_content_type(ContentType),get_record(Type,Result)});
+handle("/groups/poll/" ++ Group,ContentType,Req) ->
+    {Type,Result} = 
+	case gen_server:call({global,chatterl_serv},{group_exists,Group}) of
+	    true ->
+		case gen_server:call({global,Group},poll_messages) of
+		    [] -> {"success",get_record("messages","")};
+		    Messages ->
+			MessagesList = [get_record("message",Message)||Message <- Messages],
+			{"success",get_record("groups",MessagesList)}
+		end;
+	    false ->
+		{"error","Group: "++ Group ++ " doesn't exist"}
+	end,
+    send_response(Req,{get_content_type(ContentType),get_record(Type,Result)});
 handle("/groups/join/" ++ Group,ContentType,Req) ->
     Params = Req:parse_qs(),
     Client = proplists:get_value("client", Params),
