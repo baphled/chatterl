@@ -363,13 +363,6 @@ get_response_code(Record) ->
 %%
 %% @end
 %%--------------------------------------------------------------------
-to_json(Record) ->
-    case Record of
-	{carrier, Type, Message} ->
-	    mochijson:encode({array, [Type,Message]});
-	_ -> io:format("Illegal message~n")
-    end.
-
 json_message(CarrierRecord) ->
     {carrier, MessageType, Message} = CarrierRecord, 
     Struct =
@@ -385,6 +378,7 @@ json_message(CarrierRecord) ->
 		{struct,[{MessageType,Message}]}
 	end,
     mochijson2:encode({struct,[{chatterl,{struct,[{response,Struct}]}}]}).
+
 %%--------------------------------------------------------------------
 %% @private
 %% @doc
