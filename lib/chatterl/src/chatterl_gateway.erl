@@ -259,9 +259,6 @@ handle(Unknown, ContentType,Req) ->
 %% @end
 %%--------------------------------------------------------------------
 format_messages({Client,Date,Message}) ->
-    CRecord = get_record("client",Client),
-    DRecord = get_record("date",Date),
-    MRecord = get_record("message",Message),
     [get_record("client",Client),get_record("date",Date),get_record("message",Message)].
 
 %%--------------------------------------------------------------------
