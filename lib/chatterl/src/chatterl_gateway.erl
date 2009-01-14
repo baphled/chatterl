@@ -403,7 +403,7 @@ get_response_code(Record) ->
 %% @doc
 %%
 %% Converts our carrier Record into a JSON format.
-%% @spec to_json(Record) -> JSON
+%% @spec json_message(CarrierRecord) -> JSON
 %%
 %% @end
 %%--------------------------------------------------------------------
@@ -411,23 +411,10 @@ json_message(CarrierRecord) ->
     {carrier, CarrierType, Message} = CarrierRecord, 
     Struct =
 	case Message of
-	    {carrier,Type,Record} ->
+	    {carrier,Type,MessagesCarrier} ->
 		case Type =:= "groups" orelse Type =:= "users" orelse Type =:= "messages" of
 		    true ->
-			case Type =:= "messages" of
-			    true ->
-				case Record of
-				    [{carrier,MessageType,MessageData}] ->
-					% A Single message.
-					%io:format(CarrierRecord),
-					{struct,[{CarrierType,{struct,[{Type,loop_json_carrier(MessageData)}]}}]};
-				    [] -> {struct,[{Type,[]}]}; %Empty list.
-				    Messages ->
-					{struct,[{CarrierType,{struct,[{Type,inner_loop_json_carrier(Messages)}]}}]}
-				end;
-			    false ->
-				{struct,[{CarrierType,{struct,[{Type,loop_json_carrier(Record)}]}}]}
-			end;
+			handle_messages_json(Type,MessagesCarrier,CarrierType);
 		    false ->
 			io:format("dont know ~s~n",[Type])
 		end;
@@ -436,6 +423,35 @@ json_message(CarrierRecord) ->
 	end,
     mochijson2:encode({struct,[{chatterl,{struct,[{response,Struct}]}}]}).
 
+%%--------------------------------------------------------------------
+%% @private
+%% @doc
+%%
+%% Generates JSON structure needed to create message responses.
+%%
+%% As messages are a different format that the other responses, they
+%% need to be handled uniquely. We also want to make sure that all three
+%% clauses are meet (empty,single message, multiple messages).
+%% @spec handle_messages_json(CarrierType,MessagesCarrier,Type) -> JSON
+%%
+%% @end
+%%--------------------------------------------------------------------
+handle_messages_json(Type,MessagesCarrier,CarrierType) ->
+    case Type =:= "messages" of
+	true ->
+	    case MessagesCarrier of
+		[] -> %Empty list.
+		    {struct,[{Type,[]}]};
+		[{carrier,_MessageType,MessageData}] ->	% A Single message.
+		    {struct,[{CarrierType,
+			      {struct,[{Type,loop_json_carrier(MessageData)}]}}]};
+		Messages -> % Multiple messages
+		    {struct,[{CarrierType,
+			      {struct,[{Type,inner_loop_json_carrier(Messages)}]}}]}
+	    end;
+	false ->
+	    {struct,[{CarrierType,{struct,[{Type,loop_json_carrier(MessagesCarrier)}]}}]}
+    end.
 %%--------------------------------------------------------------------
 %% @private
 %% @doc
