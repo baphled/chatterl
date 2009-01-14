@@ -375,16 +375,10 @@ json_message(CarrierRecord) ->
     Struct =
 	case Message of
 	    {carrier,Type,Record} ->
-		case Type of
-		    "groups" ->
-			RecordList = loop_json_carrier(Record),
-			JSON = {struct,[{Type,RecordList}]},
-			{struct,[{MessageType,JSON}]};
-		    "users" ->
-			RecordList = loop_json_carrier(Record),
-			JSON = {struct,[{Type,RecordList}]},
-			{struct,[{MessageType,JSON}]};
-		    _ ->
+		case Type =:= "groups" orelse Type =:= "users" of
+		    true ->
+			{struct,[{MessageType,{struct,[{Type,loop_json_carrier(Record)}]}}]};
+		    false ->
 			io:format("dont know ~s~n",[Type])
 		end;
 	    _ ->
