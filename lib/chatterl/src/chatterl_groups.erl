@@ -193,7 +193,7 @@ terminate(Reason, State) ->
 	true ->
 	    io:format("No users to inform of shutdown~n")
     end,
-    gen_server:call({global,chatterl_serv}, {drop_group,State#group.name},infinity),
+    gen_server:call({global,chatterl_serv}, {drop_group,State#group.name},),
     io:format("Shutdown ~s:~nReason:~s~n",[State#group.name,Reason]),
     {shutdown, State#group.name}.
 
