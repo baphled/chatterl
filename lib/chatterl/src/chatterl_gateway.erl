@@ -422,7 +422,8 @@ json_message(CarrierRecord) ->
 					%io:format(CarrierRecord),
 					{struct,[{CarrierType,{struct,[{Type,loop_json_messages(MessageData)}]}}]};
 				    [] -> {struct,[{Type,[]}]}; %Empty list.
-				    _ -> io:format(Record)
+				    Messages ->
+					{struct,[{CarrierType,{struct,[{Type,inner_loop_json_messages(Messages)}]}}]}
 				end;
 			    false ->
 				{struct,[{CarrierType,{struct,[{Type,loop_json_carrier(Record)}]}}]}
@@ -490,6 +491,9 @@ loop_xml_carrier(CarrierRecord) ->
 %%--------------------------------------------------------------------
 loop_json_carrier(CarrierRecord) ->
     [{struct,[{list_to_binary(DataType),list_to_binary(Data)}]} || {carrier,DataType,Data} <- CarrierRecord].
+
+inner_loop_json_messages(CarrierRecord) ->
+    [{struct,[{list_to_binary(MsgType),loop_json_messages(Msg)}]} || {carrier,MsgType,Msg} <- CarrierRecord].
 
 loop_json_messages(CarrierRecord) ->
     [{struct,[{list_to_binary(DataType),clean_data(Data)}]} || {carrier,DataType,Data} <- CarrierRecord].
