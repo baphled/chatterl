@@ -168,7 +168,7 @@ handle("/send/" ++ Group, Req) ->
 	case gen_server:call({global,chatterl_serv},{user_exists,Sender}) of
 	    true ->
 		case gen_server:call({global,chatterl_serv},{get_group,Group}) of
-		    {GroupName,GroupPid} ->
+		    {_GroupName,GroupPid} ->
 			case gen_server:call(GroupPid,{send_msg,Sender,Message}, infinity) of
 			    {ok,Msg} -> 
 				get_record("success",atom_to_list(Msg));
@@ -213,7 +213,7 @@ handle("/users/list." ++ Ext ,Req) ->
 		UsersList = [get_record("user",User)||User <- Users],
 		{"success",get_record("users",UsersList)}
     end,
-    send_response(Req,Ext,{ContentType,get_record(Type,Result)});
+    send_response(Req,{ContentType,get_record(Type,Result)});
 handle("/groups/list",Req) ->
     {Type,Result} = 
 	case gen_server:call({global,chatterl_serv},list_groups) of
@@ -234,7 +234,7 @@ handle("/groups/join/" ++ Group,Req) ->
     Record = 
 	case gen_server:call({global,chatterl_serv},{group_exists,Group}) of
 	    true ->
-		generate_record(Group,Client);
+		generate_record(Group,Name);
 	    false ->
 		get_record("error","Group: "++ Group ++ " doesn't exist")
 	end,
@@ -308,11 +308,6 @@ send_response(Req, {ContentType,Record}) when is_list(ContentType) ->
     Response = get_response_body(ContentType,Record),
     Code = get_response_code(Record),
     Req:respond({Code, [{"Content-Type", ContentType}], list_to_binary(Response)}).
-
-send_response(Req, Ext, {ContentType,Record}) when is_list(ContentType) ->
-    Response = get_response_body(ContentType,Record),
-    Code = get_response_code(Record),
-    Req:respond({Code, [{"Content-Type", ContentType}], list_to_binary(Response)}).
 %%--------------------------------------------------------------------
 %% @private
 %% @doc
@@ -327,8 +322,8 @@ send_response(Req, Ext, {ContentType,Record}) when is_list(ContentType) ->
 %%--------------------------------------------------------------------
 get_response_body(ContentType,Record) ->
     case ContentType of
-	"text/json" ->
-	    to_json(Record);
+	"text/plain" ->
+	    json_message(Record);
 	"text/xml" ->
 	    xml_message(Record);
 	_ -> xml_message(get_record("error","Illegal content type!"))
@@ -373,6 +368,23 @@ to_json(Record) ->
 	_ -> io:format("Illegal message~n")
     end.
 
+json_message(CarrierRecord) ->
+    {carrier, MessageType, Message} = CarrierRecord,
+	case Message of
+	    {carrier,Type,Record} ->
+		case Type of
+		    "groups" ->
+			RecordList = loop_json_carrier(Record),
+			mochijson2:encode({struct,[{Type,RecordList}]});
+		    "users" ->
+			RecordList = loop_json_carrier(Record),
+			%io:format(RecordList),
+			mochijson2:encode({struct,[{Type,RecordList}]});
+		    _ ->
+			io:format("dont know ~s~n",[Type])
+		end;
+	    _ -> mochijson:encode({struct,[{MessageType,Message}]})
+	end.
 %%--------------------------------------------------------------------
 %% @private
 %% @doc
@@ -394,10 +406,10 @@ xml_message(CarrierRecord) ->
 	{carrier, Type, Record} ->		
 	    case Type of
 		"groups" ->
-		    RecordList = loop_carrier(Record),
+		    RecordList = loop_xml_carrier(Record),
 		    xml_tuple(Type,RecordList);
 		"users" ->
-		    RecordList = loop_carrier(Record),
+		    RecordList = loop_xml_carrier(Record),
 		    xml_tuple(Type,RecordList);
 		_ -> io:format("dont know ~s~n",[Type])
 	    end;
@@ -415,11 +427,13 @@ xml_message(CarrierRecord) ->
 %%
 %% @end
 %%--------------------------------------------------------------------
-loop_carrier(CarrierRecord) ->
+loop_xml_carrier(CarrierRecord) ->
     Result = [loop_xml_tuple(DataType,Data) || {carrier,DataType,Data} <- CarrierRecord],
     Response = [Result],
     Response.
 
+loop_json_carrier(CarrierRecord) ->
+    [{struct,[{list_to_binary(DataType),list_to_binary(Data)}]} || {carrier,DataType,Data} <- CarrierRecord].
 %%--------------------------------------------------------------------
 %% @private
 %% @doc
