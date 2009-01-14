@@ -319,8 +319,7 @@ generate_record(Group,Payload,Client) ->
 		{group_msg,Message} ->
 		    %% Need to check that the user is connected to the group.
 		    case gen_server:call({global,Group},{send_msg,Client,Message}, infinity) of
-			{ok,Msg} -> 
-			    io:format(Msg),
+			{ok,Msg} ->
 			    build_carrier("success",atom_to_list(Msg));
 			{error,_Error} ->
 			    build_carrier("failure","Can not send the same message twice")
