@@ -372,22 +372,25 @@ to_json(Record) ->
 
 json_message(CarrierRecord) ->
     {carrier, MessageType, Message} = CarrierRecord, 
-    case Message of
-	{carrier,Type,Record} ->
-	    case Type of
-		"groups" ->
-		    RecordList = loop_json_carrier(Record),
-		    JSON = {struct,[{Type,RecordList}]},
-		    mochijson2:encode({struct,[{MessageType,JSON}]});
-		"users" ->
-		    RecordList = loop_json_carrier(Record),
-		    JSON = {struct,[{Type,RecordList}]},
-		    mochijson2:encode({struct,[{MessageType,JSON}]});
-		_ ->
-		    io:format("dont know ~s~n",[Type])
-	    end;
-	_ -> mochijson:encode({struct,[{MessageType,Message}]})
-    end.
+    Struct =
+	case Message of
+	    {carrier,Type,Record} ->
+		case Type of
+		    "groups" ->
+			RecordList = loop_json_carrier(Record),
+			JSON = {struct,[{Type,RecordList}]},
+			{struct,[{MessageType,JSON}]};
+		    "users" ->
+			RecordList = loop_json_carrier(Record),
+			JSON = {struct,[{Type,RecordList}]},
+			{struct,[{MessageType,JSON}]};
+		    _ ->
+			io:format("dont know ~s~n",[Type])
+		end;
+	    _ ->
+		{struct,[{MessageType,Message}]}
+	end,
+    mochijson2:encode({struct,[{chatterl,{struct,[{response,Struct}]}}]}).
 %%--------------------------------------------------------------------
 %% @private
 %% @doc
