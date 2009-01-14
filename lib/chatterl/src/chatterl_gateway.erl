@@ -397,7 +397,6 @@ get_response_body(ContentType,Record) ->
 	    json_message(Record);
 	"text/xml" ->
 	    xml_message(Record);
-	_ -> xml_message(build_carrier("error","Illegal content type!"))
     end.
 
 %%--------------------------------------------------------------------
