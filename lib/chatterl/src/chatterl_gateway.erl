@@ -246,11 +246,24 @@ handle("/groups/join/" ++ Group,ContentType,Req) ->
 handle(Unknown, ContentType,Req) ->
     send_response(Req,{get_content_type(ContentType),get_record("error", "Unknown command: " ++Unknown)}).
 
+%%--------------------------------------------------------------------
+%% @private
+%% @doc
+%%
+%% Generates the record for joining a Chatterl group.
+%%
+%% Have a feeling this can be cleaned up or used in other places, so
+%% I have place it here.
+%% @spec messages(MessageCarrier) -> [MessageRecord]
+%%
+%% @end
+%%--------------------------------------------------------------------
 messages({Client,Date,Message}) ->
     CRecord = get_record("client",Client),
     DRecord = get_record("date",Date),
     MRecord = get_record("message",Message),
     [CRecord,DRecord,MRecord].
+
 %%--------------------------------------------------------------------
 %% @private
 %% @doc
@@ -484,17 +497,43 @@ loop_xml_carrier(CarrierRecord) ->
 %% @doc
 %%
 %% Loops over the record carrier building the tuple structure need to
-%% build out XML.
-%% @spec loop_carrier(Carrier) -> XMLTuple
+%% build our JSON.
+%% @spec loop_carrier(Carrier) -> JSONTuple
 %%
 %% @end
 %%--------------------------------------------------------------------
 loop_json_carrier(CarrierRecord) ->
     [{struct,[{list_to_binary(DataType),clean_message(Data)}]} || {carrier,DataType,Data} <- CarrierRecord].
 
+%%--------------------------------------------------------------------
+%% @private
+%% @doc
+%%
+%% Loops over the message carrier building the tuple structure need to
+%% build our JSON.
+%%
+%% We use this to build each message retrieved from a group, as they
+%% have a number of elements we need to parse those the same as the
+%% outer elements.
+%% @spec inner_loop_json_carrier(CarrierRecord) -> JSONTuple
+%%
+%% @end
+%%--------------------------------------------------------------------
 inner_loop_json_carrier(CarrierRecord) ->
     [{struct,[{list_to_binary(MsgType),loop_json_carrier(Msg)}]} || {carrier,MsgType,Msg} <- CarrierRecord].
 
+%%--------------------------------------------------------------------
+%% @private
+%% @doc
+%%
+%% Cleans up our messages, ready for JSON/XML construction.
+%%
+%% We need this so that we can clean our date format, later we will
+%% format dates properly but this works as a quick fix.
+%% @spec clean_message(Carrier) -> XMLTuple
+%%
+%% @end
+%%--------------------------------------------------------------------
 clean_message(Data) when is_tuple(Data) ->
     {A,B,C} = Data,
     [A,B,C];
