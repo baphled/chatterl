@@ -418,9 +418,10 @@ json_message(CarrierRecord) ->
 			    true ->
 				case Record of
 				    [{carrier,MessageType,MessageData}] ->
-					io:format(CarrierRecord),
+					% A Single message.
+					%io:format(CarrierRecord),
 					{struct,[{CarrierType,{struct,[{Type,loop_json_messages(MessageData)}]}}]};
-				    [] -> {struct,[{Type,[]}]};
+				    [] -> {struct,[{Type,[]}]}; %Empty list.
 				    _ -> io:format(Record)
 				end;
 			    false ->
