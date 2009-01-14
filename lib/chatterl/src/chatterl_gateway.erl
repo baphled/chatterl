@@ -264,6 +264,7 @@ generate_record(Group,Client) ->
 	false ->
 	    get_record("error","Group: "++ Group ++ " doesn't exist")
     end.
+
 %%--------------------------------------------------------------------
 %% @private
 %% @doc
@@ -308,6 +309,7 @@ send_response(Req, {ContentType,Record}) when is_list(ContentType) ->
     Response = get_response_body(ContentType,Record),
     Code = get_response_code(Record),
     Req:respond({Code, [{"Content-Type", ContentType}], list_to_binary(Response)}).
+
 %%--------------------------------------------------------------------
 %% @private
 %% @doc
@@ -369,22 +371,23 @@ to_json(Record) ->
     end.
 
 json_message(CarrierRecord) ->
-    {carrier, MessageType, Message} = CarrierRecord,
-	case Message of
-	    {carrier,Type,Record} ->
-		case Type of
-		    "groups" ->
-			RecordList = loop_json_carrier(Record),
-			mochijson2:encode({struct,[{Type,RecordList}]});
-		    "users" ->
-			RecordList = loop_json_carrier(Record),
-			%io:format(RecordList),
-			mochijson2:encode({struct,[{Type,RecordList}]});
-		    _ ->
-			io:format("dont know ~s~n",[Type])
-		end;
-	    _ -> mochijson:encode({struct,[{MessageType,Message}]})
-	end.
+    {carrier, MessageType, Message} = CarrierRecord, 
+    case Message of
+	{carrier,Type,Record} ->
+	    case Type of
+		"groups" ->
+		    RecordList = loop_json_carrier(Record),
+		    JSON = {struct,[{Type,RecordList}]},
+		    mochijson2:encode({struct,[{MessageType,JSON}]});
+		"users" ->
+		    RecordList = loop_json_carrier(Record),
+		    JSON = {struct,[{Type,RecordList}]},
+		    mochijson2:encode({struct,[{MessageType,JSON}]});
+		_ ->
+		    io:format("dont know ~s~n",[Type])
+	    end;
+	_ -> mochijson:encode({struct,[{MessageType,Message}]})
+    end.
 %%--------------------------------------------------------------------
 %% @private
 %% @doc
