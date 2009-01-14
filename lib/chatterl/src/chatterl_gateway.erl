@@ -215,7 +215,7 @@ handle("/users/list", ContentType ,Req) ->
 	case gen_server:call({global,chatterl_serv},list_users) of
 	    [] -> {"success",build_carrier("clients","")};
 	    Clients -> 
-		ClientsList = [build_carrier("user",User)||User <- Clients],
+		ClientsList = [build_carrier("client",Client)||Client <- Clients],
 		{"success",build_carrier("clients",ClientsList)}
     end,
     send_response(Req,{get_content_type(ContentType),build_carrier(Type,Result)});
@@ -231,7 +231,7 @@ handle("/groups/list",ContentType,Req) ->
 handle("/groups/list/" ++Group,ContentType,Req) ->
     {Type,Record} = 
 	case gen_server:call({global,chatterl_serv},{group_exists,Group}) of
-	    true -> ClientsList = [build_carrier("user",Client)
+	    true -> ClientsList = [build_carrier("client",Client)
 				   || {Client,{_Pid,_Ref}} <- gen_server:call({global,Group},list_users)],
 		    {"success",build_carrier("clients",ClientsList)};
 	    false ->
