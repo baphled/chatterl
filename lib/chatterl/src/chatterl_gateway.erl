@@ -247,11 +247,11 @@ handle("/groups/send/" ++ Group, ContentType, Req) ->
     Record = generate_record(Group,{group_msg,Message},Sender),
     send_response(Req,{get_content_type(ContentType),Record});
 handle("/groups/join/" ++ Group,ContentType,Req) ->
-    Params = Req:parse_qs(),
+    [Client] = get_properties(Req,["client"]),
     Record = 
 	case gen_server:call({global,chatterl_serv},{group_exists,Group}) of
 	    true ->
-		generate_record(Group,join,proplists:get_value("client", Params));
+		generate_record(Group,join,Client);
 	    false ->
 		build_carrier("error","Group: "++ Group ++ " doesn't exist")
 	end,
