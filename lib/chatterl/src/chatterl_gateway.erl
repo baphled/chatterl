@@ -256,6 +256,10 @@ handle("/groups/join/" ++ Group,ContentType,Req) ->
 		build_carrier("error","Group: "++ Group ++ " doesn't exist")
 	end,
     send_response(Req,{get_content_type(ContentType),Record});
+handle("/groups/leave/" ++ Group,ContentType,Req) ->
+    [Client] = get_properties(Req,["client"]),
+    Record = generate_record(Group,leave,Client),
+    send_response(Req,{get_content_type(ContentType),Record});
 handle(Unknown, ContentType,Req) ->
     send_response(Req,{get_content_type(ContentType),build_carrier("error", "Unknown command: " ++Unknown)}).
 
@@ -292,6 +296,13 @@ generate_record(Group,Payload,Client) ->
 		    case gen_server:call({global,Group},{join,Client}) of
 			{ok,_} ->
 			    build_carrier("success",Client ++ " joined group");
+			{error,Error} ->
+			    build_carrier("failure",Error)
+		    end;
+		leave ->
+		    case gen_server:call({global,Group},{drop,Client}) of
+			{ok, _ } ->
+			    build_carrier("success",Client ++ " has disconnected from " ++ Group);
 			{error,Error} ->
 			    build_carrier("failure",Error)
 		    end;
