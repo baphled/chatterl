@@ -12,7 +12,7 @@
 %%% All calls to CWIGA will only be allowed via a specified IP, which
 %%% will be defined with the configuration file.
 %%% @end
-%%% @copyright 2008 Yomi Akindayini
+%%% @copyright 2008-2009 Yomi Akindayini
 %%%---------------------------------------------------------------
 -module(chatterl_gateway).
 
@@ -219,16 +219,7 @@ handle("/users/list", ContentType ,Req) ->
 		{"success",build_carrier("clients",ClientsList)}
     end,
     send_response(Req,{get_content_type(ContentType),build_carrier(Type,Result)});
-handle("/groups/list",ContentType,Req) ->
-    {Type,Result} = 
-	case gen_server:call({global,chatterl_serv},list_groups) of
-	    [] -> {"success",build_carrier("groups","")};
-	    Groups -> 
-		GroupsList = [build_carrier("group",Group)||Group <- Groups],
-		{"success",build_carrier("groups",GroupsList)}
-    end,
-    send_response(Req,{get_content_type(ContentType),build_carrier(Type,Result)});
-handle("/groups/list/" ++Group,ContentType,Req) ->
+handle("/users/list/" ++Group,ContentType,Req) ->
     {Type,Record} = 
 	case gen_server:call({global,chatterl_serv},{group_exists,Group}) of
 	    true -> ClientsList = [build_carrier("client",Client)
@@ -238,6 +229,15 @@ handle("/groups/list/" ++Group,ContentType,Req) ->
 		build_carrier("error","Group: "++ Group ++ " doesn't exist")
 	end,
     send_response(Req,{get_content_type(ContentType),build_carrier(Type,Record)});
+handle("/groups/list",ContentType,Req) ->
+    {Type,Result} = 
+	case gen_server:call({global,chatterl_serv},list_groups) of
+	    [] -> {"success",build_carrier("groups","")};
+	    Groups -> 
+		GroupsList = [build_carrier("group",Group)||Group <- Groups],
+		{"success",build_carrier("groups",GroupsList)}
+    end,
+    send_response(Req,{get_content_type(ContentType),build_carrier(Type,Result)});
 handle("/groups/join/" ++ Group,ContentType,Req) ->
     [Client] = get_properties(Req,["client"]),
     Record = 
