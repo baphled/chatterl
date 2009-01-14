@@ -404,14 +404,9 @@ xml_message(CarrierRecord) ->
     {carrier, MessageType, Message} = CarrierRecord,
     XMLTuple = case Message of
 	{carrier, Type, Record} ->		
-	    case Type of
-		"groups" ->
-		    RecordList = loop_xml_carrier(Record),
-		    xml_tuple(Type,RecordList);
-		"users" ->
-		    RecordList = loop_xml_carrier(Record),
-		    xml_tuple(Type,RecordList);
-		_ -> io:format("dont know ~s~n",[Type])
+	    case Type =:= "groups" orelse Type =:= "users" of
+		true -> xml_tuple(Type,loop_xml_carrier(Record));
+		false -> io:format("dont know ~s~n",[Type])
 	    end;
 	_ -> xml_tuple_single(MessageType,Message)
     end,
