@@ -188,12 +188,12 @@ handle_info(Info, State) ->
 terminate(Reason, State) ->
     case gb_trees:is_empty(State#group.users) of
 	false ->
-	    gen_server:call({global,chatterl_serv}, {drop_group,State#group.name},infinity),
 	    determine_user_action(State#group.name,{drop_group,[]},
 				  gb_trees:values(State#group.users));
 	true ->
 	    io:format("No users to inform of shutdown~n")
     end,
+    gen_server:call({global,chatterl_serv}, {drop_group,State#group.name},infinity),
     io:format("Shutdown ~s:~nReason:~s~n",[State#group.name,Reason]),
     {shutdown, State#group.name}.
 
