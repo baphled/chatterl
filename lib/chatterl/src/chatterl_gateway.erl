@@ -243,10 +243,7 @@ handle("/groups/poll/" ++ Group,ContentType,Req) ->
 	end,
     send_response(Req,{get_content_type(ContentType),build_carrier(Type,Result)});
 handle("/groups/send/" ++ Group, ContentType, Req) ->
-    %% Params = Req:parse_qs(),
-%%     Sender = proplists:get_value("client", Params),
-%%     Message = proplists:get_value("msg", Params),
-    {Sender,Message} = get_properties(Req,["client","msg"]),
+    [Sender,Message] = get_properties(Req,["client","msg"]),
     Record = generate_record(Group,{group_msg,Message},Sender),
     send_response(Req,{get_content_type(ContentType),Record});
 handle("/groups/join/" ++ Group,ContentType,Req) ->
@@ -262,9 +259,18 @@ handle("/groups/join/" ++ Group,ContentType,Req) ->
 handle(Unknown, ContentType,Req) ->
     send_response(Req,{get_content_type(ContentType),build_carrier("error", "Unknown command: " ++Unknown)}).
 
+%%--------------------------------------------------------------------
+%% @private
+%% @doc
+%%
+%% Gets a list of properties.
+%% @spec get_properties(Req,WantedParams) -> [ParamValues]
+%%
+%% @end
+%%--------------------------------------------------------------------
 get_properties(Req,WantedParams) ->
     Params = Req:parse_qs(),
-    list_to_tuple([proplists:get_value(Property, Params)|| Property <-  WantedParams]).
+    [proplists:get_value(Property, Params)|| Property <-  WantedParams].
 %%--------------------------------------------------------------------
 %% @private
 %% @doc
