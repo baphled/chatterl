@@ -420,10 +420,10 @@ json_message(CarrierRecord) ->
 				    [{carrier,MessageType,MessageData}] ->
 					% A Single message.
 					%io:format(CarrierRecord),
-					{struct,[{CarrierType,{struct,[{Type,loop_json_messages(MessageData)}]}}]};
+					{struct,[{CarrierType,{struct,[{Type,loop_json_carrier(MessageData)}]}}]};
 				    [] -> {struct,[{Type,[]}]}; %Empty list.
 				    Messages ->
-					{struct,[{CarrierType,{struct,[{Type,inner_loop_json_messages(Messages)}]}}]}
+					{struct,[{CarrierType,{struct,[{Type,inner_loop_json_carrier(Messages)}]}}]}
 				end;
 			    false ->
 				{struct,[{CarrierType,{struct,[{Type,loop_json_carrier(Record)}]}}]}
@@ -490,13 +490,10 @@ loop_xml_carrier(CarrierRecord) ->
 %% @end
 %%--------------------------------------------------------------------
 loop_json_carrier(CarrierRecord) ->
-    [{struct,[{list_to_binary(DataType),list_to_binary(Data)}]} || {carrier,DataType,Data} <- CarrierRecord].
-
-inner_loop_json_messages(CarrierRecord) ->
-    [{struct,[{list_to_binary(MsgType),loop_json_messages(Msg)}]} || {carrier,MsgType,Msg} <- CarrierRecord].
-
-loop_json_messages(CarrierRecord) ->
     [{struct,[{list_to_binary(DataType),clean_data(Data)}]} || {carrier,DataType,Data} <- CarrierRecord].
+
+inner_loop_json_carrier(CarrierRecord) ->
+    [{struct,[{list_to_binary(MsgType),loop_json_carrier(Msg)}]} || {carrier,MsgType,Msg} <- CarrierRecord].
 
 clean_data(Data) when is_tuple(Data) ->
     {A,B,C} = Data,
