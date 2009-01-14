@@ -246,23 +246,7 @@ handle("/groups/send/" ++ Group, ContentType, Req) ->
     Params = Req:parse_qs(),
     Sender = proplists:get_value("client", Params),
     Message = proplists:get_value("msg", Params),
-    Record = 
-	case gen_server:call({global,chatterl_serv},{user_exists,Sender}) of
-	    true ->
-		case gen_server:call({global,chatterl_serv},{get_group,Group}) of
-		    {_GroupName,GroupPid} ->
-			case gen_server:call(GroupPid,{send_msg,Sender,Message}, infinity) of
-			    {ok,Msg} -> 
-				build_carrier("success",atom_to_list(Msg));
-			    {error,Error} ->
-				build_carrier("failure",Error)
-			end;
-		    false ->
-			build_carrier("failure", Group ++ " doesn't exist")
-		    end;
-	    false ->
-		build_carrier("failure", Sender ++ " not connected!")
-	end,
+    Record = generate_record(Group,{group_msg,Message},Sender),
     send_response(Req,{get_content_type(ContentType),Record});
 handle("/groups/join/" ++ Group,ContentType,Req) ->
     Params = Req:parse_qs(),
@@ -284,7 +268,7 @@ handle(Unknown, ContentType,Req) ->
 %% Generates the record for joining a Chatterl group.
 %%
 %% Have a feeling this can be cleaned up or used in other places, so
-%% I have place it here.
+%% I have placed it here.
 %% @spec generate_record(Group,Payload,Client) -> Record
 %%
 %% @end
@@ -298,6 +282,13 @@ generate_record(Group,Payload,Client) ->
 		    case gen_server:call({global,Group},{join,Client}) of
 			{ok,_} ->
 			    build_carrier("success",Client ++ " joined group");
+			{error,Error} ->
+			    build_carrier("failure",Error)
+		    end;
+		{group_msg,Message} ->
+		    case gen_server:call({global,Group},{send_msg,Client,Message}, infinity) of
+			{ok,Msg} -> 
+			    build_carrier("success",atom_to_list(Msg));
 			{error,Error} ->
 			    build_carrier("failure",Error)
 		    end;
