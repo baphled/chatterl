@@ -399,7 +399,8 @@ xml_message(CarrierRecord) ->
     XMLTuple = case Message of
 	{carrier, Type, Record} ->		
 	    case Type =:= "groups" orelse Type =:= "users" of
-		true -> xml_tuple(Type,loop_xml_carrier(Record));
+		true -> 
+		    xml_tuple(Type,loop_xml_carrier(Record));
 		false -> io:format("dont know ~s~n",[Type])
 	    end;
 	_ -> xml_tuple_single(MessageType,Message)
@@ -421,6 +422,16 @@ loop_xml_carrier(CarrierRecord) ->
     Response = [Result],
     Response.
 
+%%--------------------------------------------------------------------
+%% @private
+%% @doc
+%%
+%% Loops over the record carrier building the tuple structure need to
+%% build out XML.
+%% @spec loop_carrier(Carrier) -> XMLTuple
+%%
+%% @end
+%%--------------------------------------------------------------------
 loop_json_carrier(CarrierRecord) ->
     [{struct,[{list_to_binary(DataType),list_to_binary(Data)}]} || {carrier,DataType,Data} <- CarrierRecord].
 %%--------------------------------------------------------------------
