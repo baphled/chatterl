@@ -130,6 +130,8 @@ CWIGA handles all interaction with Chatterl, though for the moment the basics ha
 	<li>{@section CWIGA Calls}</li>
 </ul>
 
+== JSON Structure ==
+
 == XML Structure ==
 
 CWIGA responds with three types of responses:
@@ -140,22 +142,25 @@ CWIGA responds with three types of responses:
 </ul>
 
 <b>Success</b>
-When ever a response has been successfully retrieved from Chatter.
+When ever a response has been successfully retrieved from Chatter, returning with a 200 HTTP response code.
 
 <b>Failure</b>
-When a Chatterl responds with a failure (user cannot connect), CWIGA in turn responds with failure.
+When a Chatterl responds with a failure (user cannot connect), CWIGA in turn responds with failure, returning with a 200 HTTP response code.
 
 <b>Error</b>
-If some kind of error CWIGA responds with an error.
+If some kind of error CWIGA responds with an error. As these are usually internal errors, they return with a 500 HTTP response code.
 
 CWIGA commands are as follows:
 <ul>
-	<li>List Users.</li>
-	<li>List Groups.</li>
 	<li>Connect to Chatterl.</li>
 	<li>Disconnect to Chatterl.</li>
+	<li>List Users.</li>
+	<li>List Groups.</li>
+	<li>List Groups Users.</li>
 	<li>Join a Group.</li>
-	<li>Drop from a Group.</li>
+	<li>Leave a Group.</li>
+	<li>Send Group messages.</li>
+	<li>Poll Group messages.</li>
 </ul>
 
 <b>XML Layout</b>
@@ -174,9 +179,9 @@ Empty responses are structured as displayed below:
 	&lt;/response&gt;
 &lt;/chatterl&gt;</code></pre>
 
-<b>Populated</b>
+<b>Message list</b>
 Populated lists are have the following structure:
-When CWIGA has a number of result it creates a structure simular to below:
+When CWIGA has a number of results it creates a structure simular to below:
 <pre><code>&lt;chatterl&gt;
 	&lt;response&gt;
 		&lt;users&gt;
@@ -188,38 +193,65 @@ When CWIGA has a number of result it creates a structure simular to below:
 	&lt;/response&gt;
 &lt;/chatterl&gt;</code></pre>
 
+<b>Multi Message lists</b>
+At the time of this writing this structure has not been implemented in XML format.
+Primarily this format is used for storing all messages associated to a group.
+<pre><code>&lt;chatterl&gt;
+	&lt;response&gt;
+		&lt;messages&gt;
+			&lt;message&gt
+				&lt;client&gt;noobie&lt;/user&gt;
+				&lt;date&gt;ISODATE&lt;/user&gt;
+				&lt;message&gt;a message&lt;/user&gt;	
+			&lt;/message&gt;
+			&lt;message&gt
+				&lt;client&gt;noobie&lt;/user&gt;
+				&lt;date&gt;ISODATE&lt;/user&gt;
+				&lt;message&gt;another message&lt;/user&gt;	
+			&lt;/message&gt;
+		&lt;/messages&gt;
+	&lt;/response&gt;
+&lt;/chatterl&gt;</code></pre>
+
 <b>Messages</b>
 There are a couple of reasons for receiving messages, the first two being used for success &amp; failures (which are used for simple interactions with CWIGA). The other time is when CWIGA has come across an error, messages are formatted in the following format:
 <pre><code>
 &lt;chatterl&gt;
-	&lt;message&gt;
+	&lt;response&gt;
 		&lt;failure&gt;Unable to connect.&lt;/failure&gt;
-	&lt;/message&gt;
+	&lt;/response&gt;
 &lt;/chatterl&gt;
 </code></pre>
 
 == CWIGA Calls ==
 All commands apart from connect require the client to connect, without it, they will receive an erorr (at the moment this is not true).
 
-<b>Connect</b>
+<b>Connect to Chatterl</b>
 <pre><code>http://CWIGAURL:9000/connect/USER</code></pre>
 This will give the client a list of users connected to Chatterl.
 
-<b>Disonnect</b>
+<b>Disonnect from Chatterl</b>
 <pre><code>http://CWIGAURL:9000/disconnect/USER</code></pre>
 This will give the client a list of users connected to Chatterl.
 
-<b>List Users</b>
+<b>List Users on Chatterl</b>
 <pre><code>http://CWIGAURL:9000/users/list</code></pre>
 
-<b>List Groups</b>
+<b>List Users in a Chatterl Group</b>
+<pre><code>http://CWIGAURL:9000/users/some_group/list</code></pre>
+
+<b>List Chatterl Groups</b>
 <pre><code>http://CWIGAURL:9000/groups/list</code></pre>
 
-<b>Join Groups</b>
+<b>Join a Group</b>
 <pre><code>http://CWIGAURL:9000/groups/join?client="foo"</code></pre>
 
-<b>Drop Groups</b>
-<pre><code>http://CWIGAURL:9000/groups/drop?client="foo"</code></pre>
-Eventually this method will become:
-<pre><code>http://CWIGAURL:9000/groups/drop</code></pre>
+<b>Leave a Groups</b>
+<pre><code>http://CWIGAURL:9000/groups/leave?client="foo"</code></pre>
+
+<b>Send a Group message</b>
+<pre><code>http://CWIGAURL:9000/groups/send/some_group?client="foo"&msg="some%20messge"</code></pre>
+
+<b>Poll Group for messages</b>
+<pre><code>http://CWIGAURL:9000/groups/poll/some_group</code></pre>
 @end
