@@ -228,6 +228,16 @@ handle("/groups/list",ContentType,Req) ->
 		{"success",build_carrier("groups",GroupsList)}
     end,
     send_response(Req,{get_content_type(ContentType),build_carrier(Type,Result)});
+handle("/groups/list/" ++Group,ContentType,Req) ->
+    {Type,Record} = 
+	case gen_server:call({global,chatterl_serv},{group_exists,Group}) of
+	    true -> ClientsList = [build_carrier("user",Client)
+				   || {Client,{_Pid,_Ref}} <- gen_server:call({global,Group},list_users)],
+		    {"success",build_carrier("users",ClientsList)};
+	    false ->
+		build_carrier("error","Group: "++ Group ++ " doesn't exist")
+	end,
+    send_response(Req,{get_content_type(ContentType),build_carrier(Type,Record)});
 handle("/groups/join/" ++ Group,ContentType,Req) ->
     [Client] = get_properties(Req,["client"]),
     Record = 
