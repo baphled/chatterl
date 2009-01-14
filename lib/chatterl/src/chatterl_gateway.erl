@@ -498,7 +498,7 @@ clean_data(Data) when is_tuple(Data) ->
     {A,B,C} = Data,
     [A,B,C];
 clean_data(Data) ->
-    Data.
+    list_to_binary(Data).
     
 %%--------------------------------------------------------------------
 %% @private
