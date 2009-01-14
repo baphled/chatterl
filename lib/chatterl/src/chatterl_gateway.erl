@@ -156,7 +156,7 @@ code_change(_OldVsn, State, _Extra) ->
 %%
 %% Handles our RESTful resquests.
 %%
-%% @spec handle(Action,ContentType,Ext) -> void()
+%% @spec handle(Action,ContentType,Req) -> void()
 %%
 %% @end
 %%--------------------------------------------------------------------
@@ -311,7 +311,8 @@ get_content_type(Type) ->
 	["json"] ->
 	    "text/plain";
 	["xml"] ->
-	    "text/xml"
+	    "text/xml";
+	_ -> "text/plain"
     end.
 
 %%--------------------------------------------------------------------
