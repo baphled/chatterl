@@ -254,21 +254,6 @@ handle(Unknown, ContentType,Req) ->
 %%
 %% Have a feeling this can be cleaned up or used in other places, so
 %% I have place it here.
-%% @spec format_messages(MessageCarrier) -> [MessageRecord]
-%%
-%% @end
-%%--------------------------------------------------------------------
-format_messages({Client,Date,Message}) ->
-    [get_record("client",Client),get_record("date",Date),get_record("message",Message)].
-
-%%--------------------------------------------------------------------
-%% @private
-%% @doc
-%%
-%% Generates the record for joining a Chatterl group.
-%%
-%% Have a feeling this can be cleaned up or used in other places, so
-%% I have place it here.
 %% @spec get_record(Type,Message) -> Record
 %%
 %% @end
@@ -312,6 +297,21 @@ generate_record(Group,Payload,Client) ->
 %%--------------------------------------------------------------------
 get_record(Type,Message) ->
     #carrier{ type=Type, message=Message}.
+
+%%--------------------------------------------------------------------
+%% @private
+%% @doc
+%%
+%% Generates the record for joining a Chatterl group.
+%%
+%% Have a feeling this can be cleaned up or used in other places, so
+%% I have place it here.
+%% @spec format_messages(MessageCarrier) -> [MessageRecord]
+%%
+%% @end
+%%--------------------------------------------------------------------
+format_messages({Client,Date,Message}) ->
+    [get_record("client",Client),get_record("date",Date),get_record("message",Message)].
 
 %%--------------------------------------------------------------------
 %% @private
