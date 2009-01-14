@@ -196,28 +196,6 @@ get_content_type(Type) ->
 %%
 %% @end
 %%--------------------------------------------------------------------
-handle("/send/" ++ Group, ContentType, Req) ->
-    Params = Req:parse_qs(),
-    Sender = proplists:get_value("client", Params),
-    Message = proplists:get_value("msg", Params),
-    Record = 
-	case gen_server:call({global,chatterl_serv},{user_exists,Sender}) of
-	    true ->
-		case gen_server:call({global,chatterl_serv},{get_group,Group}) of
-		    {_GroupName,GroupPid} ->
-			case gen_server:call(GroupPid,{send_msg,Sender,Message}, infinity) of
-			    {ok,Msg} -> 
-				build_carrier("success",atom_to_list(Msg));
-			    {error,Error} ->
-				build_carrier("failure",Error)
-			end;
-		    false ->
-			build_carrier("failure", Group ++ " doesn't exist")
-		    end;
-	    false ->
-		build_carrier("failure", Sender ++ " not connected!")
-	end,
-    send_response(Req,{get_content_type(ContentType),Record});
 handle("/connect/" ++ Client,ContentType,Req) ->
     case gen_server:call({global,chatterl_serv},{connect,Client}) of
 	{ok,_} -> send_response(Req,{get_content_type(ContentType),
@@ -264,13 +242,34 @@ handle("/groups/poll/" ++ Group,ContentType,Req) ->
 		{"error","Group: "++ Group ++ " doesn't exist"}
 	end,
     send_response(Req,{get_content_type(ContentType),build_carrier(Type,Result)});
+handle("/groups/send/" ++ Group, ContentType, Req) ->
+    Params = Req:parse_qs(),
+    Sender = proplists:get_value("client", Params),
+    Message = proplists:get_value("msg", Params),
+    Record = 
+	case gen_server:call({global,chatterl_serv},{user_exists,Sender}) of
+	    true ->
+		case gen_server:call({global,chatterl_serv},{get_group,Group}) of
+		    {_GroupName,GroupPid} ->
+			case gen_server:call(GroupPid,{send_msg,Sender,Message}, infinity) of
+			    {ok,Msg} -> 
+				build_carrier("success",atom_to_list(Msg));
+			    {error,Error} ->
+				build_carrier("failure",Error)
+			end;
+		    false ->
+			build_carrier("failure", Group ++ " doesn't exist")
+		    end;
+	    false ->
+		build_carrier("failure", Sender ++ " not connected!")
+	end,
+    send_response(Req,{get_content_type(ContentType),Record});
 handle("/groups/join/" ++ Group,ContentType,Req) ->
     Params = Req:parse_qs(),
-    Client = proplists:get_value("client", Params),
     Record = 
 	case gen_server:call({global,chatterl_serv},{group_exists,Group}) of
 	    true ->
-		generate_record(Group,join,Client);
+		generate_record(Group,join,proplists:get_value("client", Params));
 	    false ->
 		build_carrier("error","Group: "++ Group ++ " doesn't exist")
 	end,
