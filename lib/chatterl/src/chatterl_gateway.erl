@@ -213,10 +213,10 @@ handle("/disconnect/" ++ Client,ContentType,Req) ->
 handle("/users/list", ContentType ,Req) ->
     {Type,Result} =
 	case gen_server:call({global,chatterl_serv},list_users) of
-	    [] -> {"success",build_carrier("users","")};
-	    Users -> 
-		UsersList = [build_carrier("user",User)||User <- Users],
-		{"success",build_carrier("users",UsersList)}
+	    [] -> {"success",build_carrier("clients","")};
+	    Clients -> 
+		ClientsList = [build_carrier("user",User)||User <- Clients],
+		{"success",build_carrier("clients",ClientsList)}
     end,
     send_response(Req,{get_content_type(ContentType),build_carrier(Type,Result)});
 handle("/groups/list",ContentType,Req) ->
@@ -233,7 +233,7 @@ handle("/groups/list/" ++Group,ContentType,Req) ->
 	case gen_server:call({global,chatterl_serv},{group_exists,Group}) of
 	    true -> ClientsList = [build_carrier("user",Client)
 				   || {Client,{_Pid,_Ref}} <- gen_server:call({global,Group},list_users)],
-		    {"success",build_carrier("users",ClientsList)};
+		    {"success",build_carrier("clients",ClientsList)};
 	    false ->
 		build_carrier("error","Group: "++ Group ++ " doesn't exist")
 	end,
@@ -339,6 +339,8 @@ generate_record(Group,Payload,Client) ->
 %% @doc
 %%
 %% Builds and returns our carrier message.
+%%
+%% This is used to pass around message retrieved from Chatterl.
 %% @spec build_carrier(Type,Message) -> Record
 %%
 %% @end
@@ -434,7 +436,9 @@ json_message(CarrierRecord) ->
     Struct =
 	case Message of
 	    {carrier,Type,MessagesCarrier} ->
-		case Type =:= "groups" orelse Type =:= "users" orelse Type =:= "messages" of
+		case Type =:= "groups" 
+		    orelse Type =:= "clients" 
+		    orelse Type =:= "messages" of
 		    true ->
 			handle_messages_json(Type,MessagesCarrier,CarrierType);
 		    false ->
@@ -493,7 +497,7 @@ xml_message(CarrierRecord) ->
     {carrier, MessageType, Message} = CarrierRecord,
     XMLTuple = case Message of
 	{carrier, Type, Record} ->		
-	    case Type =:= "groups" orelse Type =:= "users" orelse Type =:= "messages" of
+	    case Type =:= "groups" orelse Type =:= "clients" orelse Type =:= "messages" of
 		true -> 
 		    xml_tuple(Type,loop_xml_carrier(Record));
 		false -> io:format("dont know ~s~n",[Type])
