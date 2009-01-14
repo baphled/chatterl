@@ -317,11 +317,13 @@ generate_record(Group,Payload,Client) ->
 			    build_carrier("failure",Error)
 		    end;
 		{group_msg,Message} ->
+		    %% Need to check that the user is connected to the group.
 		    case gen_server:call({global,Group},{send_msg,Client,Message}, infinity) of
 			{ok,Msg} -> 
+			    io:format(Msg),
 			    build_carrier("success",atom_to_list(Msg));
-			{error,Error} ->
-			    build_carrier("failure",Error)
+			{error,_Error} ->
+			    build_carrier("failure","Can not send the same message twice")
 		    end;
 		_ -> io:format("Unrecognised payload: ~s~n",[Payload])
 			end;

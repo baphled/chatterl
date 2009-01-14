@@ -188,12 +188,13 @@ handle_info(Info, State) ->
 terminate(Reason, State) ->
     case gb_trees:is_empty(State#group.users) of
 	false ->
-	    determine_user_action(State#group.name,{drop_group,[]},
-				  gb_trees:values(State#group.users));
+	    %determine_user_action(State#group.name,{drop_group,[]},
+		%		  gb_trees:values(State#group.users));
+	    ok;
 	true ->
 	    io:format("No users to inform of shutdown~n")
     end,
-    gen_server:call({global,chatterl_serv}, {drop_group,State#group.name},infinity),
+    gen_server:call({global,chatterl_serv}, {drop_group,State#group.name}),
     io:format("Shutdown ~s:~nReason:~s~n",[State#group.name,Reason]),
     {shutdown, State#group.name}.
 
@@ -229,8 +230,8 @@ determine_user_action(GroupName,{Action,PayLoad},UsersList) ->
 	receive_msg ->
 	    case PayLoad of
 		{CreatedOn,Sender,Message} ->
-		    GroupMsg = "Sending to users ~s~n";
-		    %send_msg_to_users({receive_msg, CreatedOn,Sender,Message},UsersList,GroupMsg);
+		    GroupMsg = "Sending to users ~s~n",
+		    send_msg_to_users({receive_msg, CreatedOn,Sender,Message},UsersList,GroupMsg);
 		_ ->
 		    {error, "Illegal payload format"}
 	    end;
@@ -255,10 +256,10 @@ send_msg_to_users(PayLoad,UsersList,GroupMsg) ->
 				   {user_lookup, Client}, infinity) of
 		  {error, Error} ->
 		      io:format("Error: ~s~n",[Error]);
-		  {ok, ClientName, ClientPid} ->
+		  {ok, ClientName, _ClientPid} ->
 		      io:format(GroupMsg,
 				[ClientName]),
-		      gen_server:call(ClientPid,PayLoad)
+		      gen_server:call({global,ClientName},PayLoad,infinity)
 	      end
       end,
       UsersList).
