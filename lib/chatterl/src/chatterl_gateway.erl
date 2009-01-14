@@ -221,7 +221,7 @@ handle("/groups/poll/" ++ Group,ContentType,Req) ->
 		case gen_server:call({global,Group},poll_messages) of
 		    [] -> {"success",get_record("messages","")};
 		    Messages ->
-			MessagesList = [get_record("message",messages(Message))||Message <- Messages],
+			MessagesList = [get_record("message",format_messages(Message))||Message <- Messages],
 			{"success",get_record("messages",MessagesList)}
 		end;
 	    false ->
@@ -254,15 +254,15 @@ handle(Unknown, ContentType,Req) ->
 %%
 %% Have a feeling this can be cleaned up or used in other places, so
 %% I have place it here.
-%% @spec messages(MessageCarrier) -> [MessageRecord]
+%% @spec format_messages(MessageCarrier) -> [MessageRecord]
 %%
 %% @end
 %%--------------------------------------------------------------------
-messages({Client,Date,Message}) ->
+format_messages({Client,Date,Message}) ->
     CRecord = get_record("client",Client),
     DRecord = get_record("date",Date),
     MRecord = get_record("message",Message),
-    [CRecord,DRecord,MRecord].
+    [get_record("client",Client),get_record("date",Date),get_record("message",Message)].
 
 %%--------------------------------------------------------------------
 %% @private
