@@ -242,6 +242,18 @@ handle("/groups/join/" ++ Group,Req) ->
 handle(Unknown, Req) ->
     send_response(Req,{"text/xml",get_record("error", "Unknown command: " ++Unknown)}).
 
+%%--------------------------------------------------------------------
+%% @private
+%% @doc
+%%
+%% Generates the record for joining a Chatterl group.
+%%
+%% Have a feeling this can be cleaned up or used in other places, so
+%% I have place it here.
+%% @spec get_record(Type,Message) -> Record
+%%
+%% @end
+%%--------------------------------------------------------------------
 generate_record(Group,Client) ->
     case gen_server:call({global,chatterl_serv},{group_exists,Group}) of
 	true ->
@@ -434,6 +446,7 @@ loop_xml_carrier(CarrierRecord) ->
 %%--------------------------------------------------------------------
 loop_json_carrier(CarrierRecord) ->
     [{struct,[{list_to_binary(DataType),list_to_binary(Data)}]} || {carrier,DataType,Data} <- CarrierRecord].
+
 %%--------------------------------------------------------------------
 %% @private
 %% @doc
