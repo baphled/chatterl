@@ -228,24 +228,6 @@ handle("/groups/list",ContentType,Req) ->
 		{"success",build_carrier("groups",GroupsList)}
     end,
     send_response(Req,{get_content_type(ContentType),build_carrier(Type,Result)});
-handle("/groups/poll/" ++ Group,ContentType,Req) ->
-    {Type,Result} = 
-	case gen_server:call({global,chatterl_serv},{group_exists,Group}) of
-	    true ->
-		case gen_server:call({global,Group},poll_messages) of
-		    [] -> {"success",build_carrier("messages","")};
-		    Messages ->
-			MessagesList = [build_carrier("message",format_messages(Message))||Message <- Messages],
-			{"success",build_carrier("messages",MessagesList)}
-		end;
-	    false ->
-		{"error","Group: "++ Group ++ " doesn't exist"}
-	end,
-    send_response(Req,{get_content_type(ContentType),build_carrier(Type,Result)});
-handle("/groups/send/" ++ Group, ContentType, Req) ->
-    [Sender,Message] = get_properties(Req,["client","msg"]),
-    Record = generate_record(Group,{group_msg,Message},Sender),
-    send_response(Req,{get_content_type(ContentType),Record});
 handle("/groups/join/" ++ Group,ContentType,Req) ->
     [Client] = get_properties(Req,["client"]),
     Record = 
@@ -260,6 +242,24 @@ handle("/groups/leave/" ++ Group,ContentType,Req) ->
     [Client] = get_properties(Req,["client"]),
     Record = generate_record(Group,leave,Client),
     send_response(Req,{get_content_type(ContentType),Record});
+handle("/groups/send/" ++ Group, ContentType, Req) ->
+    [Sender,Message] = get_properties(Req,["client","msg"]),
+    Record = generate_record(Group,{group_msg,Message},Sender),
+    send_response(Req,{get_content_type(ContentType),Record});
+handle("/groups/poll/" ++ Group,ContentType,Req) ->
+    {Type,Result} = 
+	case gen_server:call({global,chatterl_serv},{group_exists,Group}) of
+	    true ->
+		case gen_server:call({global,Group},poll_messages) of
+		    [] -> {"success",build_carrier("messages","")};
+		    Messages ->
+			MessagesList = [build_carrier("message",format_messages(Message))||Message <- Messages],
+			{"success",build_carrier("messages",MessagesList)}
+		end;
+	    false ->
+		{"error","Group: "++ Group ++ " doesn't exist"}
+	end,
+    send_response(Req,{get_content_type(ContentType),build_carrier(Type,Result)});
 handle(Unknown, ContentType,Req) ->
     send_response(Req,{get_content_type(ContentType),build_carrier("error", "Unknown command: " ++Unknown)}).
 
