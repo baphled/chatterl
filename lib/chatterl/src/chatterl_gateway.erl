@@ -267,14 +267,10 @@ handle("/groups/poll/" ++ Group,ContentType,Req) ->
 handle("/groups/join/" ++ Group,ContentType,Req) ->
     Params = Req:parse_qs(),
     Client = proplists:get_value("client", Params),
-    Name = case Client of
-	       undefined -> atom_to_list(Client);
-	       _ -> Client
-	   end,
     Record = 
 	case gen_server:call({global,chatterl_serv},{group_exists,Group}) of
 	    true ->
-		generate_record(Group,join,Name);
+		generate_record(Group,join,Client);
 	    false ->
 		build_carrier("error","Group: "++ Group ++ " doesn't exist")
 	end,
@@ -295,31 +291,26 @@ handle(Unknown, ContentType,Req) ->
 %% @end
 %%--------------------------------------------------------------------
 generate_record(Group,Payload,Client) ->
-    case gen_server:call({global,chatterl_serv},{group_exists,Group}) of
+    case gen_server:call({global,chatterl_serv},{user_exists,Client}) of
 	true ->
-	    case gen_server:call({global,chatterl_serv},{user_exists,Client}) of
-		true ->
-		    %% Check payload here
-		    case Payload of
-			join ->
-			    case gen_server:call({global,Group},{join,Client}) of
-				{ok,_} ->
-				    build_carrier("success",Client ++ " joined group");
-				{error,Error} ->
-				    build_carrier("failure",Error)
-			    end;
-			_ -> io:format("Unrecognised payload: ~s~n",[Payload])
+	    %% Check payload here
+	    case Payload of
+		join ->
+		    case gen_server:call({global,Group},{join,Client}) of
+			{ok,_} ->
+			    build_carrier("success",Client ++ " joined group");
+			{error,Error} ->
+			    build_carrier("failure",Error)
 		    end;
-		false ->
-		    Name = 
-			case Client of
-			    undefined -> atom_to_list(Client);
-			    _ -> Client
-			end,
-		    build_carrier("error","Client:" ++Name ++" doesn't exist")
-	    end;
+		_ -> io:format("Unrecognised payload: ~s~n",[Payload])
+			end;
 	false ->
-	    build_carrier("error","Group: "++ Group ++ " doesn't exist")
+		    Name = 
+		case Client of
+		    undefined -> atom_to_list(Client);
+		    _ -> Client
+		end,
+	    build_carrier("error","Client:" ++Name ++" doesn't exist")
     end.
 
 %%--------------------------------------------------------------------
