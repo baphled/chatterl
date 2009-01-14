@@ -202,14 +202,14 @@ handle("/connect/" ++ Client,ContentType,Req) ->
 	{ok,_} -> {"success",Client++" now connected"};
 	{error,Error} -> {"failure",Error}
     end,
-    send_response(Req,{{get_content_type(ContentType),build_carrier(Type,Record)}});
+    send_response(Req,{get_content_type(ContentType),build_carrier(Type,Record)});
 handle("/disconnect/" ++ Client,ContentType,Req) ->
+    {Type,Record} =
     case gen_server:call({global,chatterl_serv},{disconnect,Client}) of
-	{ok,Message} -> send_response(Req, {get_content_type(ContentType),
-					    build_carrier("success",Message)});
-	{error,Error} -> send_response(Req,{get_content_type(ContentType),
-					    build_carrier("failure",Error)})
-    end;
+	{ok,Message} -> {"success",Message};
+	{error,Error} -> {"failure",Error}
+    end,
+    send_response(Req, {get_content_type(ContentType),build_carrier(Type,Record)});
 handle("/users/list", ContentType ,Req) ->
     {Type,Result} =
 	case gen_server:call({global,chatterl_serv},list_users) of
