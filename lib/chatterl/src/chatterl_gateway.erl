@@ -285,7 +285,7 @@ handle(Unknown, ContentType,Req) ->
 %%
 %% Have a feeling this can be cleaned up or used in other places, so
 %% I have place it here.
-%% @spec build_carrier(Type,Message) -> Record
+%% @spec generate_record(Group,Payload,Client) -> Record
 %%
 %% @end
 %%--------------------------------------------------------------------
@@ -486,7 +486,7 @@ xml_message(CarrierRecord) ->
 %%
 %% Loops over the record carrier building the tuple structure need to
 %% build out XML.
-%% @spec loop_carrier(Carrier) -> XMLTuple
+%% @spec loop_xml_carrier(Carrier) -> XMLTuple
 %%
 %% @end
 %%--------------------------------------------------------------------
@@ -501,7 +501,7 @@ loop_xml_carrier(CarrierRecord) ->
 %%
 %% Loops over the record carrier building the tuple structure need to
 %% build our JSON.
-%% @spec loop_carrier(Carrier) -> JSONTuple
+%% @spec loop_json_carrier(Carrier) -> JSONTuple
 %%
 %% @end
 %%--------------------------------------------------------------------
@@ -620,7 +620,7 @@ strip_whitespace({El,Attr,Children}) ->
 %% @doc
 %%
 %% Logs all our requests.
-%% @spec loop_xml_tuple(Type,Message) -> XmlTuple
+%% @spec log(Req) -> XmlTuple
 %%
 %% @end
 %%--------------------------------------------------------------------
