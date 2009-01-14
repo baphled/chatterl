@@ -221,8 +221,8 @@ handle("/groups/poll/" ++ Group,ContentType,Req) ->
 		case gen_server:call({global,Group},poll_messages) of
 		    [] -> {"success",get_record("messages","")};
 		    Messages ->
-			MessagesList = [get_record("message",Message)||Message <- Messages],
-			{"success",get_record("groups",MessagesList)}
+			MessagesList = [get_record("message",messages(Message))||Message <- Messages],
+			{"success",get_record("messages",MessagesList)}
 		end;
 	    false ->
 		{"error","Group: "++ Group ++ " doesn't exist"}
@@ -246,6 +246,11 @@ handle("/groups/join/" ++ Group,ContentType,Req) ->
 handle(Unknown, ContentType,Req) ->
     send_response(Req,{get_content_type(ContentType),get_record("error", "Unknown command: " ++Unknown)}).
 
+messages({Client,Date,Message}) ->
+    CRecord = get_record("client",Client),
+    DRecord = get_record("date",Date),
+    MRecord = get_record("message",Message),
+    [CRecord,DRecord,MRecord].
 %%--------------------------------------------------------------------
 %% @private
 %% @doc
@@ -409,7 +414,15 @@ json_message(CarrierRecord) ->
 	    {carrier,Type,Record} ->
 		case Type =:= "groups" orelse Type =:= "users" orelse Type =:= "messages" of
 		    true ->
-			{struct,[{MessageType,{struct,[{Type,loop_json_carrier(Record)}]}}]};
+			case Type =:= "messages" of
+			    true -> %io:format(Record),
+				[{carrier,MessageType2,MessageData}] = Record,
+				%io:format(MessageData),
+				JSON = {struct,[{MessageType,{struct,[{Type,loop_json_messages(MessageData)}]}}]},
+				[{struct,[{MessageType,{struct,[{MessageType2,JSON}]}}]}];
+			    false ->
+				{struct,[{MessageType,{struct,[{Type,loop_json_carrier(Record)}]}}]}
+			end;
 		    false ->
 			io:format("dont know ~s~n",[Type])
 		end;
@@ -474,6 +487,15 @@ loop_xml_carrier(CarrierRecord) ->
 loop_json_carrier(CarrierRecord) ->
     [{struct,[{list_to_binary(DataType),list_to_binary(Data)}]} || {carrier,DataType,Data} <- CarrierRecord].
 
+loop_json_messages(CarrierRecord) ->
+    [{struct,[{list_to_binary(DataType),clean_data(Data)}]} || {carrier,DataType,Data} <- CarrierRecord].
+
+clean_data(Data) when is_tuple(Data) ->
+    {A,B,C} = Data,
+    [A,B,C];
+clean_data(Data) ->
+    Data.
+    
 %%--------------------------------------------------------------------
 %% @private
 %% @doc
