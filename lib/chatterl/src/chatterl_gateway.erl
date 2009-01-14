@@ -52,10 +52,10 @@ start(Port) ->
 %% @end
 %%--------------------------------------------------------------------
 dispatch_requests(Req) ->
-  %log(Req),
-  Path = Req:get(path),
-  Action = clean_path(Path),
-  handle(Action, Req).
+    %log(Req),
+    [Path|Ext] = string:tokens(Req:get(path),"."),
+    Action = clean_path(Path),
+    handle(Action,Ext,Req).
 
 %%====================================================================
 %% gen_server callbacks
@@ -156,11 +156,11 @@ code_change(_OldVsn, State, _Extra) ->
 %%
 %% Handles our RESTful resquests.
 %%
-%% @spec handle(Action, Req) -> void()
+%% @spec handle(Action,ContentType,Ext) -> void()
 %%
 %% @end
 %%--------------------------------------------------------------------
-handle("/send/" ++ Group, Req) ->
+handle("/send/" ++ Group, ContentType, Req) ->
     Params = Req:parse_qs(),
     Sender = proplists:get_value("client", Params),
     Message = proplists:get_value("msg", Params),
@@ -181,31 +181,22 @@ handle("/send/" ++ Group, Req) ->
 	    false ->
 		get_record("failure", Sender ++ " not connected!")
 	end,
-    send_response(Req,{"text/xml",Record});
-handle("/connect/" ++ Client,Req) ->
-    ContentType = "text/xml",
+    send_response(Req,{get_content_type(ContentType),Record});
+handle("/connect/" ++ Client,ContentType,Req) ->
     case gen_server:call({global,chatterl_serv},{connect,Client}) of
-	{ok,_} ->
-	    send_response(Req,{ContentType,get_record("success",Client++" now connected")});
-	{error,Error} ->
-	    send_response(Req,{ContentType,get_record("failure",Error)})
+	{ok,_} -> send_response(Req,{get_content_type(ContentType),
+				     get_record("success",Client++" now connected")});
+	{error,Error} -> send_response(Req,{get_content_type(ContentType),
+					    get_record("failure",Error)})
     end;
-handle("/disconnect/" ++ Client,Req) ->
-    ContentType = "text/xml",
+handle("/disconnect/" ++ Client,ContentType,Req) ->
     case gen_server:call({global,chatterl_serv},{disconnect,Client}) of
-	{ok,Message} ->
-	    send_response(Req, {ContentType,get_record("success",Message)});
-	{error,Error} ->
-	    send_response(Req,{ContentType,get_record("failure",Error)})
+	{ok,Message} -> send_response(Req, {get_content_type(ContentType),
+					    get_record("success",Message)});
+	{error,Error} -> send_response(Req,{get_content_type(ContentType),
+					    get_record("failure",Error)})
     end;
-handle("/users/list." ++ Ext ,Req) ->
-    ContentType = 
-	case Ext of
-	    "json" ->
-		"text/plain";
-	    "xml" ->
-		"text/xml"
-	end,
+handle("/users/list", ContentType ,Req) ->
     {Type,Result} =
 	case gen_server:call({global,chatterl_serv},list_users) of
 	    [] -> {"success",get_record("users","")};
@@ -213,8 +204,8 @@ handle("/users/list." ++ Ext ,Req) ->
 		UsersList = [get_record("user",User)||User <- Users],
 		{"success",get_record("users",UsersList)}
     end,
-    send_response(Req,{ContentType,get_record(Type,Result)});
-handle("/groups/list",Req) ->
+    send_response(Req,{get_content_type(ContentType),get_record(Type,Result)});
+handle("/groups/list",ContentType,Req) ->
     {Type,Result} = 
 	case gen_server:call({global,chatterl_serv},list_groups) of
 	    [] -> {"success",get_record("groups","")};
@@ -222,9 +213,8 @@ handle("/groups/list",Req) ->
 		GroupsList = [get_record("group",Group)||Group <- Groups],
 		{"success",get_record("groups",GroupsList)}
     end,
-    send_response(Req,{"text/xml",get_record(Type,Result)});
-handle("/groups/join/" ++ Group,Req) ->
-    ContentType = "text/xml",
+    send_response(Req,{get_content_type(ContentType),get_record(Type,Result)});
+handle("/groups/join/" ++ Group,ContentType,Req) ->
     Params = Req:parse_qs(),
     Client = proplists:get_value("client", Params),
     Name = case Client of
@@ -238,9 +228,9 @@ handle("/groups/join/" ++ Group,Req) ->
 	    false ->
 		get_record("error","Group: "++ Group ++ " doesn't exist")
 	end,
-    send_response(Req,{ContentType,Record});
-handle(Unknown, Req) ->
-    send_response(Req,{"text/xml",get_record("error", "Unknown command: " ++Unknown)}).
+    send_response(Req,{get_content_type(ContentType),Record});
+handle(Unknown, ContentType,Req) ->
+    send_response(Req,{get_content_type(ContentType),get_record("error", "Unknown command: " ++Unknown)}).
 
 %%--------------------------------------------------------------------
 %% @private
@@ -310,6 +300,24 @@ clean_path(Path) ->
 %% @private
 %% @doc
 %%
+%% Gets the content type, used to help CWIGA to determine what format
+%% to respond in.
+%% @spec get_content_type(Type) -> string()
+%%
+%% @end
+%%--------------------------------------------------------------------
+get_content_type(Type) ->
+    case Type of
+	["json"] ->
+	    "text/plain";
+	["xml"] ->
+	    "text/xml"
+    end.
+
+%%--------------------------------------------------------------------
+%% @private
+%% @doc
+%%
 %% Handles our all responses.
 %%
 %% Sends responses based on the content type, which are JSON and XML.
@@ -350,7 +358,6 @@ get_response_body(ContentType,Record) ->
 %% Gets our response code depending on the type of message passed by 
 %% the carrier record.
 %%
-%% 
 %% @spec get_response_code(Record) -> integer()
 %%
 %% @end
@@ -387,7 +394,7 @@ json_message(CarrierRecord) ->
 			io:format("dont know ~s~n",[Type])
 		end;
 	    _ ->
-		{struct,[{MessageType,Message}]}
+		{struct,[{MessageType,list_to_binary(Message)}]}
 	end,
     mochijson2:encode({struct,[{chatterl,{struct,[{response,Struct}]}}]}).
 
