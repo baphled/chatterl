@@ -408,26 +408,29 @@ get_response_code(Record) ->
 %% @end
 %%--------------------------------------------------------------------
 json_message(CarrierRecord) ->
-    {carrier, MessageType, Message} = CarrierRecord, 
+    {carrier, CarrierType, Message} = CarrierRecord, 
     Struct =
 	case Message of
 	    {carrier,Type,Record} ->
 		case Type =:= "groups" orelse Type =:= "users" orelse Type =:= "messages" of
 		    true ->
 			case Type =:= "messages" of
-			    true -> %io:format(Record),
-				[{carrier,MessageType2,MessageData}] = Record,
-				%io:format(MessageData),
-				JSON = {struct,[{MessageType,{struct,[{Type,loop_json_messages(MessageData)}]}}]},
-				[{struct,[{MessageType,{struct,[{MessageType2,JSON}]}}]}];
+			    true ->
+				case Record of
+				    [{carrier,MessageType,MessageData}] ->
+					io:format(CarrierRecord),
+					{struct,[{CarrierType,{struct,[{Type,loop_json_messages(MessageData)}]}}]};
+				    [] -> {struct,[{Type,[]}]};
+				    _ -> io:format(Record)
+				end;
 			    false ->
-				{struct,[{MessageType,{struct,[{Type,loop_json_carrier(Record)}]}}]}
+				{struct,[{CarrierType,{struct,[{Type,loop_json_carrier(Record)}]}}]}
 			end;
 		    false ->
 			io:format("dont know ~s~n",[Type])
 		end;
 	    _ ->
-		{struct,[{MessageType,list_to_binary(Message)}]}
+		{struct,[{CarrierType,list_to_binary(Message)}]}
 	end,
     mochijson2:encode({struct,[{chatterl,{struct,[{response,Struct}]}}]}).
 
