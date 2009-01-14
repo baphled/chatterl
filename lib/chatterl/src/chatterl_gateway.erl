@@ -152,168 +152,6 @@ code_change(_OldVsn, State, _Extra) ->
 %%% Internal functions
 %%--------------------------------------------------------------------
 %%--------------------------------------------------------------------
-%% @doc
-%%
-%% Handles our RESTful resquests.
-%%
-%% @spec handle(Action,ContentType,Req) -> void()
-%%
-%% @end
-%%--------------------------------------------------------------------
-handle("/send/" ++ Group, ContentType, Req) ->
-    Params = Req:parse_qs(),
-    Sender = proplists:get_value("client", Params),
-    Message = proplists:get_value("msg", Params),
-    Record = 
-	case gen_server:call({global,chatterl_serv},{user_exists,Sender}) of
-	    true ->
-		case gen_server:call({global,chatterl_serv},{get_group,Group}) of
-		    {_GroupName,GroupPid} ->
-			case gen_server:call(GroupPid,{send_msg,Sender,Message}, infinity) of
-			    {ok,Msg} -> 
-				get_record("success",atom_to_list(Msg));
-			    {error,Error} ->
-				get_record("failure",Error)
-			end;
-		    false ->
-			get_record("failure", Group ++ " doesn't exist")
-		    end;
-	    false ->
-		get_record("failure", Sender ++ " not connected!")
-	end,
-    send_response(Req,{get_content_type(ContentType),Record});
-handle("/connect/" ++ Client,ContentType,Req) ->
-    case gen_server:call({global,chatterl_serv},{connect,Client}) of
-	{ok,_} -> send_response(Req,{get_content_type(ContentType),
-				     get_record("success",Client++" now connected")});
-	{error,Error} -> send_response(Req,{get_content_type(ContentType),
-					    get_record("failure",Error)})
-    end;
-handle("/disconnect/" ++ Client,ContentType,Req) ->
-    case gen_server:call({global,chatterl_serv},{disconnect,Client}) of
-	{ok,Message} -> send_response(Req, {get_content_type(ContentType),
-					    get_record("success",Message)});
-	{error,Error} -> send_response(Req,{get_content_type(ContentType),
-					    get_record("failure",Error)})
-    end;
-handle("/users/list", ContentType ,Req) ->
-    {Type,Result} =
-	case gen_server:call({global,chatterl_serv},list_users) of
-	    [] -> {"success",get_record("users","")};
-	    Users -> 
-		UsersList = [get_record("user",User)||User <- Users],
-		{"success",get_record("users",UsersList)}
-    end,
-    send_response(Req,{get_content_type(ContentType),get_record(Type,Result)});
-handle("/groups/list",ContentType,Req) ->
-    {Type,Result} = 
-	case gen_server:call({global,chatterl_serv},list_groups) of
-	    [] -> {"success",get_record("groups","")};
-	    Groups -> 
-		GroupsList = [get_record("group",Group)||Group <- Groups],
-		{"success",get_record("groups",GroupsList)}
-    end,
-    send_response(Req,{get_content_type(ContentType),get_record(Type,Result)});
-handle("/groups/poll/" ++ Group,ContentType,Req) ->
-    {Type,Result} = 
-	case gen_server:call({global,chatterl_serv},{group_exists,Group}) of
-	    true ->
-		case gen_server:call({global,Group},poll_messages) of
-		    [] -> {"success",get_record("messages","")};
-		    Messages ->
-			MessagesList = [get_record("message",format_messages(Message))||Message <- Messages],
-			{"success",get_record("messages",MessagesList)}
-		end;
-	    false ->
-		{"error","Group: "++ Group ++ " doesn't exist"}
-	end,
-    send_response(Req,{get_content_type(ContentType),get_record(Type,Result)});
-handle("/groups/join/" ++ Group,ContentType,Req) ->
-    Params = Req:parse_qs(),
-    Client = proplists:get_value("client", Params),
-    Name = case Client of
-	       undefined -> atom_to_list(Client);
-	       _ -> Client
-	   end,
-    Record = 
-	case gen_server:call({global,chatterl_serv},{group_exists,Group}) of
-	    true ->
-		generate_record(Group,join,Name);
-	    false ->
-		get_record("error","Group: "++ Group ++ " doesn't exist")
-	end,
-    send_response(Req,{get_content_type(ContentType),Record});
-handle(Unknown, ContentType,Req) ->
-    send_response(Req,{get_content_type(ContentType),get_record("error", "Unknown command: " ++Unknown)}).
-
-%%--------------------------------------------------------------------
-%% @private
-%% @doc
-%%
-%% Generates the record for joining a Chatterl group.
-%%
-%% Have a feeling this can be cleaned up or used in other places, so
-%% I have place it here.
-%% @spec get_record(Type,Message) -> Record
-%%
-%% @end
-%%--------------------------------------------------------------------
-generate_record(Group,Payload,Client) ->
-    case gen_server:call({global,chatterl_serv},{group_exists,Group}) of
-	true ->
-	    case gen_server:call({global,chatterl_serv},{user_exists,Client}) of
-		true ->
-		    %% Check payload here
-		    case Payload of
-			join ->
-			    case gen_server:call({global,Group},{join,Client}) of
-				{ok,_} ->
-				    get_record("success",Client ++ " joined group");
-				{error,Error} ->
-				    get_record("failure",Error)
-			    end;
-			_ -> io:format("Unrecognised payload: ~s~n",[Payload])
-		    end;
-		false ->
-		    Name = 
-			case Client of
-			    undefined -> atom_to_list(Client);
-			    _ -> Client
-			end,
-		    get_record("error","Client:" ++Name ++" doesn't exist")
-	    end;
-	false ->
-	    get_record("error","Group: "++ Group ++ " doesn't exist")
-    end.
-
-%%--------------------------------------------------------------------
-%% @private
-%% @doc
-%%
-%% Builds and returns our carrier message.
-%% @spec get_record(Type,Message) -> Record
-%%
-%% @end
-%%--------------------------------------------------------------------
-get_record(Type,Message) ->
-    #carrier{ type=Type, message=Message}.
-
-%%--------------------------------------------------------------------
-%% @private
-%% @doc
-%%
-%% Generates the record for joining a Chatterl group.
-%%
-%% Have a feeling this can be cleaned up or used in other places, so
-%% I have place it here.
-%% @spec format_messages(MessageCarrier) -> [MessageRecord]
-%%
-%% @end
-%%--------------------------------------------------------------------
-format_messages({Client,Date,Message}) ->
-    [get_record("client",Client),get_record("date",Date),get_record("message",Message)].
-
-%%--------------------------------------------------------------------
 %% @private
 %% @doc
 %%
@@ -350,6 +188,168 @@ get_content_type(Type) ->
     end.
 
 %%--------------------------------------------------------------------
+%% @doc
+%%
+%% Handles our RESTful resquests.
+%%
+%% @spec handle(Action,ContentType,Req) -> void()
+%%
+%% @end
+%%--------------------------------------------------------------------
+handle("/send/" ++ Group, ContentType, Req) ->
+    Params = Req:parse_qs(),
+    Sender = proplists:get_value("client", Params),
+    Message = proplists:get_value("msg", Params),
+    Record = 
+	case gen_server:call({global,chatterl_serv},{user_exists,Sender}) of
+	    true ->
+		case gen_server:call({global,chatterl_serv},{get_group,Group}) of
+		    {_GroupName,GroupPid} ->
+			case gen_server:call(GroupPid,{send_msg,Sender,Message}, infinity) of
+			    {ok,Msg} -> 
+				build_carrier("success",atom_to_list(Msg));
+			    {error,Error} ->
+				build_carrier("failure",Error)
+			end;
+		    false ->
+			build_carrier("failure", Group ++ " doesn't exist")
+		    end;
+	    false ->
+		build_carrier("failure", Sender ++ " not connected!")
+	end,
+    send_response(Req,{get_content_type(ContentType),Record});
+handle("/connect/" ++ Client,ContentType,Req) ->
+    case gen_server:call({global,chatterl_serv},{connect,Client}) of
+	{ok,_} -> send_response(Req,{get_content_type(ContentType),
+				     build_carrier("success",Client++" now connected")});
+	{error,Error} -> send_response(Req,{get_content_type(ContentType),
+					    build_carrier("failure",Error)})
+    end;
+handle("/disconnect/" ++ Client,ContentType,Req) ->
+    case gen_server:call({global,chatterl_serv},{disconnect,Client}) of
+	{ok,Message} -> send_response(Req, {get_content_type(ContentType),
+					    build_carrier("success",Message)});
+	{error,Error} -> send_response(Req,{get_content_type(ContentType),
+					    build_carrier("failure",Error)})
+    end;
+handle("/users/list", ContentType ,Req) ->
+    {Type,Result} =
+	case gen_server:call({global,chatterl_serv},list_users) of
+	    [] -> {"success",build_carrier("users","")};
+	    Users -> 
+		UsersList = [build_carrier("user",User)||User <- Users],
+		{"success",build_carrier("users",UsersList)}
+    end,
+    send_response(Req,{get_content_type(ContentType),build_carrier(Type,Result)});
+handle("/groups/list",ContentType,Req) ->
+    {Type,Result} = 
+	case gen_server:call({global,chatterl_serv},list_groups) of
+	    [] -> {"success",build_carrier("groups","")};
+	    Groups -> 
+		GroupsList = [build_carrier("group",Group)||Group <- Groups],
+		{"success",build_carrier("groups",GroupsList)}
+    end,
+    send_response(Req,{get_content_type(ContentType),build_carrier(Type,Result)});
+handle("/groups/poll/" ++ Group,ContentType,Req) ->
+    {Type,Result} = 
+	case gen_server:call({global,chatterl_serv},{group_exists,Group}) of
+	    true ->
+		case gen_server:call({global,Group},poll_messages) of
+		    [] -> {"success",build_carrier("messages","")};
+		    Messages ->
+			MessagesList = [build_carrier("message",format_messages(Message))||Message <- Messages],
+			{"success",build_carrier("messages",MessagesList)}
+		end;
+	    false ->
+		{"error","Group: "++ Group ++ " doesn't exist"}
+	end,
+    send_response(Req,{get_content_type(ContentType),build_carrier(Type,Result)});
+handle("/groups/join/" ++ Group,ContentType,Req) ->
+    Params = Req:parse_qs(),
+    Client = proplists:get_value("client", Params),
+    Name = case Client of
+	       undefined -> atom_to_list(Client);
+	       _ -> Client
+	   end,
+    Record = 
+	case gen_server:call({global,chatterl_serv},{group_exists,Group}) of
+	    true ->
+		generate_record(Group,join,Name);
+	    false ->
+		build_carrier("error","Group: "++ Group ++ " doesn't exist")
+	end,
+    send_response(Req,{get_content_type(ContentType),Record});
+handle(Unknown, ContentType,Req) ->
+    send_response(Req,{get_content_type(ContentType),build_carrier("error", "Unknown command: " ++Unknown)}).
+
+%%--------------------------------------------------------------------
+%% @private
+%% @doc
+%%
+%% Generates the record for joining a Chatterl group.
+%%
+%% Have a feeling this can be cleaned up or used in other places, so
+%% I have place it here.
+%% @spec build_carrier(Type,Message) -> Record
+%%
+%% @end
+%%--------------------------------------------------------------------
+generate_record(Group,Payload,Client) ->
+    case gen_server:call({global,chatterl_serv},{group_exists,Group}) of
+	true ->
+	    case gen_server:call({global,chatterl_serv},{user_exists,Client}) of
+		true ->
+		    %% Check payload here
+		    case Payload of
+			join ->
+			    case gen_server:call({global,Group},{join,Client}) of
+				{ok,_} ->
+				    build_carrier("success",Client ++ " joined group");
+				{error,Error} ->
+				    build_carrier("failure",Error)
+			    end;
+			_ -> io:format("Unrecognised payload: ~s~n",[Payload])
+		    end;
+		false ->
+		    Name = 
+			case Client of
+			    undefined -> atom_to_list(Client);
+			    _ -> Client
+			end,
+		    build_carrier("error","Client:" ++Name ++" doesn't exist")
+	    end;
+	false ->
+	    build_carrier("error","Group: "++ Group ++ " doesn't exist")
+    end.
+
+%%--------------------------------------------------------------------
+%% @private
+%% @doc
+%%
+%% Builds and returns our carrier message.
+%% @spec build_carrier(Type,Message) -> Record
+%%
+%% @end
+%%--------------------------------------------------------------------
+build_carrier(Type,Message) ->
+    #carrier{ type=Type, message=Message}.
+
+%%--------------------------------------------------------------------
+%% @private
+%% @doc
+%%
+%% Generates the record for joining a Chatterl group.
+%%
+%% Have a feeling this can be cleaned up or used in other places, so
+%% I have place it here.
+%% @spec format_messages(MessageCarrier) -> [MessageRecord]
+%%
+%% @end
+%%--------------------------------------------------------------------
+format_messages({Client,Date,Message}) ->
+    [build_carrier("client",Client),build_carrier("date",Date),build_carrier("message",Message)].
+
+%%--------------------------------------------------------------------
 %% @private
 %% @doc
 %%
@@ -383,7 +383,7 @@ get_response_body(ContentType,Record) ->
 	    json_message(Record);
 	"text/xml" ->
 	    xml_message(Record);
-	_ -> xml_message(get_record("error","Illegal content type!"))
+	_ -> xml_message(build_carrier("error","Illegal content type!"))
     end.
 
 %%--------------------------------------------------------------------
