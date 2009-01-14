@@ -407,7 +407,7 @@ json_message(CarrierRecord) ->
     Struct =
 	case Message of
 	    {carrier,Type,Record} ->
-		case Type =:= "groups" orelse Type =:= "users" of
+		case Type =:= "groups" orelse Type =:= "users" orelse Type =:= "messages" of
 		    true ->
 			{struct,[{MessageType,{struct,[{Type,loop_json_carrier(Record)}]}}]};
 		    false ->
@@ -437,7 +437,7 @@ xml_message(CarrierRecord) ->
     {carrier, MessageType, Message} = CarrierRecord,
     XMLTuple = case Message of
 	{carrier, Type, Record} ->		
-	    case Type =:= "groups" orelse Type =:= "users" of
+	    case Type =:= "groups" orelse Type =:= "users" orelse Type =:= "messages" of
 		true -> 
 		    xml_tuple(Type,loop_xml_carrier(Record));
 		false -> io:format("dont know ~s~n",[Type])
