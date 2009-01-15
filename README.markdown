@@ -1,7 +1,7 @@
 <h1>The chatterl application</h1>
 <p>Copyright &copy; 2008-2009 Yomi Colledge</p>
 <p><b>Version:</b> Jan 15 2009 01:45:25</p>
-<p><b>Authors:</b> Yomi Colledge (<a href="baphled.wordpress.com"><tt>baphled</tt></a>).</p>
+<p><b>Authors:</b> Yomi (<a href="baphled.wordpress.com"><tt>baphled</tt></a>) Colledge.</p>
 
 <ul>
 	<li><a href="#Description">Description</a></li>
