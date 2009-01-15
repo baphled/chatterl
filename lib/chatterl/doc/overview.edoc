@@ -13,14 +13,12 @@
 </ul>
 
 == Description ==
-A multi processed chat system that can be housed over a number of nodes and track clients over varying devices, at the time of the writing the system works over multiple nodes and is able to do the basics (connect to a group, send message to other clients and connected groups).
+A multi processed chat system that can be housed over a number of nodes &amp; track clients over varying devices, at the time of the writing the system works over multiple nodes &amp; is able to do the basics (connect to a group, send message to other clients &amp; connected groups).
 
-The main focus of this project is to create a chat system that is highly reliable as well as scaleable. Other developers will be able to create add-on modules that are able to interact with chatterl and further enhance the functionality of chatterl and the chatterl clients experience.
-
-As mentioned the system is OTP based, of which it uses Sinan to maintain its builds.
+The main focus of this project is to create a chat system that is highly reliable as well as scaleable. Other developers will be able to create add-on modules that are able to interact with chatterl &amp; further enhance the functionality of chatterl &amp; the chatterl clients experience.
 
 == Installing Chatterl ==
-At the moment of this writing Chatterl is still in alpha so their is no real release at the moment, to get it running you will need to do the following:
+As mentioned the system is OTP based, of which it uses Sinan to maintain its builds. At the moment of this writing Chatterl is still in alpha so their is no real release at the moment, to get it running you will need to do the following:
 <pre><code>git-clone git://github.com/baphled/chatterl.git &amp;&amp;
 cd chatterl &amp;&amp;
 sinan doc &amp;&amp; 
@@ -32,7 +30,7 @@ The above presumes that you have Sinan configured &amp; installed, if you haven'
 You will need to change to cookie &amp; name values to something else, doing so should drop you into the erlang shell &amp; ready to run the Chatterl application. 
 
 == Running Chatterl ==
-To run a client on a different machine you will need to do the above if  (making sure that the -sname is not the same as any other connected nodes &amp; that the cookie is the same) if connecting on the same box simply cd to the ebin directory and run the following command:
+To run a client on a different machine you will need to do the above if  (making sure that the -sname is not the same as any other connected nodes &amp; that the cookie is the same) if connecting on the same box simply cd to the ebin directory &amp; run the following command:
 <pre><code>erl -s chatterl -s reloader -name bar -setcookie abc</code></pre>
 Bar being the name you want use to identify the erlang node.
 
@@ -48,13 +46,14 @@ Once you receive the infamous pong response you are ready to roll.
     <li>List Chatterl groups.</li>
     <li> List Chatterl users.</li>
     <li> Login/logout of a chatterl group.</li>
-    <li> Send message to a group and other clients.</li>
+    <li> Send message to a group &amp; other clients.</li>
+    <li>A RESTful API</li>
 </ul>
 
 == Future Features ==
 <ul>
-    <li> Centralised Error logging and data storage.</li>
-    <li> Client customisable routines (able to poll RSS feeds, twitter, FB and the such like).</li>
+    <li> Centralised Error logging &amp; data storage.</li>
+    <li> Client customisable routines (able to poll RSS feeds, twitter, FB &amp; the such like).</li>
     <li> Better handling of errors.</li>
     <li> User registration.</li>
     <li> FB Connect.</li>
@@ -74,18 +73,18 @@ At the moment of this writing there are two ways to interact with Chatterl, thro
 
 <b>Starting the server</b>
 <pre><code>erl -s chatterl</code></pre>
-Chatterl server runs as an OTP application and uses a supervisor to manage it (in later versions there will be options to spawn multiple servers, allowing for a more fault tolerant chat system). To start up the server you simply need to run the following command:
+Chatterl server runs as an OTP application &amp; uses a supervisor to manage it (in later versions there will be options to spawn multiple servers, allowing for a more fault tolerant chat system). To start up the server you simply need to run the following command:
 
 
-Which will initialise the server and CWIGA The backend allowing clients to connect and groups to be created and admin the ability to manage the system. Groups can be created on differing nodes as long as the node can communicate with the chatterl_serv.
+Which will initialise the server &amp; CWIGA The backend allowing clients to connect &amp; groups to be created &amp; admin the ability to manage the system. Groups can be created on differing nodes as long as the node can communicate with the chatterl_serv.
 
-CWIGA allows for developers to interact with the API, giving them the ability use the basic CRUD functionalities of Chatterl as well as handle clients along with thier messages and other functionality.
+CWIGA allows for developers to interact with the API, giving them the ability use the basic CRUD functionalities of Chatterl as well as handle clients along with thier messages &amp; other functionality.
 
 <b>Starting a group</b>
 <pre><code>chatterl_serv:create("room","description").</code></pre>
 Which will spawn a group process which users can connect to.
 
-Chatterl groups can be started on any node that can communicate with the server, this allows the user to create a number of groups on varying nodes, helping with general organisation as well a performance and reliablity.
+Chatterl groups can be started on any node that can communicate with the server, this allows the user to create a number of groups on varying nodes, helping with general organisation as well a performance &amp; reliablity.
 
 <b>Connection to chatterl</b>
 <pre><code>chatter_client:start(UserName).</code></pre>
@@ -94,7 +93,7 @@ Creating a connection to the server is done by using the following command.
 At the time of this writing chatterl_clients can only spawn a client per node, this will later be changed once the web interface has been fully implemented, possibly to a refactoring the client to a parameterised module.
 For the moment node users must follow the basic OTP configurations (same cookie, valid DNS name, etc).
 
-This will initialise a user and connect them to chatterl_serv (must be done before users can join a group or communicate with other chatterl users).
+This will initialise a user &amp; connect them to chatterl_serv (must be done before users can join a group or communicate with other chatterl users).
 
 <b>Disconnecting from chatterl</b> 
 <pre><code>chatterl_client:stop().</code></pre>
@@ -123,18 +122,26 @@ If the message is sent successfully then the sender will receive follow message:
 in turn sending the message to the receipients node.
 
 == CWIGA ==
-CWIGA handles all interaction with Chatterl, though for the moment the basics have only been implemented. It can respond in both XML and JSON (at the moment of  writing only XML is functional).
-
 <ul>
-	<li>{@section XML Structure}</li>
+	<li>{@section CWIGA Brief}</li>
+	<li>{@section Response Types}</li>
+	<li>{@section Response Structures}</li>
 	<li>{@section CWIGA Calls}</li>
 </ul>
 
-== JSON Structure ==
+== CWIGA Brief ==
+CWIGA handles all interaction with Chatterl, though for the moment the basics have only been implemented. It can respond in both XML &amp; JSON (at the moment of  writing only XML is functional).
 
-== XML Structure ==
+CWIGA responsed coming in a standardised structure, allowing for easy parsing and searching of data, all data is represented in the following formats:
+<ul>
+	<li>JSON</li>
+	<li>XML</li>
+</ul>
 
-CWIGA responds with three types of responses:
+Any unrecognised formats will fall back to JSON, as it is the default response format. Defining the prefered format can been done by appending the corresponding path extension to the query string <pre><code>http://CWIGAURL:9000/users/some_group/list.xml</code></pre> will retrieve the user list of some_group in XML format.
+
+== Response Types ==
+CWIGA has three types of responses which are as follows:
 <ul>
 	<li>Success</li>
 	<li>Failure</li>
@@ -142,13 +149,129 @@ CWIGA responds with three types of responses:
 </ul>
 
 <b>Success</b>
-When ever a response has been successfully retrieved from Chatter, returning with a 200 HTTP response code.
+When ever a response has been successfully retrieved from Chatter, returning with a 200 HTTP response code along with the corresponding response structure (see {@ Response Structures}).
 
 <b>Failure</b>
 When a Chatterl responds with a failure (user cannot connect), CWIGA in turn responds with failure, returning with a 200 HTTP response code.
 
 <b>Error</b>
-If some kind of error CWIGA responds with an error. As these are usually internal errors, they return with a 500 HTTP response code.
+If some kind of error occurs within Chatterl CWIGA responds with an error. As these are usually internal errors, they return with a 500 HTTP response code.
+
+== Response Structures ==
+All CWIGA responses follow the same format for simplicity &amp; ease of use. There are three basic response format that can be retrieved from CWIGA:
+<ul>
+	<li>Empty</li>
+	<li>Populated</li>
+	<li>Messages</li>
+</ul>
+
+Following are examples of the different response types shown in JSON &amp; XML respectively.
+
+<b>Empty</b>
+Empty responses are structured are used when ever a response is returned with an empty value, these response are displayed in the below formats:
+
+<pre><code>&lt;chatterl&gt;
+	&lt;response&gt;
+		&lt;users/&gt;
+	&lt;/response&gt;
+&lt;/chatterl&gt;</code></pre>
+
+<pre><code>{"chatterl":
+	{"response":
+		{"success":
+			{"groups":[]}
+		}
+	}
+}</code></pre>
+
+<b>Message list</b>
+Populated lists are have the following structure:
+When CWIGA has a number of results it creates a structure simular to below:
+
+<pre><code>{"chatterl":
+	{"response":
+		{"success":
+			{"groups":
+				[
+					{"group":"nu"},
+					{"group":"another group"}
+				]
+			}
+		}
+	}
+}</code></pre>
+
+<pre><code>&lt;chatterl&gt;
+	&lt;response&gt;
+		&lt;users&gt;
+			&lt;user&gt;noobie&lt;/user&gt;
+			&lt;user&gt;noobiz&lt;/user&gt;
+			&lt;user&gt;nooby&lt;/user&gt;
+			&lt;user&gt;noobz&lt;/user&gt;
+		&lt;/users&gt;
+	&lt;/response&gt;
+&lt;/chatterl&gt;</code></pre>
+
+<b>Multi Message lists</b>
+Primarily this format is used for storing all messages associated to a group (At the time of this writing this structure has not been implemented in XML format).
+
+<pre><code>{"chatterl":
+	{"response":
+		{"success":
+			{"messages":
+				[{"message":
+					[
+						{"client":"baph"},
+						{"date":ISODATE},
+						{"msgbody":"hey"}
+					]
+				},
+				{"message":
+					[
+						{"client":"baph"},
+						{"date":ISODATE},
+						{"msgbody":"welcome"}]
+				}]
+			}
+		}
+	}
+}</code></pre>
+
+<pre><code>&lt;chatterl&gt;
+	&lt;response&gt;
+		&lt;messages&gt;
+			&lt;message&gt
+				&lt;client&gt;baph&lt;/client&gt;
+				&lt;date&gt;ISODATE&lt;/date&gt;
+				&lt;msgbody&gt;hey&lt;/msgbody&gt;	
+			&lt;/message&gt;
+			&lt;message&gt
+				&lt;client&gt;baph&lt;/client&gt;
+				&lt;date&gt;ISODATE&lt;/date&gt;
+				&lt;mgsbody&gt;welcome&lt;/msgbody&gt;	
+			&lt;/message&gt;
+		&lt;/messages&gt;
+	&lt;/response&gt;
+&lt;/chatterl&gt;</code></pre>
+
+<b>Messages</b>
+There are a couple of reasons for receiving messages, the first two being used for success &amp; failures (which are used for simple interactions with CWIGA). The other time is when CWIGA has come across an error, messages are formatted in the following formats:
+<pre><code>{"chatterl":
+	{"response":
+		{"success":"noob now connected"}
+	}
+}</code></pre>
+
+<pre><code>
+&lt;chatterl&gt;
+	&lt;response&gt;
+		&lt;failure&gt;Unable to connect.&lt;/failure&gt;
+	&lt;/response&gt;
+&lt;/chatterl&gt;
+</code></pre>
+
+== CWIGA Calls ==
+All commands apart from connect require the client to connect, without it, they will receive an erorr (at the moment this is not true).
 
 CWIGA commands are as follows:
 <ul>
@@ -162,69 +285,6 @@ CWIGA commands are as follows:
 	<li>Send Group messages.</li>
 	<li>Poll Group messages.</li>
 </ul>
-
-<b>XML Layout</b>
-All CWIGA responses follow the same format for simplicity and ease of use. There are three basic response format that can be retrieved from CWIGA:
-<ul>
-	<li>Empty</li>
-	<li>Populated</li>
-	<li>Messages</li>
-</ul>
-
-<b>Empty</b>
-Empty responses are structured as displayed below:
-<pre><code>&lt;chatterl&gt;
-	&lt;response&gt;
-		&lt;users/&gt;
-	&lt;/response&gt;
-&lt;/chatterl&gt;</code></pre>
-
-<b>Message list</b>
-Populated lists are have the following structure:
-When CWIGA has a number of results it creates a structure simular to below:
-<pre><code>&lt;chatterl&gt;
-	&lt;response&gt;
-		&lt;users&gt;
-			&lt;user&gt;noobie&lt;/user&gt;
-			&lt;user&gt;noobiz&lt;/user&gt;
-			&lt;user&gt;nooby&lt;/user&gt;
-			&lt;user&gt;noobz&lt;/user&gt;
-		&lt;/users&gt;
-	&lt;/response&gt;
-&lt;/chatterl&gt;</code></pre>
-
-<b>Multi Message lists</b>
-At the time of this writing this structure has not been implemented in XML format.
-Primarily this format is used for storing all messages associated to a group.
-<pre><code>&lt;chatterl&gt;
-	&lt;response&gt;
-		&lt;messages&gt;
-			&lt;message&gt
-				&lt;client&gt;noobie&lt;/user&gt;
-				&lt;date&gt;ISODATE&lt;/user&gt;
-				&lt;message&gt;a message&lt;/user&gt;	
-			&lt;/message&gt;
-			&lt;message&gt
-				&lt;client&gt;noobie&lt;/user&gt;
-				&lt;date&gt;ISODATE&lt;/user&gt;
-				&lt;message&gt;another message&lt;/user&gt;	
-			&lt;/message&gt;
-		&lt;/messages&gt;
-	&lt;/response&gt;
-&lt;/chatterl&gt;</code></pre>
-
-<b>Messages</b>
-There are a couple of reasons for receiving messages, the first two being used for success &amp; failures (which are used for simple interactions with CWIGA). The other time is when CWIGA has come across an error, messages are formatted in the following format:
-<pre><code>
-&lt;chatterl&gt;
-	&lt;response&gt;
-		&lt;failure&gt;Unable to connect.&lt;/failure&gt;
-	&lt;/response&gt;
-&lt;/chatterl&gt;
-</code></pre>
-
-== CWIGA Calls ==
-All commands apart from connect require the client to connect, without it, they will receive an erorr (at the moment this is not true).
 
 <b>Connect to Chatterl</b>
 <pre><code>http://CWIGAURL:9000/connect/USER</code></pre>
