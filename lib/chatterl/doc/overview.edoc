@@ -149,7 +149,7 @@ CWIGA has three types of responses which are as follows:
 </ul>
 
 <b>Success</b>
-When ever a response has been successfully retrieved from Chatter, returning with a 200 HTTP response code along with the corresponding response structure (see {@ Response Structures}).
+When ever a response has been successfully retrieved from Chatter, returning with a 200 HTTP response code along with the corresponding response structure (see {@section Response Structures}).
 
 <b>Failure</b>
 When a Chatterl responds with a failure (user cannot connect), CWIGA in turn responds with failure, returning with a 200 HTTP response code.
@@ -240,12 +240,12 @@ Primarily this format is used for storing all messages associated to a group (At
 <pre><code>&lt;chatterl&gt;
 	&lt;response&gt;
 		&lt;messages&gt;
-			&lt;message&gt
+			&lt;message&gt;
 				&lt;client&gt;baph&lt;/client&gt;
 				&lt;date&gt;ISODATE&lt;/date&gt;
 				&lt;msgbody&gt;hey&lt;/msgbody&gt;	
 			&lt;/message&gt;
-			&lt;message&gt
+			&lt;message&gt;
 				&lt;client&gt;baph&lt;/client&gt;
 				&lt;date&gt;ISODATE&lt;/date&gt;
 				&lt;mgsbody&gt;welcome&lt;/msgbody&gt;	
@@ -316,7 +316,7 @@ Where as displayed below:
 
 <pre><code>&lt;chatterl&gt;
 	&lt;response&gt;
-		&lt;failure&gtUnable to drop from group&lt;/failure&gt;
+		&lt;failure&gt;Unable to drop from group&lt;/failure&gt;
 	&lt;/response&gt;
 &lt;/chatterl&gt;</code></pre>
 
@@ -413,7 +413,7 @@ Failure responses are returns as follows:
 &lt;/chatterl&gt;</code></pre>
 
 <b>Send a Group message</b>
-<pre><code>http://CWIGAURL:9000/groups/send/some_group?client="foo"&msg="some%20messge"</code></pre>
+<pre><code>http://CWIGAURL:9000/groups/send/some_group?client=foo&amp;msg=hey%20all</code></pre>
 
 <b>Poll Group for messages</b>
 <pre><code>http://CWIGAURL:9000/groups/poll/some_group</code></pre>
@@ -460,12 +460,12 @@ Lists of messages are expressed in the following manner:
 <pre><code>&lt;chatterl&gt;
 	&lt;response&gt;
 		&lt;messages&gt;
-			&lt;message&gt
+			&lt;message&gt;
 				&lt;client&gt;baph&lt;/client&gt;
 				&lt;date&gt;ISODATE&lt;/date&gt;
 				&lt;msgbody&gt;hey&lt;/msgbody&gt;	
 			&lt;/message&gt;
-			&lt;message&gt
+			&lt;message&gt;
 				&lt;client&gt;baph&lt;/client&gt;
 				&lt;date&gt;ISODATE&lt;/date&gt;
 				&lt;mgsbody&gt;welcome&lt;/msgbody&gt;	

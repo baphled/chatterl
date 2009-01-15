@@ -189,7 +189,7 @@ terminate(Reason, State) ->
     case gb_trees:is_empty(State#group.users) of
 	false ->
 	    determine_user_action(State#group.name,{drop_group,[]},
-				  gb_trees:values(State#group.users));
+				  gb_trees:values(State#group.users)),
 	    io:format("Shutting down, need to tell clients...~n");
 	true ->
 	    io:format("No users to inform of shutdown~n")
@@ -230,7 +230,8 @@ determine_user_action(GroupName,{Action,PayLoad},UsersList) ->
 	receive_msg ->
 	    case PayLoad of
 		{CreatedOn,Sender,Message} ->
-		    GroupMsg = "Sending to users ~s~n",
+		    GroupMsg = "Sending to users ~s~n";
+		%Really this should only be used when sending private message & with a proxy.
 		    %send_msg_to_users({receive_msg, CreatedOn,Sender,Message},UsersList,GroupMsg);
 		_ ->
 		    {error, "Illegal payload format"}
