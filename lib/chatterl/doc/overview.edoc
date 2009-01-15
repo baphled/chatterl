@@ -290,7 +290,11 @@ CWIGA commands are as follows:
 <pre><code>http://CWIGAURL:9000/connect/USER</code></pre>
 Calls Chatterl &amp; makes a connection, once this is successful, the client is able to interact with the rest of the API.
 When a client connects successfully, the following response will be received:
-<pre><code>{"chatterl":{"response":{"success":"foo has connected to Chatterl"}}}</code></pre>
+<pre><code>{"chatterl":
+	{"response":
+		{"success":"foo has connected to Chatterl"}
+	}
+}</code></pre>
 
 <pre><code>&lt;chatterl&gt;
 	&lt;response&gt;
@@ -303,7 +307,11 @@ When a client connects successfully, the following response will be received:
 Disconnects the client from Chatterl, this destroys the client process along with all the connections it is associated with (needs to be full implemented).
 
 Successful responses are displayed are the following:
-<pre><code>{"chatterl":{"response":{"success":"User dropped"}}}</code></pre>
+<pre><code>{"chatterl":
+	{"response":
+		{"success":"User dropped"}
+	}
+}</code></pre>
 
 <pre><code>&lt;chatterl&gt;
 	&lt;response&gt;
@@ -312,7 +320,11 @@ Successful responses are displayed are the following:
 &lt;/chatterl&gt;</code></pre>
 
 Where as displayed below:
-<pre><code>{"chatterl":{"response":{"failure":"Unable to drop from group"}}}</code></pre>
+<pre><code>{"chatterl":
+	{"response":
+		{"failure":"Unable to drop from group"}
+	}
+}</code></pre>
 
 <pre><code>&lt;chatterl&gt;
 	&lt;response&gt;
@@ -325,7 +337,13 @@ Where as displayed below:
 This call only has two types of response (an empty list or a populated on) which are expressed as follows:
 
 Empty
-<pre><code>{"chatterl":{"response":{"success":{"clients":[]}}}}</code></pre>
+<pre><code>{"chatterl":
+	{"response":
+		{"success":
+			{"clients":[]}
+		}
+	}
+}</code></pre>
 
 <pre><code>&lt;chatterl&gt;
 	&lt;response&gt;
@@ -336,7 +354,17 @@ Empty
 &lt;/chatterl&gt;</code></pre>
 
 Populated
-<pre><code>{"chatterl":{"response":{"success":{"clients":[{"client":"foo"},{"client":"bar"},{"client":"baz"}]}}}}</code></pre>
+<pre><code>{"chatterl":
+	{"response":
+		{"success":
+			{"clients":[
+				{"client":"foo"},
+				{"client":"bar"},
+				{"client":"baz"}
+			]}
+		}
+	}
+}</code></pre>
 
 <pre><code>&lt;chatterl&gt;
 	&lt;response&gt;
@@ -357,7 +385,17 @@ Will list all the clients currently connected to Chatterl, responses to this req
 <b>List Chatterl Groups</b>
 <pre><code>http://CWIGAURL:9000/groups/list</code></pre>
 
-<pre><code>{"chatterl":{"response":{"success":{"groups":[{"group":"nu_group"},{"group":"anuva_group"},{"group":"one_more"}]}}}}</code></pre>
+<pre><code>{"chatterl":
+	{"response":
+		{"success":
+			{"groups":[
+				{"group":"nu_group"},
+				{"group":"anuva_group"},
+				{"group":"one_more"}
+			]}
+		}
+	}
+}</code></pre>
 
 <pre><code>&lt;chatterl&gt;
 	&lt;response&gt;
@@ -374,7 +412,11 @@ Will list all the clients currently connected to Chatterl, responses to this req
 <b>Join a Group</b>
 <pre><code>http://CWIGAURL:9000/groups/join?client="foo"</code></pre>
 Successful requests return the following response:
-<pre><code>{"chatterl":{"response":{"success":"foo joined group"}}}</code></pre>
+<pre><code>{"chatterl":
+	{"response":
+		{"success":"foo joined group"}
+	}
+}</code></pre>
 
 <pre><code>&lt;chatterl&gt;
 	&lt;response&gt;
@@ -383,7 +425,11 @@ Successful requests return the following response:
 &lt;/chatterl&gt;</code></pre>
 
 Where as failures result in responses simular to the ones below:
-<pre><code>{"chatterl":{"response":{"failure":"foo joined group"}}}</code></pre>
+<pre><code>{"chatterl":
+	{"response":
+		{"failure":"foo joined group"}
+	}
+}</code></pre>
 
 <pre><code>&lt;chatterl&gt;
 	&lt;response&gt;
@@ -395,7 +441,11 @@ Where as failures result in responses simular to the ones below:
 <pre><code>http://CWIGAURL:9000/groups/some_group/leave?client="foo"</code></pre>
 Makes a client leave the specified group, on succes a response simular to below is received.
 
-<pre><code>{"chatterl":{"response":{"success":"foo has left group foo"}}}</code></pre>
+<pre><code>{"chatterl":
+	{"response":
+		{"success":"foo has left group foo"}
+	}
+}</code></pre>
 
 <pre><code>&lt;chatterl&gt;
 	&lt;response&gt;
@@ -404,7 +454,11 @@ Makes a client leave the specified group, on succes a response simular to below 
 &lt;/chatterl&gt;</code></pre>
 
 Failure responses are returns as follows:
-<pre><code>{"chatterl":{"response":{"failure":"foo not connected to some_group"}}}</code></pre>
+<pre><code>{"chatterl":
+	{"response":
+		{"failure":"foo not connected to some_group"}
+	}
+}</code></pre>
 
 <pre><code>&lt;chatterl&gt;
 	&lt;response&gt;
@@ -414,6 +468,21 @@ Failure responses are returns as follows:
 
 <b>Send a Group message</b>
 <pre><code>http://CWIGAURL:9000/groups/send/some_group?client=foo&amp;msg=hey%20all</code></pre>
+These responses are dealt with in the same fashion as joining a group.
+
+Successful requests are as follows:
+<pre><code>{"chatterl":
+	{"response":
+		{"success":"msg_sent"}
+	}
+}</code></pre>
+
+Where as failure responses are returns as follows:
+<pre><code>{"chatterl":
+	{"response":
+		{"failure":"Can not send the same message twice"}
+	}
+}</code></pre>
 
 <b>Poll Group for messages</b>
 <pre><code>http://CWIGAURL:9000/groups/poll/some_group</code></pre>
