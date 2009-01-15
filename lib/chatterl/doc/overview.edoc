@@ -288,30 +288,198 @@ CWIGA commands are as follows:
 
 <b>Connect to Chatterl</b>
 <pre><code>http://CWIGAURL:9000/connect/USER</code></pre>
-This will give the client a list of users connected to Chatterl.
+Calls Chatterl &amp; makes a connection, once this is successful, the client is able to interact with the rest of the API.
+When a client connects successfully, the following response will be received:
+<pre><code>{"chatterl":{"response":{"success":"foo has connected to Chatterl"}}}</code></pre>
+
+<pre><code>&lt;chatterl&gt;
+	&lt;response&gt;
+		&lt;success&gt;foo now connected&lt;/success&gt;
+	&lt;/response&gt;
+&lt;/chatterl&gt;</code></pre>
 
 <b>Disonnect from Chatterl</b>
 <pre><code>http://CWIGAURL:9000/disconnect/USER</code></pre>
-This will give the client a list of users connected to Chatterl.
+Disconnects the client from Chatterl, this destroys the client process along with all the connections it is associated with (needs to be full implemented).
+
+Successful responses are displayed are the following:
+<pre><code>{"chatterl":{"response":{"success":"User dropped"}}}</code></pre>
+
+<pre><code>&lt;chatterl&gt;
+	&lt;response&gt;
+		&lt;success&gt;User dropped&lt;/success&gt;
+	&lt;/response&gt;
+&lt;/chatterl&gt;</code></pre>
+
+Where as displayed below:
+<pre><code>{"chatterl":{"response":{"failure":"Unable to drop from group"}}}</code></pre>
+
+<pre><code>&lt;chatterl&gt;
+	&lt;response&gt;
+		&lt;failure&gtUnable to drop from group&lt;/failure&gt;
+	&lt;/response&gt;
+&lt;/chatterl&gt;</code></pre>
 
 <b>List Users on Chatterl</b>
 <pre><code>http://CWIGAURL:9000/users/list</code></pre>
+This call only has two types of response (an empty list or a populated on) which are expressed as follows:
+
+Empty
+<pre><code>{"chatterl":{"response":{"success":{"clients":[]}}}}</code></pre>
+
+<pre><code>&lt;chatterl&gt;
+	&lt;response&gt;
+		&lt;success&gt;
+			&lt;clients/&gt;
+		&lt;/success&gt;
+	&lt;/response&gt;
+&lt;/chatterl&gt;</code></pre>
+
+Populated
+<pre><code>{"chatterl":{"response":{"success":{"clients":[{"client":"foo"},{"client":"bar"},{"client":"baz"}]}}}}</code></pre>
+
+<pre><code>&lt;chatterl&gt;
+	&lt;response&gt;
+		&lt;success&gt;
+			&lt;clients&gt;
+				&lt;client&gt;foo&lt;/client&gt;
+				&lt;client&gt;bar&lt;/client&gt;
+				&lt;client&gt;baz&lt;/client&gt;
+			&lt;/clients&gt;
+		&lt;/success&gt;
+	&lt;/response&gt;
+&lt;/chatterl&gt;</code></pre>
 
 <b>List Users in a Chatterl Group</b>
 <pre><code>http://CWIGAURL:9000/users/some_group/list</code></pre>
+Will list all the clients currently connected to Chatterl, responses to this requests produce the same response body as (<code>/users/list</code>) the above examplexsy.
 
 <b>List Chatterl Groups</b>
 <pre><code>http://CWIGAURL:9000/groups/list</code></pre>
 
+<pre><code>{"chatterl":{"response":{"success":{"groups":[{"group":"nu_group"},{"group":"anuva_group"},{"group":"one_more"}]}}}}</code></pre>
+
+<pre><code>&lt;chatterl&gt;
+	&lt;response&gt;
+		&lt;success&gt;
+			&lt;groups&gt;
+				&lt;group&gt;nu_group&lt;/group&gt;
+				&lt;group&gt;anuva_group&lt;/group&gt;
+				&lt;group&gt;one_more&lt;/group&gt;
+			&lt;/groups&gt;
+		&lt;/success&gt;
+	&lt;/response&gt;
+&lt;/chatterl&gt;</code></pre>
+
 <b>Join a Group</b>
 <pre><code>http://CWIGAURL:9000/groups/join?client="foo"</code></pre>
+Successful requests return the following response:
+<pre><code>{"chatterl":{"response":{"success":"foo joined group"}}}</code></pre>
+
+<pre><code>&lt;chatterl&gt;
+	&lt;response&gt;
+		&lt;success&gt;foo joined group;/success&gt;
+	&lt;/response&gt;
+&lt;/chatterl&gt;</code></pre>
+
+Where as failures result in responses simular to the ones below:
+<pre><code>{"chatterl":{"response":{"failure":"foo joined group"}}}</code></pre>
+
+<pre><code>&lt;chatterl&gt;
+	&lt;response&gt;
+		&lt;failure&gt;foo joined group;/failure&gt;
+	&lt;/response&gt;
+&lt;/chatterl&gt;</code></pre>
 
 <b>Leave a Groups</b>
-<pre><code>http://CWIGAURL:9000/groups/leave?client="foo"</code></pre>
+<pre><code>http://CWIGAURL:9000/groups/some_group/leave?client="foo"</code></pre>
+Makes a client leave the specified group, on succes a response simular to below is received.
+
+<pre><code>{"chatterl":{"response":{"success":"foo has left group foo"}}}</code></pre>
+
+<pre><code>&lt;chatterl&gt;
+	&lt;response&gt;
+		&lt;success&gt;foo has left group foo;/success&gt;
+	&lt;/response&gt;
+&lt;/chatterl&gt;</code></pre>
+
+Failure responses are returns as follows:
+<pre><code>{"chatterl":{"response":{"failure":"foo not connected to some_group"}}}</code></pre>
+
+<pre><code>&lt;chatterl&gt;
+	&lt;response&gt;
+		&lt;failure&gt;foo not connected to some_group;/failure&gt;
+	&lt;/response&gt;
+&lt;/chatterl&gt;</code></pre>
 
 <b>Send a Group message</b>
 <pre><code>http://CWIGAURL:9000/groups/send/some_group?client="foo"&msg="some%20messge"</code></pre>
 
 <b>Poll Group for messages</b>
 <pre><code>http://CWIGAURL:9000/groups/poll/some_group</code></pre>
+Checks a groups for a list of its messages, there are two types of successful requests:
+<ul>
+	<li>No messages</li>
+	<li>List of messages</li>
+</ul>
+
+No messages are represented as follows:
+<pre><code>{"chatterl":{"response":{"messages":[]}}}</code></pre>
+
+<pre><code>&lt;chatterl&gt;
+	&lt;response&gt;
+		&lt;success&gt;
+			&lt;messages/&gt;
+		&lt;/success&gt;
+	&lt;/response&gt;
+&lt;/chatterl&gt;</code></pre>
+
+Lists of messages are expressed in the following manner:
+<pre><code>{"chatterl":
+	{"response":
+		{"success":
+			{"messages":
+				[{"message":
+					[
+						{"client":"baph"},
+						{"date":ISODATE},
+						{"msgbody":"hey"}
+					]
+				},
+				{"message":
+					[
+						{"client":"baph"},
+						{"date":ISODATE},
+						{"msgbody":"welcome"}]
+				}]
+			}
+		}
+	}
+}</code></pre>
+
+<pre><code>&lt;chatterl&gt;
+	&lt;response&gt;
+		&lt;messages&gt;
+			&lt;message&gt
+				&lt;client&gt;baph&lt;/client&gt;
+				&lt;date&gt;ISODATE&lt;/date&gt;
+				&lt;msgbody&gt;hey&lt;/msgbody&gt;	
+			&lt;/message&gt;
+			&lt;message&gt
+				&lt;client&gt;baph&lt;/client&gt;
+				&lt;date&gt;ISODATE&lt;/date&gt;
+				&lt;mgsbody&gt;welcome&lt;/msgbody&gt;	
+			&lt;/message&gt;
+		&lt;/messages&gt;
+	&lt;/response&gt;
+&lt;/chatterl&gt;</code></pre>
+
+It is possible for a group not to exist, in these cases the following response will be returned:
+<pre><code>{"chatterl":{"response":{"failure":"Group:some_group does'n exist"}}}</code></pre>
+
+<pre><code>&lt;chatterl&gt;
+	&lt;response&gt;
+		&lt;failure&gt;Group:some_group does'n exist;/failure&gt;
+	&lt;/response&gt;
+&lt;/chatterl&gt;</code></pre>
 @end
