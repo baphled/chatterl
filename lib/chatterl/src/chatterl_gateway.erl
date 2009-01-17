@@ -480,15 +480,21 @@ handle_messages_json(Type,MessagesCarrier,CarrierType) ->
 	    {struct,[{CarrierType,{struct,[{Type,loop_json_carrier(MessagesCarrier)}]}}]}
     end.
 
+%%--------------------------------------------------------------------
+%% @private
+%% @doc
+%%
+%% Generates XML structure needed to create message responses.
+%%
+%% @spec handle_messages_json(CarrierType,MessagesCarrier,Type) -> XML
+%%
+%% @end
+%%--------------------------------------------------------------------
 handle_messages_xml(Type,MessagesCarrier,CarrierType) ->
     case Type =:= "messages" of
 	true ->
 	    case MessagesCarrier of
-		[] ->
-		    xml_tuple(Type,MessagesCarrier);
-		[{carrier,MessageType,MessageData}] ->
-		    xml_tuple_single(MessageType,MessageData);
-		Messages -> 
+		_ -> 
 		    Result = inner_loop_xml_tuple(MessagesCarrier),
 		    Data = loop_xml_tuple(Type,Result),
 		    xml_tuple_single(CarrierType,Data)
@@ -539,13 +545,43 @@ xml_message(CarrierRecord) ->
 %% @end
 %%--------------------------------------------------------------------
 loop_xml_carrier(CarrierRecord) ->
-    Result = [loop_xml_tuple(DataType,[Data]) || {carrier,DataType,Data} <- CarrierRecord],
-    %Response = [Result],
-    Result.
+    [loop_xml_tuple(DataType,[Data]) || {carrier,DataType,Data} <- CarrierRecord].
 
+%%--------------------------------------------------------------------
+%% @private
+%% @doc
+%%
+%% Loops over the inner record carriers building the tuple structure need to
+%% build out XML.
+%% @spec loop_xml_carrier(Carrier) -> [XMLTuple]
+%%
+%% @end
+%%--------------------------------------------------------------------
 inner_loop_xml_carrier(CarrierRecord) ->
      [loop_xml_tuple(DataType,clean_xml([Data])) || {carrier,DataType,Data} <- CarrierRecord].
-    
+
+%%--------------------------------------------------------------------
+%% @private
+%% @doc
+%%
+%% Loops over the carrier tuple building the tuple structure need to
+%% build out XML.
+%% @spec loop_xml_carrier(Carrier) -> [XMLTuple]
+%%
+%% @end
+%%--------------------------------------------------------------------
+inner_loop_xml_tuple(Messages) ->
+    [loop_xml_tuple(Type,inner_loop_xml_carrier(Message))|| {carrier,Type,Message} <- Messages].
+
+%%--------------------------------------------------------------------
+%% @private
+%% @doc
+%%
+%% Cleans our XML for us, especially modifying our date to a readable format.
+%% @spec loop_xml_carrier(Carrier) -> XMLTuple
+%%
+%% @end
+%%--------------------------------------------------------------------
 clean_xml([Data]) when is_tuple(Data) ->
     [httpd_util:rfc1123_date(Data)];
 clean_xml([Data]) ->
@@ -640,8 +676,7 @@ loop_xml_tuple(Type,Message) when is_list(Type) ->
     {list_to_atom(Type),[],Message};
 loop_xml_tuple(Type,Message) ->
     {list_to_atom(Type),[],[Message]}.
-inner_loop_xml_tuple(Messages) ->
-    [loop_xml_tuple(Type,inner_loop_xml_carrier(Message))|| {carrier,Type,Message} <- Messages].
+
 %%--------------------------------------------------------------------
 %% @private
 %% @doc
