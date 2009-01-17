@@ -137,16 +137,21 @@ handle_call({drop, User}, _From, State) ->
     {reply, Reply, State#group{users=NewTree}};
 handle_call({send_msg,User,Message},_From,State) ->
     {Reply, NewTree} =
-	case gb_trees:is_defined(Message, State#group.messages) of
+	case gb_trees:is_defined(User, State#group.users) of
 	    false ->
-		CreatedOn = erlang:now(),
-		io:format("~s: ~s~n", [User,Message]),
-		determine_user_action(State#group.name,{receive_msg,{CreatedOn,User,Message}},
-				      gb_trees:values(State#group.users)),
-		{{ok, msg_sent},
-		 gb_trees:insert(Message, {User,CreatedOn,Message}, State#group.messages)};
+		{{error, user_not_joined}, State#group.users};
 	    true ->
-		{{error, already_sent}, State#group.messages}
+		case gb_trees:is_defined(Message, State#group.messages) of
+		    false ->
+			CreatedOn = erlang:local_time(),
+		io:format("~s: ~s~n", [User,Message]),
+			determine_user_action(State#group.name,{receive_msg,{CreatedOn,User,Message}},
+					      gb_trees:values(State#group.users)),
+			{{ok, msg_sent},
+			 gb_trees:insert(Message, {User,CreatedOn,Message}, State#group.messages)};
+		    true ->
+			{{error, already_sent}, State#group.messages}
+		end
 	end,
     {reply, Reply, State#group{messages=NewTree}}.
 %%--------------------------------------------------------------------

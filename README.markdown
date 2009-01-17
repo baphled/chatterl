@@ -1,7 +1,7 @@
-<h1>The chatterl application</h1>
-<p>Copyright &copy; 2008-2009 Yomi Colledge</p>
-<p><b>Version:</b> Jan 15 2009 01:45:25</p>
-<p><b>Authors:</b> Yomi (<a href="baphled.wordpress.com"><tt>baphled</tt></a>) Colledge.</p>
+<h1>Chatterl</h1>
+<p>Copyright � 2008-2009 Yomi Colledge</p>
+<p><b>Version:</b> Jan 15 2009 01:55:58</p>
+<p><b>Authors:</b> Yomi (<a href="baphled@wordpress.com"><tt>baphled</tt></a>) Colledge.</p>
 
 <ul>
 	<li><a href="#Description">Description</a></li>
@@ -133,7 +133,7 @@ If the message is sent successfully then the sender will receive follow message:
 <h3><a name="CWIGA_Brief">CWIGA Brief</a></h3><p>
 CWIGA handles all interaction with Chatterl, though for the moment the basics have only been implemented. It can respond in both XML &amp; JSON (at the moment of  writing only XML is functional).</p>
 
-CWIGA responsed coming in a standardised structure, allowing for easy parsing and searching of data, all data is represented in the following formats:
+CWIGA's responses all come in a standardised structure, allowing for easy parsing and searching of data, all data is represented in the following formats:
 <ul>
 	<li>JSON</li>
 	<li>XML</li>
@@ -159,7 +159,7 @@ When a Chatterl responds with a failure (user cannot connect), CWIGA in turn res
 If some kind of error occurs within Chatterl CWIGA responds with an error. As these are usually internal errors, they return with a 500 HTTP response code.</p>
 
 <h3><a name="Response_Structures">Response Structures</a></h3>
-All CWIGA responses follow the same format for simplicity &amp; ease of use. There are three basic response format that can be retrieved from CWIGA:
+All CWIGA of responses follow the same format for simplicity &amp; ease of use. There are three basic response format that can be retrieved from CWIGA:
 <ul>
 	<li>Empty</li>
 	<li>Populated</li>
@@ -468,23 +468,14 @@ Failure responses are returns as follows:
 &lt;/chatterl&gt;</code></pre>
 
 <b>Send a Group message</b>
-<pre><code>http://CWIGAURL:9000/groups/send/some_group?client=foo&amp;msg=hey%20all</code></pre><p>
-These responses are dealt with in the same fashion as joining a group.</p>
-
-Successful requests are as follows:
-<pre><code>{"chatterl":
-	{"response":
-		{"success":"msg_sent"}
-	}
-}</code></pre>
-
-Where as failure responses are returns as follows:
+<pre><code>http://CWIGAURL:9000/groups/send/some_group?client=foo&amp;msg=hey%20all</code></pre>
+These responses are dealt with in the same fashion as joining a group, so we will save space here by giving both examples:
+Failure responses are returns as follows:
 <pre><code>{"chatterl":
 	{"response":
 		{"failure":"Can not send the same message twice"}
 	}
 }</code></pre>
-
 <b>Poll Group for messages</b>
 <pre><code>http://CWIGAURL:9000/groups/poll/some_group</code></pre>
 Checks a groups for a list of its messages, there are two types of successful requests:

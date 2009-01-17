@@ -479,6 +479,22 @@ handle_messages_json(Type,MessagesCarrier,CarrierType) ->
 	false ->
 	    {struct,[{CarrierType,{struct,[{Type,loop_json_carrier(MessagesCarrier)}]}}]}
     end.
+
+handle_messages_xml(Type,MessagesCarrier,CarrierType) ->
+    case Type =:= "messages" of
+	true ->
+	    case MessagesCarrier of
+		[] ->
+		    xml_tuple(Type,MessagesCarrier);
+		[{carrier,_MessageType,MessageData}] ->
+		    xml_tuple(Type,loop_xml_carrier(MessageData));
+		Messages -> 
+		    xml_tuple(Type,inner_loop_xml_tuple(MessagesCarrier))
+	    end;
+	false ->
+	    Result = loop_xml_carrier(MessagesCarrier),
+	    xml_tuple(Type,Result)
+    end.
 %%--------------------------------------------------------------------
 %% @private
 %% @doc
@@ -500,11 +516,13 @@ xml_message(CarrierRecord) ->
 	{carrier, Type, Record} ->		
 	    case Type =:= "groups" orelse Type =:= "clients" orelse Type =:= "messages" of
 		true -> 
-		    xml_tuple(Type,loop_xml_carrier(Record));
+		    %xml_tuple(Type,loop_xml_carrier(Record));
+		    handle_messages_xml(Type,Record,MessageType);
 		false -> io:format("dont know ~s~n",[Type])
 	    end;
 	_ -> xml_tuple_single(MessageType,Message)
     end,
+    %io:format(XMLTuple),
     tuple_to_xml(XMLTuple,[]).
 
 %%--------------------------------------------------------------------
@@ -522,6 +540,8 @@ loop_xml_carrier(CarrierRecord) ->
     Response = [Result],
     Response.
 
+inner_loop_xml_carrier(CarrierRecord) ->
+    [loop_xml_tuple(DataType,Data) || {carrier,DataType,Data} <- CarrierRecord].
 %%--------------------------------------------------------------------
 %% @private
 %% @doc
@@ -565,8 +585,8 @@ inner_loop_json_carrier(CarrierRecord) ->
 %% @end
 %%--------------------------------------------------------------------
 clean_message(Data) when is_tuple(Data) ->
-    {A,B,C} = Data,
-    [A,B,C];
+    {Date={Year,Month,Day},Time={Hour,Minutes,Seconds}} = Data,
+    [tuple_to_list(Date),tuple_to_list(Time)];
 clean_message(Data) ->
     list_to_binary(Data).
     
@@ -607,6 +627,10 @@ xml_tuple_single(Type,Message) ->
 loop_xml_tuple(Type,Message) ->
     {list_to_atom(Type),[],[Message]}.
 
+inner_loop_xml_tuple(Messages) ->
+    Results = [inner_loop_xml_carrier(Message)|| {carrier,Type,Message} <- Messages],
+    [Response] = Results,
+    Response.
 %%--------------------------------------------------------------------
 %% @private
 %% @doc
