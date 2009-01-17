@@ -486,18 +486,16 @@ handle_messages_xml(Type,MessagesCarrier,CarrierType) ->
 	    case MessagesCarrier of
 		[] ->
 		    xml_tuple(Type,MessagesCarrier);
-		[{carrier,_MessageType,MessageData}] ->
-		    xml_tuple(Type,loop_xml_carrier(MessageData));
+		[{carrier,MessageType,MessageData}] ->
+		    xml_tuple_single(MessageType,MessageData);
 		Messages -> 
 		    Result = inner_loop_xml_tuple(MessagesCarrier),
-		    %io:format(Result),
 		    Data = loop_xml_tuple(Type,Result),
-		    %io:format(Data),
 		    xml_tuple_single(CarrierType,Data)
 	    end;
 	false ->
 	    Result = loop_xml_carrier(MessagesCarrier),
-	    xml_tuple(Type,Result)
+	    xml_tuple(Type,[Result])
     end.
 %%--------------------------------------------------------------------
 %% @private
@@ -541,16 +539,16 @@ xml_message(CarrierRecord) ->
 %% @end
 %%--------------------------------------------------------------------
 loop_xml_carrier(CarrierRecord) ->
-    Result = [loop_xml_tuple(DataType,Data) || {carrier,DataType,Data} <- CarrierRecord],
+    Result = [loop_xml_tuple(DataType,[Data]) || {carrier,DataType,Data} <- CarrierRecord],
     %Response = [Result],
     Result.
 
 inner_loop_xml_carrier(CarrierRecord) ->
-     [loop_xml_tuple(DataType,clean_data([Data])) || {carrier,DataType,Data} <- CarrierRecord].
+     [loop_xml_tuple(DataType,clean_xml([Data])) || {carrier,DataType,Data} <- CarrierRecord].
     
-clean_data([Data]) when is_tuple(Data) ->
+clean_xml([Data]) when is_tuple(Data) ->
     [httpd_util:rfc1123_date(Data)];
-clean_data([Data]) ->
+clean_xml([Data]) ->
     [Data].
 %%--------------------------------------------------------------------
 %% @private
@@ -609,13 +607,13 @@ clean_message(Data) ->
 %% @end
 %%--------------------------------------------------------------------
 xml_tuple(Type,Message) when is_list(Message) ->
-    InnerXML = case Message of
+    case Message of
 	[Data] ->
 	    Data;
 	Data ->
 	    Data
     end,
-    {chatterl,[],[{response,[],[{list_to_atom(Type),[],InnerXML}]}]}.
+    {chatterl,[],[{response,[],[{list_to_atom(Type),[],Data}]}]}.
 
 %%--------------------------------------------------------------------
 %% @private
