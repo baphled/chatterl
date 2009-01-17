@@ -362,7 +362,7 @@ build_carrier(Type,Message) ->
 %% @end
 %%--------------------------------------------------------------------
 format_messages({Client,Date,Message}) ->
-    [build_carrier("client",Client),build_carrier("date",Date),build_carrier("message",Message)].
+    [build_carrier("client",Client),build_carrier("date",Date),build_carrier("msgbody",Message)].
 
 %%--------------------------------------------------------------------
 %% @private
