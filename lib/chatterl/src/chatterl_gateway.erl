@@ -518,9 +518,10 @@ xml_message(CarrierRecord) ->
     {carrier, MessageType, Message} = CarrierRecord,
     XMLTuple = case Message of
 	{carrier, Type, Record} ->		
-	    case Type =:= "groups" orelse Type =:= "clients" orelse Type =:= "messages" of
+	    case Type =:= "groups" 
+		orelse Type =:= "clients" 
+		orelse Type =:= "messages" of
 		true -> 
-		    %xml_tuple(Type,loop_xml_carrier(Record));
 		    handle_messages_xml(Type,Record,MessageType);
 		false -> io:format("dont know ~s~n",[Type])
 	    end;
@@ -594,8 +595,7 @@ inner_loop_json_carrier(CarrierRecord) ->
 %% @end
 %%--------------------------------------------------------------------
 clean_message(Data) when is_tuple(Data) ->
-    {{Year,Month,Day},{Hour,Minutes,Seconds}} = Data,
-    list_to_binary([Hour,Minutes,Seconds]);
+    list_to_binary([httpd_util:rfc1123_date(Data)]);
 clean_message(Data) ->
     list_to_binary(Data).
     
