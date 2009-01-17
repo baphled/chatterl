@@ -521,10 +521,7 @@ xml_message(CarrierRecord) ->
 	    case Type =:= "groups" orelse Type =:= "clients" orelse Type =:= "messages" of
 		true -> 
 		    %xml_tuple(Type,loop_xml_carrier(Record));
-		    Result = handle_messages_xml(Type,Record,MessageType),
-		    %io:format(Result),
-		    [Data] = Result,
-		    Data;
+		    handle_messages_xml(Type,Record,MessageType);
 		false -> io:format("dont know ~s~n",[Type])
 	    end;
 	_ -> xml_tuple_single(MessageType,Message)
@@ -551,8 +548,7 @@ inner_loop_xml_carrier(CarrierRecord) ->
      [loop_xml_tuple(DataType,clean_data([Data])) || {carrier,DataType,Data} <- CarrierRecord].
     
 clean_data([Data]) when is_tuple(Data) ->
-    {Year,Month} = Data,
-    mochiweb_util:quote_plus(mochiweb_util:join(tuple_to_list(Month),":"));
+    [httpd_util:rfc1123_date(Data)];
 clean_data([Data]) ->
     [Data].
 %%--------------------------------------------------------------------
