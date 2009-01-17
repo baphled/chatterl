@@ -321,8 +321,8 @@ generate_record(Group,Payload,Client) ->
 		    case gen_server:call({global,Group},{send_msg,Client,Message}, infinity) of
 			{ok,Msg} ->
 			    build_carrier("success",atom_to_list(Msg));
-			{error,_Error} ->
-			    build_carrier("failure","Can not send the same message twice")
+			{error,Error} ->
+			    build_carrier("failure",Error)
 		    end;
 		_ -> io:format("Unrecognised payload: ~s~n",[Payload])
 			end;
@@ -489,7 +489,11 @@ handle_messages_xml(Type,MessagesCarrier,CarrierType) ->
 		[{carrier,_MessageType,MessageData}] ->
 		    xml_tuple(Type,loop_xml_carrier(MessageData));
 		Messages -> 
-		    xml_tuple(Type,inner_loop_xml_tuple(MessagesCarrier))
+		    Result = inner_loop_xml_tuple(MessagesCarrier),
+		    %io:format(Result),
+		    Data = loop_xml_tuple(Type,Result),
+		    %io:format(Data),
+		    xml_tuple_single(CarrierType,Data)
 	    end;
 	false ->
 	    Result = loop_xml_carrier(MessagesCarrier),
@@ -517,7 +521,10 @@ xml_message(CarrierRecord) ->
 	    case Type =:= "groups" orelse Type =:= "clients" orelse Type =:= "messages" of
 		true -> 
 		    %xml_tuple(Type,loop_xml_carrier(Record));
-		    handle_messages_xml(Type,Record,MessageType);
+		    Result = handle_messages_xml(Type,Record,MessageType),
+		    %io:format(Result),
+		    [Data] = Result,
+		    Data;
 		false -> io:format("dont know ~s~n",[Type])
 	    end;
 	_ -> xml_tuple_single(MessageType,Message)
@@ -537,11 +544,17 @@ xml_message(CarrierRecord) ->
 %%--------------------------------------------------------------------
 loop_xml_carrier(CarrierRecord) ->
     Result = [loop_xml_tuple(DataType,Data) || {carrier,DataType,Data} <- CarrierRecord],
-    Response = [Result],
-    Response.
+    %Response = [Result],
+    Result.
 
 inner_loop_xml_carrier(CarrierRecord) ->
-    [loop_xml_tuple(DataType,Data) || {carrier,DataType,Data} <- CarrierRecord].
+     [loop_xml_tuple(DataType,clean_data([Data])) || {carrier,DataType,Data} <- CarrierRecord].
+    
+clean_data([Data]) when is_tuple(Data) ->
+    {Year,Month} = Data,
+    mochiweb_util:quote_plus(mochiweb_util:join(tuple_to_list(Month),":"));
+clean_data([Data]) ->
+    [Data].
 %%--------------------------------------------------------------------
 %% @private
 %% @doc
@@ -585,8 +598,8 @@ inner_loop_json_carrier(CarrierRecord) ->
 %% @end
 %%--------------------------------------------------------------------
 clean_message(Data) when is_tuple(Data) ->
-    {Date={Year,Month,Day},Time={Hour,Minutes,Seconds}} = Data,
-    [tuple_to_list(Date),tuple_to_list(Time)];
+    {{Year,Month,Day},{Hour,Minutes,Seconds}} = Data,
+    list_to_binary([Hour,Minutes,Seconds]);
 clean_message(Data) ->
     list_to_binary(Data).
     
@@ -600,8 +613,13 @@ clean_message(Data) ->
 %% @end
 %%--------------------------------------------------------------------
 xml_tuple(Type,Message) when is_list(Message) ->
-    [Data] = Message,
-    {chatterl,[],[{response,[],[{list_to_atom(Type),[],Data}]}]}.
+    InnerXML = case Message of
+	[Data] ->
+	    Data;
+	Data ->
+	    Data
+    end,
+    {chatterl,[],[{response,[],[{list_to_atom(Type),[],InnerXML}]}]}.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -624,13 +642,12 @@ xml_tuple_single(Type,Message) ->
 %%
 %% @end
 %%--------------------------------------------------------------------
+loop_xml_tuple(Type,Message) when is_list(Type) ->
+    {list_to_atom(Type),[],Message};
 loop_xml_tuple(Type,Message) ->
     {list_to_atom(Type),[],[Message]}.
-
 inner_loop_xml_tuple(Messages) ->
-    Results = [inner_loop_xml_carrier(Message)|| {carrier,Type,Message} <- Messages],
-    [Response] = Results,
-    Response.
+    [loop_xml_tuple(Type,inner_loop_xml_carrier(Message))|| {carrier,Type,Message} <- Messages].
 %%--------------------------------------------------------------------
 %% @private
 %% @doc

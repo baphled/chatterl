@@ -139,11 +139,11 @@ handle_call({send_msg,User,Message},_From,State) ->
     {Reply, NewTree} =
 	case gb_trees:is_defined(User, State#group.users) of
 	    false ->
-		{{error, user_not_joined}, State#group.users};
+		{{error, user_not_joined}, State#group.messages};
 	    true ->
 		case gb_trees:is_defined(Message, State#group.messages) of
 		    false ->
-			CreatedOn = erlang:local_time(),
+			CreatedOn = erlang:localtime(),
 		io:format("~s: ~s~n", [User,Message]),
 			determine_user_action(State#group.name,{receive_msg,{CreatedOn,User,Message}},
 					      gb_trees:values(State#group.users)),
