@@ -462,6 +462,13 @@ Failure responses are returns as follows:
 		{"failure":"Can not send the same message twice"}
 	}
 }</code></pre>
+
+Successful messages are responded to in the following manner:
+<pre><code>{"chatterl":
+	{"response":
+		{"success":msg_sent"}
+	}
+}</code></pre>
 <b>Poll Group for messages</b>
 <pre><code>http://CWIGAURL:9000/groups/poll/some_group</code></pre>
 Checks a groups for a list of its messages, there are two types of successful requests:

@@ -22,7 +22,7 @@
 
 %% API
 %% Client based
--export([start/1,stop/1]).
+-export([start/1,stop/1,private_msg/3]).
 %% Group based
 -export([join/1,leave/1]).
 
@@ -77,6 +77,9 @@ join(Group) ->
 %%--------------------------------------------------------------------
 leave(Group) ->
     determine_group_action(leave,Group).
+
+private_msg(Sender,Client,Message) ->
+    gen_server:call({global,Sender},{private_msg,Client,Message}).
 %%====================================================================
 %% gen_server callbacks
 %%====================================================================
