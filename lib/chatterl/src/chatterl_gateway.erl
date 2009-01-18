@@ -283,8 +283,14 @@ handle("/groups/leave/" ++ Group,ContentType,Req) ->
     send_response(Req,{get_content_type(ContentType),build_carrier(Type,Record)});
 handle("/groups/send/" ++ Group, ContentType, Req) ->
     [Sender,Message] = get_properties(Req,["client","msg"]),
-    Record = generate_record(Group,{group_msg,Message},Sender),
-    send_response(Req,{get_content_type(ContentType),Record});
+    {Type,Record} =
+	case gen_server:call({global,Group},{send_msg,Client,Message}, infinity) of
+	    {ok,Msg} ->
+		{"success",atom_to_list(Msg)};
+	    {error,Error} ->
+		{"failure",Error}
+	end
+    send_response(Req,{get_content_type(ContentType),build_carrier(Type,Record}});
 handle("/groups/poll/" ++ Group,ContentType,Req) ->
     {Type,Result} = 
 	case gen_server:call({global,chatterl_serv},{group_exists,Group}) of
@@ -343,48 +349,6 @@ handle(Unknown, ContentType,Req) ->
 get_properties(Req,WantedParams) ->
     Params = Req:parse_qs(),
     [proplists:get_value(Property, Params)|| Property <-  WantedParams].
-%%--------------------------------------------------------------------
-%% @private
-%% @doc
-%%
-%% Generates the record for joining a Chatterl group.
-%%
-%% Have a feeling this can be cleaned up or used in other places, so
-%% I have placed it here.
-%% @spec generate_record(Group,Payload,Client) -> Record
-%%
-%% @end
-%%--------------------------------------------------------------------
-generate_record(Group,Payload,Client) ->
-    case gen_server:call({global,chatterl_serv},{user_exists,Client}) of
-	true ->
-	    %% Check payload here
-	    case Payload of
-		leave ->
-		    case gen_server:call({global,Group},{leave,Client}) of
-			{ok, _ } ->
-			    build_carrier("success",Client ++ " has disconnected from " ++ Group);
-			{error,Error} ->
-			    build_carrier("failure",Error)
-		    end;
-		{group_msg,Message} ->
-		    %% Need to check that the user is connected to the group.
-		    case gen_server:call({global,Group},{send_msg,Client,Message}, infinity) of
-			{ok,Msg} ->
-			    build_carrier("success",atom_to_list(Msg));
-			{error,Error} ->
-			    build_carrier("failure",Error)
-		    end;
-		_ -> io:format("Unrecognised payload: ~s~n",[Payload])
-			end;
-	false ->
-		    Name = 
-		case Client of
-		    undefined -> atom_to_list(Client);
-		    _ -> Client
-		end,
-	    build_carrier("error","Client:" ++Name ++" doesn't exist")
-    end.
 
 %%--------------------------------------------------------------------
 %% @private
