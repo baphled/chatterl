@@ -282,15 +282,21 @@ handle("/groups/leave/" ++ Group,ContentType,Req) ->
 	end,
     send_response(Req,{get_content_type(ContentType),build_carrier(Type,Record)});
 handle("/groups/send/" ++ Group, ContentType, Req) ->
+    [Client] = get_properties(Req,["client"]),
     [Sender,Message] = get_properties(Req,["client","msg"]),
     {Type,Record} =
-	case gen_server:call({global,Group},{send_msg,Client,Message}, infinity) of
-	    {ok,Msg} ->
-		{"success",atom_to_list(Msg)};
-	    {error,Error} ->
-		{"failure",Error}
-	end
-    send_response(Req,{get_content_type(ContentType),build_carrier(Type,Record}});
+	case gen_server:call({global,chatterl_serv},{user_exists,Client}) of
+	    true ->
+		case gen_server:call({global,Group},{send_msg,Client,Message}, infinity) of
+		    {ok,Msg} ->
+			{"success",atom_to_list(Msg)};
+		    {error,Error} ->
+			{"failure",Error}
+		end;
+	    false ->
+		{"failure","User not joined"}
+	end,
+    send_response(Req,{get_content_type(ContentType),build_carrier(Type,Record)});
 handle("/groups/poll/" ++ Group,ContentType,Req) ->
     {Type,Result} = 
 	case gen_server:call({global,chatterl_serv},{group_exists,Group}) of
