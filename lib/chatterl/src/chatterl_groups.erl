@@ -122,9 +122,15 @@ handle_call({join, User}, From, State) ->
 		{{error, "Already joined"}, State#group.users};
 	    false ->
 		case is_list(User) of
-		    true -> io:format("~s joined ~s~n", [User,State#group.name]),
-			    {{ok, "User added"}, 
-			     gb_trees:insert(User, {User,From}, State#group.users)};
+		    true -> 
+			case gen_server:call({global,chatterl_serv},{user_exists,User}) of
+			    true ->
+				io:format("~s joined ~s~n", [User,State#group.name]),
+				{{ok, "User added"}, 
+				 gb_trees:insert(User, {User,From}, State#group.users)};
+			    false ->
+				{{error, "not connected"}, State#group.users}
+			end;
 		    false ->io:format("~s not a valid user",[undefined]),
 			    	{{error, "Invalid user name"}, State#group.users}
 		end

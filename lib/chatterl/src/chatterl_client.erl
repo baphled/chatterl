@@ -161,14 +161,15 @@ handle_call({private_msg,Client,Message},_From,State) ->
 		     case ClientName =:= State#client.name of
 			 false ->
 			     {name,From} = gen_server:call(ClientPid, client_name, infinity),
-			     case gen_server:call(ClientPid, {receive_msg, erlang:now(), From, Message}) of
+			     case gen_server:call(ClientPid, 
+						  {receive_msg, erlang:now(), From, Message}) of
 				 ok -> {ok, msg_sent};
 				 _ -> {error, "Unable to send message!"}
 			     end;
 			 true ->
 			     {error, "Can not send to self!"}
 		     end
-    end,
+	     end,
     {reply,Result,State};
 handle_call({receive_msg, _CreatedOn, Client, Msg}, _From, State) ->
     io:format("Received msg~p: ~p~n", [Client,Msg]),

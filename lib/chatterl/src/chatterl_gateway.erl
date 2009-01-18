@@ -199,8 +199,8 @@ get_content_type(Type) ->
 %%--------------------------------------------------------------------
 handle("/connect/" ++ Client,ContentType,Req) ->
     {Type,Record} =
-    case gen_server:call({global,chatterl_serv},{connect,Client}) of
-	{ok,_} -> {"success",Client++" now connected"};
+    case chatterl_mid_man:connect(Client) of
+	ok -> {"success",Client++" now connected"};
 	{error,Error} -> {"failure",Error}
     end,
     send_response(Req,{get_content_type(ContentType),build_carrier(Type,Record)});

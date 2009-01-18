@@ -39,7 +39,7 @@ connect(Nickname) ->
     ok ->
       ok;
     {error, Error} ->
-      Error
+      {error,Error}
   end.
 
 send_message(Client, Group, Message) ->
@@ -93,7 +93,7 @@ handle_call({connect, Nickname}, _From, State) ->
 handle_cast({send_message, Client, Group, Message}, State) ->
   case dict:find(Client, State) of
     error ->
-      {error, user_not_connected};
+      io:format("user not connected");
     {ok, Pid} ->
       Pid ! {send_message, Client, Group, Message}
   end,
