@@ -25,7 +25,7 @@
 
 %% API
 %% Client based
--export([start/1,stop/0,private_msg/2,send_msg/2]).
+-export([start/1,stop/1,private_msg/2]).
 %% Group based
 -export([join/1,leave/1]).
 
@@ -58,8 +58,8 @@ start(Client) ->
 %% @spec stop() -> stopped
 %% @end
 %%--------------------------------------------------------------------
-stop() ->
-    gen_server:call(self(), stop, infinity).
+stop(Client) ->
+    gen_server:call({global,Client}, stop, infinity).
 
 %%--------------------------------------------------------------------
 %% @doc
@@ -80,16 +80,6 @@ join(Group) ->
 %%--------------------------------------------------------------------
 leave(Group) ->
     determine_group_action(leave,Group).
-
-%%--------------------------------------------------------------------
-%% @doc
-%% Sends a message to a specific group
-%%
-%% @spec send_msg(Group,Msg) -> {ok,msg_sent} | {error,Error}
-%% @end
-%%--------------------------------------------------------------------
-send_msg(Group,Msg) ->
-    gen_server:call(self(),{group_msg,Group,Msg},infinity).
 
 %%--------------------------------------------------------------------
 %% @doc
