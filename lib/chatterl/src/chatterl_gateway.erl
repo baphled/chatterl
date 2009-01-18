@@ -301,6 +301,20 @@ handle("/groups/create/" ++Group,ContentType,Req) ->
 		{"error",Error}
 	end,
     send_response(Req,{get_content_type(ContentType),build_carrier(Type,Result)});
+handle("/groups/drop/" ++Group,ContentType,Req) ->
+    {Type,Result} = 
+	case is_auth(Req) of
+	    {ok,_Msg} ->
+		case gen_server:call({global,chatterl_serv},{drop,Group}) of
+		    {error,{Error,_GroupName}} ->
+			{"failure",Error};
+		    {ok,ResponseMsg} ->
+			{"success",ResponseMsg}
+		end;
+	    {error,Error} ->
+		{"error",Error}
+	end,
+    send_response(Req,{get_content_type(ContentType),build_carrier(Type,Result)});
 handle(Unknown, ContentType,Req) ->
     send_response(Req,{get_content_type(ContentType),build_carrier("error", "Unknown command: " ++Unknown)}).
 
