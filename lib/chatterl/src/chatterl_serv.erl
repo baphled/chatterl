@@ -238,11 +238,11 @@ handle_call({create, Group, Description}, _From, State) ->
     {Reply, NewTree} =
 	case gb_trees:is_defined(Group, State#chatterl.groups) of
 	    true ->		
-		{{error, "Group already created"},
+		{{error, already_created},
 		 State#chatterl.groups};
  	    false ->
 		case chatterl_groups:start(Group, Description) of
-		    {error, Error} ->
+		    {error, {Error,_Pid}} ->
 			{{error, Error},
 			 State#chatterl.groups};
 		    {ok,GroupPid} ->

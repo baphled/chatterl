@@ -287,13 +287,13 @@ handle("/groups/poll/" ++ Group,ContentType,Req) ->
 	end,
     send_response(Req,{get_content_type(ContentType),build_carrier(Type,Result)});
 handle("/groups/create/" ++Group,ContentType,Req) ->
-    [Description] = get_properties(Req,["description"]),
+    Description = mochiweb_util:shell_quote(get_properties(Req,["description"])),
     {Type,Result} = 
 	case is_auth(Req) of
 	    {ok,_Msg} ->
-		case gen_server:call({global,chatterl_serv},{create,Group,Description},infinity) of
-		    {error,Error} ->
-			{"failure",Error};
+		case gen_server:call({global,chatterl_serv},{create,Group,Description}) of
+		    {error,_Error} ->
+			{"failure","Unable to create group"};
 		    {ok,_GroupPid} ->
 			{"success","Group added"}
 		end;
