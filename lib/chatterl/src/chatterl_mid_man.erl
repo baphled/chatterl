@@ -15,7 +15,7 @@
 -behaviour(gen_server).
 
 %% API
--export([start/0,connect/1,disconnect/1,list_groups/0,send_message/3]).
+-export([start/0,connect/1,disconnect/1,list_groups/0,private_msg/3]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -36,22 +36,22 @@ start() ->
 
 connect(Client) ->
   case gen_server:call({global, ?SERVER}, {connect, Client}) of
-    ok ->
-      ok;
-    {error, Error} ->
-      {error,Error}
+      ok ->
+	  {ok,"Connected"};
+      {error,Error} ->
+	  {error,atom_to_list(Error)}
   end.
 
 disconnect(Client) ->
     case gen_server:call({global, ?SERVER}, {disconnect, Client}) of
-	ok ->
-	    {ok,"Disconnected user"};
+	{ok,Msg} ->
+	    {ok,Msg};
 	{error,Error} ->
 	    {error,Error}
     end.
 
-send_message(Client, Group, Message) ->
-  gen_server:cast({global, ?SERVER}, {send_message, Client, Group, Message}).
+private_msg(Sender, Client, Message) ->
+  gen_server:cast({global, ?SERVER}, {private_msg, Sender, Client, Message}).
 
 list_groups() ->
     gen_server:call({global, chatterl_serv}, list_groups, infinity).
@@ -80,14 +80,13 @@ init([]) ->
 %% Description: Handling call messages
 %%--------------------------------------------------------------------
 handle_call({connect, Nickname}, _From, State) ->
-  case dict:find(Nickname, State) of
-    error ->
-      Pid = spawn(fun() ->
-		      process_flag(trap_exit, true),
-		      proxy_client([]) end),
-      erlang:monitor(process, Pid),
-      gen_server:call({global, chatterl_serv}, {connect,Nickname}, infinity),
-      {reply, ok, dict:store(Nickname, Pid, State)};
+    case dict:find(Nickname, State) of
+      error ->
+	  Pid = spawn(fun() ->
+			  process_flag(trap_exit, true),
+			  proxy_client([]) end),
+	  erlang:monitor(process, Pid),
+	  {reply, ok, dict:store(Nickname, Pid, State)};
     {ok, _} ->
       {reply, {error, duplicate_nick_found}, State}
   end;
@@ -101,19 +100,18 @@ handle_call({disconnect, Client}, _From,State) ->
 		{{ok,"Disconnected"},dict:erase(Client, State)}
 	end,
     {reply, Reply, NewState}.
-
 %%--------------------------------------------------------------------
 %% Function: handle_cast(Msg, State) -> {noreply, State} |
 %%                                      {noreply, State, Timeout} |
 %%                                      {stop, Reason, State}
 %% Description: Handling cast messages
 %%--------------------------------------------------------------------
-handle_cast({send_message, Client, Group, Message}, State) ->
+handle_cast({private_msg, Sender, Client, Message}, State) ->
     case dict:find(Client, State) of
 	error ->
 	    io:format("user not connected");
 	{ok, Pid} ->
-	    Pid ! {send_message, Client, Group, Message}
+	    Pid ! {private_msg, Sender, Client, Message}
     end,
     {noreply, State};
 handle_cast(_Msg, State) ->
@@ -151,12 +149,17 @@ code_change(_OldVsn, State, _Extra) ->
 %%--------------------------------------------------------------------
 proxy_client(Messages) ->
     receive
-	{printmsg, MessageBody} ->
-	    proxy_client([MessageBody|Messages]);
-	{send_message, Client,Group, Message} ->
-	    gen_server:call({global,Group},{send_msg,Client,Message}),
+	{receive_msg, SentOn,Sender,MessageBody} ->
+	    Message = {SentOn,Sender,MessageBody},
+	    io:format(MessageBody),
+	    proxy_client([Message|Messages]);
+	{private_msg, Sender, Client, Message} ->
+	    io:format("Sending private message~n"),
+	    gen_server:call({global,Client},{private_msg,Sender,Message}),
 	    proxy_client(Messages);
 	{stop,Client} ->
 	    io:format("Proxy stopping...~s~n",[Client]),
-	    gen_server:call({global,chatterl_serv},{disconnect,Client})
+	    gen_server:call({global,chatterl_serv},{disconnect,Client});
+	Other -> io:format("unknown proxy request ~s~n",[Other]),
+		 proxy_client(Messages)
     end.

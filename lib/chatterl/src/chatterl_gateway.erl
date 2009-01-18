@@ -200,7 +200,7 @@ get_content_type(Type) ->
 handle("/connect/" ++ Client,ContentType,Req) ->
     {Type,Record} =
     case chatterl_mid_man:connect(Client) of
-	ok -> {"success",Client++" now connected"};
+	{ok,_Msg} -> {"success",Client++" now connected"};
 	{error,Error} -> {"failure",Error}
     end,
     send_response(Req,{get_content_type(ContentType),build_carrier(Type,Record)});
@@ -209,8 +209,8 @@ handle("/disconnect/" ++ Client,ContentType,Req) ->
     case chatterl_mid_man:disconnect(Client) of
 	{ok,Msg} ->
 	    {"success",Msg};
-	{error,_Error} ->
-	    {"failure","Unable to disconnect"}
+	{error,Error} ->
+	    {"failure",Error}
     end,
     send_response(Req, {get_content_type(ContentType),build_carrier(Type,Record)});
 handle("/users/list", ContentType ,Req) ->

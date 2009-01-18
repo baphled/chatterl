@@ -154,26 +154,24 @@ handle_call({drop_group, Group}, _From, State) ->
     io:format("Disconnecting from: ~p~n",[Group]),
     NewTree = gb_trees:delete(Group, State#client.groups),
     {reply, {ok,"Dropped from group"}, State#client{groups = NewTree}};
-handle_call({private_msg,Client,Message},_From,State) ->
+handle_call({private_msg,Client,Message},From,State) ->
     Result = case gen_server:call({global, chatterl_serv}, {user_lookup, Client}, infinity) of
 	{error, Error} -> {error, Error};
 	{ok, ClientName, ClientPid} ->
 		     case ClientName =:= State#client.name of
 			 false ->
-			     {name,From} = gen_server:call(ClientPid, client_name, infinity),
-			     case gen_server:call(ClientPid, 
-						  {receive_msg, erlang:now(), From, Message}) of
-				 ok -> {ok, msg_sent};
-				 _ -> {error, "Unable to send message!"}
-			     end;
+			     {name,Sender} = gen_server:call(ClientPid, client_name, infinity),
+			     io:format("receiving messages: ~s~n",[Message]),
+			     From ! {receive_msg, erlang:localtime(), Sender,Message};
 			 true ->
 			     {error, "Can not send to self!"}
 		     end
 	     end,
     {reply,Result,State};
-handle_call({receive_msg, _CreatedOn, Client, Msg}, _From, State) ->
+handle_call({receive_msg, CreatedOn, Client, Msg}, From, State) ->
     io:format("Received msg~p: ~p~n", [Client,Msg]),
-    {reply, ok, State}.
+    gen_server:call(From, {receive_msg, CreatedOn, Client, Msg}),
+    {reply, {CreatedOn,Client,Msg}, State}.
 
 %%--------------------------------------------------------------------
 %% @doc
