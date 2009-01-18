@@ -26,7 +26,6 @@
 	 terminate/2, code_change/3]).
 
 -record(state, {}).
--record(messages, {client,message}).
 %% Record used to pass our basic messages from the gateway to chatterl_web
 -record(carrier, {type,message}).
 -define(SERVER, ?MODULE).
@@ -288,18 +287,19 @@ handle("/groups/poll/" ++ Group,ContentType,Req) ->
 	end,
     send_response(Req,{get_content_type(ContentType),build_carrier(Type,Result)});
 handle("/groups/create/" ++Group,ContentType,Req) ->
-    {Type,Result} = case Req:get_header_value("authorization") of
-		 "Basic "++Base64 ->
-		     Str = base64:mime_decode_to_string(Base64),
-		     case string:tokens(Str, ":") of
-                       ["authdemo", "demo1"] ->
-                           {"success",Str};
-                       _ ->
-                           {"success",Str}
-                   end;
-		 _ ->
-		     {"error","Not authorized"}
-	     end,
+    [Description] = get_properties(Req,["description"]),
+    {Type,Result} = 
+	case is_auth(Req) of
+	    {ok,_Msg} ->
+		case gen_server:call({global,chatterl_serv},{create,Group,Description},infinity) of
+		    {error,Error} ->
+			{"failure",Error};
+		    {ok,_GroupPid} ->
+			{"success","Group added"}
+		end;
+	    {error,Error} ->
+		{"error",Error}
+	end,
     send_response(Req,{get_content_type(ContentType),build_carrier(Type,Result)});
 handle(Unknown, ContentType,Req) ->
     send_response(Req,{get_content_type(ContentType),build_carrier("error", "Unknown command: " ++Unknown)}).
@@ -594,8 +594,8 @@ loop_xml_carrier(CarrierRecord) ->
 %% @end
 %%--------------------------------------------------------------------
 inner_loop_xml_carrier(CarrierRecord) ->
-    io:format(CarrierRecord),
-     [loop_xml_tuple(DataType,clean_xml([Data])) || {carrier,DataType,Data} <- CarrierRecord].
+    %io:format(CarrierRecord),
+    [loop_xml_tuple(DataType,clean_xml([Data])) || {carrier,DataType,Data} <- CarrierRecord].
 
 %%--------------------------------------------------------------------
 %% @private
@@ -761,3 +761,17 @@ strip_whitespace({El,Attr,Children}) ->
 log(Req) ->
  Ip = Req:get(peer),
  gen_server:call(?MODULE, {dolog, Req, Ip}).
+
+is_auth(Req) ->
+    case Req:get_header_value("authorization") of
+	"Basic "++Base64 ->
+	    Str = base64:mime_decode_to_string(Base64),
+	    case string:tokens(Str, ":") of
+		["admin", "pass"] ->
+		    {ok,"Authorized"};
+		_ ->
+		    {error,"Unauthorized authorization."}
+	    end;
+	_ ->
+	    {error,"Need to authorize"}
+    end.
