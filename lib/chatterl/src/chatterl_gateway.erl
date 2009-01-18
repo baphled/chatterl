@@ -273,8 +273,14 @@ handle("/groups/join/" ++ Group,ContentType,Req) ->
     send_response(Req,{get_content_type(ContentType),Record});
 handle("/groups/leave/" ++ Group,ContentType,Req) ->
     [Client] = get_properties(Req,["client"]),
-    Record = generate_record(Group,leave,Client),
-    send_response(Req,{get_content_type(ContentType),Record});
+    {Type,Record} = 
+	case gen_server:call({global,Group},{leave,Client}) of
+	    {ok, _ } ->
+		{"success",Client ++ " has disconnected from " ++ Group};
+	    {error,Error} ->
+		{"failure",Error}
+	end,
+    send_response(Req,{get_content_type(ContentType),build_carrier(Type,Record)});
 handle("/groups/send/" ++ Group, ContentType, Req) ->
     [Sender,Message] = get_properties(Req,["client","msg"]),
     Record = generate_record(Group,{group_msg,Message},Sender),
@@ -354,13 +360,6 @@ generate_record(Group,Payload,Client) ->
 	true ->
 	    %% Check payload here
 	    case Payload of
-		join ->
-		    case gen_server:call({global,Group},{join,Client}) of
-			{ok,_} ->
-			    build_carrier("success",Client ++ " joined group");
-			{error,Error} ->
-			    build_carrier("failure",Error)
-		    end;
 		leave ->
 		    case gen_server:call({global,Group},{leave,Client}) of
 			{ok, _ } ->
