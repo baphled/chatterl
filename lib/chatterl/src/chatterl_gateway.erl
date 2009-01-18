@@ -223,7 +223,8 @@ handle("/users/list/" ++Group,ContentType,Req) ->
     {Type,Record} = 
 	case gen_server:call({global,chatterl_serv},{group_exists,Group}) of
 	    true -> ClientsList = [build_carrier("client",Client)
-				   || {Client,{_Pid,_Ref}} <- gen_server:call({global,Group},list_users)],
+				   || {Client,{_Pid,_Ref}} 
+					  <- gen_server:call({global,Group},list_users)],
 		    {"success",build_carrier("clients",ClientsList)};
 	    false ->
 		build_carrier("error","Group: "++ Group ++ " doesn't exist")
