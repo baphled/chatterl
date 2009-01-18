@@ -206,9 +206,11 @@ handle("/connect/" ++ Client,ContentType,Req) ->
     send_response(Req,{get_content_type(ContentType),build_carrier(Type,Record)});
 handle("/disconnect/" ++ Client,ContentType,Req) ->
     {Type,Record} =
-    case gen_server:call({global,chatterl_serv},{disconnect,Client}) of
-	{ok,Message} -> {"success",Message};
-	{error,Error} -> {"failure",Error}
+    case chatterl_mid_man:disconnect(Client) of
+	{ok,Msg} ->
+	    {"success",Msg};
+	{error,_Error} ->
+	    {"failure","Unable to disconnect"}
     end,
     send_response(Req, {get_content_type(ContentType),build_carrier(Type,Record)});
 handle("/users/list", ContentType ,Req) ->

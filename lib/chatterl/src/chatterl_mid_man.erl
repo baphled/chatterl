@@ -15,7 +15,7 @@
 -behaviour(gen_server).
 
 %% API
--export([start/0,connect/1,list_groups/0,send_message/3]).
+-export([start/0,connect/1,disconnect/1,list_groups/0,send_message/3]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -34,13 +34,21 @@
 start() ->
     gen_server:start_link({global, ?SERVER}, ?MODULE, [], []).
 
-connect(Nickname) ->
-  case gen_server:call({global, ?SERVER}, {connect, Nickname}) of
+connect(Client) ->
+  case gen_server:call({global, ?SERVER}, {connect, Client}) of
     ok ->
       ok;
     {error, Error} ->
       {error,Error}
   end.
+
+disconnect(Client) ->
+    case gen_server:cast({global, ?SERVER}, {disconnect, Client}) of
+	ok ->
+	    {ok,"Disconnected user"};
+	{error,Error} ->
+	    {error,Error}
+    end.
 
 send_message(Client, Group, Message) ->
   gen_server:cast({global, ?SERVER}, {send_message, Client, Group, Message}).
@@ -91,13 +99,23 @@ handle_call({connect, Nickname}, _From, State) ->
 %% Description: Handling cast messages
 %%--------------------------------------------------------------------
 handle_cast({send_message, Client, Group, Message}, State) ->
-  case dict:find(Client, State) of
-    error ->
-      io:format("user not connected");
-    {ok, Pid} ->
-      Pid ! {send_message, Client, Group, Message}
-  end,
-  {noreply, State};
+    case dict:find(Client, State) of
+	error ->
+	    io:format("user not connected");
+	{ok, Pid} ->
+	    Pid ! {send_message, Client, Group, Message}
+    end,
+    {noreply, State};
+handle_cast({disconnect, Client}, State) ->
+    NewState = 
+	case dict:find(Client, State) of
+	    error ->
+		State;
+	    {ok, Pid} ->
+		Pid ! {stop,Client},
+		dict:erase(Client, State)
+	end,
+    {noreply, NewState};
 handle_cast(_Msg, State) ->
     {noreply, State}.
 
@@ -138,7 +156,8 @@ proxy_client(Messages) ->
 	{send_message, Client,Group, Message} ->
 	    gen_server:call({global,Group},{send_msg,Client,Message}),
 	    proxy_client(Messages);
-	stop ->
-	    io:format("Proxy stopping...~n"),
+	{stop,Client} ->
+	    io:format("Proxy stopping...~s~n",[Client]),
+	    gen_server:call({global,chatterl_serv},{disconnect,Client}),
 	    ok
     end.
