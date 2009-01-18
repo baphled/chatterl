@@ -72,11 +72,11 @@ At the moment of this writing there are two ways to interact with Chatterl, thro
 == Shell Interaction ==
 
 <b>Starting the server</b>
-<pre><code>erl -s chatterl</code></pre>
-Chatterl server runs as an OTP application &amp; uses a supervisor to manage it (in later versions there will be options to spawn multiple servers, allowing for a more fault tolerant chat system). To start up the server you simply need to run the following command:
-
+<pre><code>erl -s chatterl -s reloader</code></pre>
 
 Which will initialise the server &amp; CWIGA The backend allowing clients to connect &amp; groups to be created &amp; admin the ability to manage the system. Groups can be created on differing nodes as long as the node can communicate with the chatterl_serv.
+
+Chatterl server runs as an OTP application &amp; uses a supervisor to manage it (in later versions there will be options to spawn multiple servers, allowing for a more fault tolerant chat system).
 
 CWIGA allows for developers to interact with the API, giving them the ability use the basic CRUD functionalities of Chatterl as well as handle clients along with thier messages &amp; other functionality.
 
@@ -96,32 +96,19 @@ For the moment node users must follow the basic OTP configurations (same cookie,
 This will initialise a user &amp; connect them to chatterl_serv (must be done before users can join a group or communicate with other chatterl users).
 
 <b>Disconnecting from chatterl</b> 
-<pre><code>chatterl_client:stop().</code></pre>
+<pre><code>chatterl_client:stop(UserName).</code></pre>
 
 This will disconnect the user from all the groups they are currently connected to as well as the actual Chatterl server.
-
-<b>Joining a group</b>
-<pre><code>chatterl_client:join(GroupName).</code></pre>
-If the group exists the user is able to join the group allowing them to send message to the room.
-
-<b>Dropping from a group</b>
-<pre><code>chatterl_client:drop(GroupName).</code></pre>
-This will send a message to the group, which will handle the termination.
 
 <b>Sending group message</b>
 <pre><code>chatterl_client:send_msg(GroupName,Message).</code></pre>
 GroupName being the name of the group the client is connected to, Message being the message that you want to send to the receiving client. If the message is sent successfully all users connected to the group will receive the message.
 
-<b>Sending a private message</b>
-<pre><code>chatterl_client:private_msg(RecipientName,Message).</code></pre>
-This allows a Chatterl client to send a private message to another client.
-
-If the message is sent successfully then the sender will receive follow message:
-<pre><code>{ok,msg_sent}</code></pre>
-
-in turn sending the message to the receipients node.
-
 == CWIGA ==
+This is the main interface at the moment, allowing admin & users to interact with Chatterl.
+
+As long as a group/client exists CWIGA can interact with it, to that note CWIGA can do what can be done by the Shell &amp; more.
+
 <ul>
 	<li>{@section CWIGA Brief}</li>
 	<li>{@section Response Types}</li>
@@ -130,7 +117,7 @@ in turn sending the message to the receipients node.
 </ul>
 
 == CWIGA Brief ==
-CWIGA handles all interaction with Chatterl, though for the moment the basics have only been implemented. It can respond in both XML &amp; JSON (at the moment of  writing only XML is functional).
+CWIGA handles all interaction with Chatterl, responding in both XML &amp; JSON.
 
 CWIGA's responses all come in a standardised structure, allowing for easy parsing and searching of data, all data is represented in the following formats:
 <ul>
