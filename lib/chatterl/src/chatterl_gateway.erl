@@ -259,7 +259,12 @@ handle("/groups/join/" ++ Group,ContentType,Req) ->
     Record = 
 	case gen_server:call({global,chatterl_serv},{group_exists,Group}) of
 	    true ->
-		generate_record(Group,join,Client);
+		 case gen_server:call({global,Group},{join,Client}) of
+			{ok,_} ->
+			    build_carrier("success",Client ++ " joined group");
+			{error,Error} ->
+			    build_carrier("failure",Error)
+		    end;
 	    false ->
 		build_carrier("error","Group: "++ Group ++ " doesn't exist")
 	end,

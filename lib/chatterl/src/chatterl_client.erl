@@ -27,9 +27,7 @@
 %% Client based
 -export([start/1,stop/0,private_msg/2,send_msg/2]).
 %% Group based
--export([name/0,join/1,leave/1,connected_to/0,list_groups/0]).
-%% Server based
--export([list_users/1]).
+-export([join/1,leave/1]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -63,51 +61,6 @@ start(Client) ->
 stop() ->
     gen_server:call(self(), stop, infinity).
 
-%%--------------------------------------------------------------------
-%% @doc
-%% Gets the clients name
-%%
-%% @spec name() -> {name,Name} | {error,Error}
-%% @end
-%%--------------------------------------------------------------------
-name() ->
-    gen_server:call(self(), client_name, infinity).
-
-%%--------------------------------------------------------------------
-%% @doc
-%% Retrieves a list of groups the client is connected to
-%%
-%% @spec connected_to() -> [Groups] | []
-%% @end
-%%--------------------------------------------------------------------
-connected_to() ->
-    gen_server:call(self(), groups, infinity).
-
-%%--------------------------------------------------------------------
-%% @doc
-%% Retrieves a list of avaliable groups
-%%
-%% @spec list_groups() -> [Groups] | []
-%% @end
-%%--------------------------------------------------------------------
-list_groups() ->
-    gen_server:call({global, chatterl_serv}, list_groups, infinity).
-
-%%--------------------------------------------------------------------
-%% @doc
-%% Retrieves a list of users connect to a groups
-%%
-%% @spec list_users(GroupName) -> [Users] | []
-%% @end
-%%--------------------------------------------------------------------
-list_users(GroupName) ->
-    case chatterl_serv:list_users(GroupName) of
-	{error, Error} ->
-	    {error, Error};
-	Users ->
-	    clean_user_list([],Users)
-    end.
-    
 %%--------------------------------------------------------------------
 %% @doc
 %% Allows a client to join a specific group
@@ -300,22 +253,6 @@ code_change(OldVsn, State, _Extra) ->
 %%--------------------------------------------------------------------
 %%% Internal functions
 %%--------------------------------------------------------------------
-%%--------------------------------------------------------------------
-%% @private
-%% @doc
-%% Cleans list so that we only have the actual values.
-%% Used to remove our pid/pid reference from our results.
-%%
-%% @spec clean_user_list(CleanList,Users) -> {ok,Message}
-%%                                               | {error,Error}
-%% @end
-%%--------------------------------------------------------------------
-clean_user_list(CleanList,[User|Users]) ->
-    {Value,{_Pid,_PidRef}} = User,
-    CleanedList = [Value|CleanList],
-    clean_user_list(CleanedList,Users);
-clean_user_list(CleanList,[]) ->
-    CleanList.
 %%--------------------------------------------------------------------
 %% @private
 %% @doc
