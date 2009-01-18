@@ -274,11 +274,16 @@ handle("/groups/join/" ++ Group,ContentType,Req) ->
 handle("/groups/leave/" ++ Group,ContentType,Req) ->
     [Client] = get_properties(Req,["client"]),
     {Type,Record} = 
-	case gen_server:call({global,Group},{leave,Client}) of
-	    {ok, _ } ->
-		{"success",Client ++ " has disconnected from " ++ Group};
-	    {error,Error} ->
-		{"failure",Error}
+	case gen_server:call({global,chatterl_serv},{user_exists,Client}) of
+	    true ->
+		case gen_server:call({global,Group},{leave,Client}) of
+		    {ok, _ } ->
+			{"success",Client ++ " has disconnected from " ++ Group};
+		    {error,Error} ->
+			{"failure",Error}
+		end;
+	    false ->
+		{"failure","User not joined"}
 	end,
     send_response(Req,{get_content_type(ContentType),build_carrier(Type,Record)});
 handle("/groups/send/" ++ Group, ContentType, Req) ->
@@ -478,6 +483,37 @@ json_message(CarrierRecord) ->
 %% @private
 %% @doc
 %%
+%% Generates out actual XML message.
+%%
+%% Takes the record and converts it into a tuple which can be further
+%% converted into a valid XML format using tuple_to_xml.
+%% Example of XML tuple structure.
+%% <code>{carrier,"groups",[{carrier,"group","nu"},{carrier,"group","nu2"}]}</code>
+%%
+%% @spec xml_message(Record) -> XML
+%%
+%% @end
+%%--------------------------------------------------------------------
+xml_message(CarrierRecord) ->
+    {carrier, MessageType, Message} = CarrierRecord,
+    XMLTuple = case Message of
+	{carrier, Type, Record} ->		
+	    case Type =:= "groups" 
+		orelse Type =:= "clients" 
+		orelse Type =:= "messages" of
+		true -> 
+		    handle_messages_xml(Type,Record,MessageType);
+		false -> io:format("dont know ~s~n",[Type])
+	    end;
+	_ -> xml_tuple_single(MessageType,Message)
+    end,
+    %io:format(XMLTuple),
+    tuple_to_xml(XMLTuple,[]).
+
+%%--------------------------------------------------------------------
+%% @private
+%% @doc
+%%
 %% Generates JSON structure needed to create message responses.
 %%
 %% As messages are a different format that the other responses, they
@@ -529,36 +565,53 @@ handle_messages_xml(Type,MessagesCarrier,CarrierType) ->
 	    Result = loop_xml_carrier(MessagesCarrier),
 	    xml_tuple(Type,[Result])
     end.
+
 %%--------------------------------------------------------------------
 %% @private
 %% @doc
 %%
-%% Generates out actual XML message.
-%%
-%% Takes the record and converts it into a tuple which can be further
-%% converted into a valid XML format using tuple_to_xml.
-%% Example of XML tuple structure.
-%% <code>{carrier,"groups",[{carrier,"group","nu"},{carrier,"group","nu2"}]}</code>
-%%
-%% @spec xml_message(Record) -> XML
+%% Loops over the record carrier building the tuple structure need to
+%% build our JSON.
+%% @spec loop_json_carrier(Carrier) -> JSONTuple
 %%
 %% @end
 %%--------------------------------------------------------------------
-xml_message(CarrierRecord) ->
-    {carrier, MessageType, Message} = CarrierRecord,
-    XMLTuple = case Message of
-	{carrier, Type, Record} ->		
-	    case Type =:= "groups" 
-		orelse Type =:= "clients" 
-		orelse Type =:= "messages" of
-		true -> 
-		    handle_messages_xml(Type,Record,MessageType);
-		false -> io:format("dont know ~s~n",[Type])
-	    end;
-	_ -> xml_tuple_single(MessageType,Message)
-    end,
-    %io:format(XMLTuple),
-    tuple_to_xml(XMLTuple,[]).
+loop_json_carrier(CarrierRecord) ->
+    [{struct,[{list_to_binary(DataType),clean_message(Data)}]} || {carrier,DataType,Data} <- CarrierRecord].
+
+%%--------------------------------------------------------------------
+%% @private
+%% @doc
+%%
+%% Loops over the message carrier building the tuple structure need to
+%% build our JSON.
+%%
+%% We use this to build each message retrieved from a group, as they
+%% have a number of elements we need to parse those the same as the
+%% outer elements.
+%% @spec inner_loop_json_carrier(CarrierRecord) -> JSONTuple
+%%
+%% @end
+%%--------------------------------------------------------------------
+inner_loop_json_carrier(CarrierRecord) ->
+    [{struct,[{list_to_binary(MsgType),loop_json_carrier(Msg)}]} || {carrier,MsgType,Msg} <- CarrierRecord].
+
+%%--------------------------------------------------------------------
+%% @private
+%% @doc
+%%
+%% Cleans up our messages, ready for JSON/XML construction.
+%%
+%% We need this so that we can clean our date format, later we will
+%% format dates properly but this works as a quick fix.
+%% @spec clean_message(Carrier) -> XMLTuple
+%%
+%% @end
+%%--------------------------------------------------------------------
+clean_message(Data) when is_tuple(Data) ->
+    list_to_binary([httpd_util:rfc1123_date(Data)]);
+clean_message(Data) ->
+    list_to_binary(Data).
 
 %%--------------------------------------------------------------------
 %% @private
@@ -613,53 +666,7 @@ clean_xml([Data]) when is_tuple(Data) ->
     [httpd_util:rfc1123_date(Data)];
 clean_xml([Data]) ->
     [Data].
-%%--------------------------------------------------------------------
-%% @private
-%% @doc
-%%
-%% Loops over the record carrier building the tuple structure need to
-%% build our JSON.
-%% @spec loop_json_carrier(Carrier) -> JSONTuple
-%%
-%% @end
-%%--------------------------------------------------------------------
-loop_json_carrier(CarrierRecord) ->
-    [{struct,[{list_to_binary(DataType),clean_message(Data)}]} || {carrier,DataType,Data} <- CarrierRecord].
 
-%%--------------------------------------------------------------------
-%% @private
-%% @doc
-%%
-%% Loops over the message carrier building the tuple structure need to
-%% build our JSON.
-%%
-%% We use this to build each message retrieved from a group, as they
-%% have a number of elements we need to parse those the same as the
-%% outer elements.
-%% @spec inner_loop_json_carrier(CarrierRecord) -> JSONTuple
-%%
-%% @end
-%%--------------------------------------------------------------------
-inner_loop_json_carrier(CarrierRecord) ->
-    [{struct,[{list_to_binary(MsgType),loop_json_carrier(Msg)}]} || {carrier,MsgType,Msg} <- CarrierRecord].
-
-%%--------------------------------------------------------------------
-%% @private
-%% @doc
-%%
-%% Cleans up our messages, ready for JSON/XML construction.
-%%
-%% We need this so that we can clean our date format, later we will
-%% format dates properly but this works as a quick fix.
-%% @spec clean_message(Carrier) -> XMLTuple
-%%
-%% @end
-%%--------------------------------------------------------------------
-clean_message(Data) when is_tuple(Data) ->
-    list_to_binary([httpd_util:rfc1123_date(Data)]);
-clean_message(Data) ->
-    list_to_binary(Data).
-    
 %%--------------------------------------------------------------------
 %% @private
 %% @doc
@@ -752,6 +759,17 @@ log(Req) ->
  Ip = Req:get(peer),
  gen_server:call(?MODULE, {dolog, Req, Ip}).
 
+%%--------------------------------------------------------------------
+%% @private
+%% @doc
+%%
+%% Determines whether the client has successfully authenticated.
+%%
+%% Need to make this more secure.
+%% @spec log(Req) -> XmlTuple
+%%
+%% @end
+%%--------------------------------------------------------------------
 is_auth(Req) ->
     case Req:get_header_value("authorization") of
 	"Basic "++Base64 ->
