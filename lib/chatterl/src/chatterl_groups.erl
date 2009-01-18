@@ -242,7 +242,7 @@ determine_user_action(GroupName,{Action,PayLoad},UsersList) ->
     case Action of
 	drop_group ->
 	    GroupMsg = "Sending disconnect message to ~s~n",
-	    send_msg_to_users({drop_group,GroupName},UsersList,GroupMsg);
+	    %send_msg_to_users({drop_group,GroupName},UsersList,GroupMsg);
 	receive_msg ->
 	    case PayLoad of
 		{CreatedOn,Sender,Message} ->
