@@ -235,9 +235,9 @@ determine_user_action(GroupName,{Action,PayLoad},UsersList) ->
 	receive_msg ->
 	    case PayLoad of
 		{CreatedOn,Sender,Message} ->
-		    GroupMsg = "Sending to users ~s~n";
+		    GroupMsg = "Sending to users ~s~n",
 		%Really this should only be used when sending private message & with a proxy.
-		    %send_msg_to_users({receive_msg, CreatedOn,Sender,Message},UsersList,GroupMsg);
+		    send_msg_to_users({receive_msg, CreatedOn,Sender,Message},UsersList,GroupMsg);
 		_ ->
 		    {error, "Illegal payload format"}
 	    end;

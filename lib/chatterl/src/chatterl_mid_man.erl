@@ -93,7 +93,7 @@ handle_call({connect, Nickname}, _From, State) ->
 handle_cast({send_message, Client, Group, Message}, State) ->
   case dict:find(Client, State) of
     error ->
-      ok;
+      {error, user_not_connected};
     {ok, Pid} ->
       Pid ! {send_message, Client, Group, Message}
   end,
@@ -133,6 +133,8 @@ code_change(_OldVsn, State, _Extra) ->
 %%--------------------------------------------------------------------
 proxy_client(Messages) ->
     receive
+	{printmsg, MessageBody} ->
+	    proxy_client([MessageBody|Messages]);
 	{send_message, Client,Group, Message} ->
 	    gen_server:call({global,Group},{send_msg,Client,Message}),
 	    proxy_client(Messages);
