@@ -79,6 +79,7 @@ init([Name,Description]) ->
      #group{
        name = Name,
        description = Description,
+       created = erlang:now(),
        messages = gb_trees:empty(),
        users = gb_trees:empty()}}.
 
@@ -104,6 +105,10 @@ handle_call(name, _From, State) ->
 handle_call(description, _From, State) ->
     Result = State#group.description,
     Reply = {description, Result},
+    {reply, Reply, State};
+handle_call(created, _From, State) ->
+    Result = State#group.created,
+    Reply = {created, Result},
     {reply, Reply, State};
 handle_call(poll_messages, _From, State) ->
     {reply, gb_trees:values(State#group.messages), State};

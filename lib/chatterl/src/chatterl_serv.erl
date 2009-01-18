@@ -189,7 +189,9 @@ handle_call({get_group, Group}, _From, State) ->
 	    end,
     {reply, Reply, State};
 handle_call({group_info,Group}, _From, State) ->
-    Reply = [gen_server:call({global,Group},name), gen_server:call({global,Group},description)],
+    Reply = [gen_server:call({global,Group},name), 
+	     gen_server:call({global,Group},description),
+	     gen_server:call({global,Group},created)],
     {reply,Reply,State};
 handle_call(list_users, _From, State) ->
     Reply = gb_trees:keys(State#chatterl.users),
