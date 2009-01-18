@@ -157,12 +157,17 @@ handle_call({drop_group, Group}, _From, State) ->
 handle_call({private_msg,Client,Message},_From,State) ->
     Result = case gen_server:call({global, chatterl_serv}, {user_lookup, Client}, infinity) of
 	{error, Error} -> {error, Error};
-	{ok, _ClientName, ClientPid} ->
-	    {name,From} = gen_server:call(ClientPid, client_name, infinity),
-	    case gen_server:call(ClientPid, {receive_msg, erlang:now(), From, Message}) of
-		ok -> {ok, msg_sent};
-		_ -> {error, "Unable to send message!"}
-	    end
+	{ok, ClientName, ClientPid} ->
+		     case ClientName =:= State#client.name of
+			 false ->
+			     {name,From} = gen_server:call(ClientPid, client_name, infinity),
+			     case gen_server:call(ClientPid, {receive_msg, erlang:now(), From, Message}) of
+				 ok -> {ok, msg_sent};
+				 _ -> {error, "Unable to send message!"}
+			     end;
+			 true ->
+			     {error, "Can not send to self!"}
+		     end
     end,
     {reply,Result,State};
 handle_call({receive_msg, _CreatedOn, Client, Msg}, _From, State) ->
