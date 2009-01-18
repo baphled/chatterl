@@ -60,8 +60,10 @@ init([Port]) ->
     Shutdown = infinity,
     Type = supervisor,
 
-    Server = {server_sup, {server_sup, start_link, [Port]},
+    Server = {server_sup, {server_sup, start_link, []},
               Restart, Shutdown, Type, [server_sup]},
+    CWIGA = {cwiga_sup, {cwiga_sup, start_link, [Port]},
+              Restart, Shutdown, Type, [cwiga_sup]},
     {ok, {SupFlags, [Server]}}.
 
 %%%===================================================================
