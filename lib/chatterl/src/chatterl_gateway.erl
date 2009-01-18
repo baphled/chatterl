@@ -233,6 +233,20 @@ handle("/users/list/" ++Group,ContentType,Req) ->
 		build_carrier("error","Group: "++ Group ++ " doesn't exist")
 	end,
     send_response(Req,{get_content_type(ContentType),build_carrier(Type,Record)});
+handle("/users/poll/" ++ Client,ContentType,Req) ->
+    {Type,Result} = 
+	case gen_server:call({global,chatterl_serv},{user_exists,Client}) of
+	    true ->
+		case gen_server:call({global,Client},poll_messages) of
+		    [] -> {"success",build_carrier("messages","")};
+		    Messages ->
+			MessagesList = [build_carrier("message",format_messages(Message))||Message <- Messages],
+			{"success",build_carrier("messages",MessagesList)}
+		end;
+	    false ->
+		{"error","Client: "++ Client ++ " doesn't exist"}
+	end,
+    send_response(Req,{get_content_type(ContentType),build_carrier(Type,Result)});
 handle("/groups/list",ContentType,Req) ->
     {Type,Result} = 
 	case chatterl_mid_man:list_groups() of
