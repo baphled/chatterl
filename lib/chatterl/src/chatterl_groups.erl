@@ -130,7 +130,7 @@ handle_call({join, User}, From, State) ->
 		end
 	end,
     {reply, Reply, State#group{users=NewTree}};
-handle_call({drop, User}, _From, State) ->
+handle_call({leave, User}, _From, State) ->
     {Reply, NewTree} =
 	case gb_trees:is_defined(User, State#group.users) of
 	    true ->

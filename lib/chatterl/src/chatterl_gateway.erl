@@ -292,7 +292,7 @@ handle("/groups/create/" ++Group,ContentType,Req) ->
 	case is_auth(Req) of
 	    {ok,_Msg} ->
 		case gen_server:call({global,chatterl_serv},{create,Group,Description}) of
-		    {error,_Error} ->
+		    {error,Error} ->
 			{"failure","Unable to create group"};
 		    {ok,_GroupPid} ->
 			{"success","Group added"}
@@ -355,7 +355,7 @@ generate_record(Group,Payload,Client) ->
 			    build_carrier("failure",Error)
 		    end;
 		leave ->
-		    case gen_server:call({global,Group},{drop,Client}) of
+		    case gen_server:call({global,Group},{leave,Client}) of
 			{ok, _ } ->
 			    build_carrier("success",Client ++ " has disconnected from " ++ Group);
 			{error,Error} ->

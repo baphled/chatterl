@@ -27,7 +27,7 @@
 %% Client based
 -export([start/1,stop/0,private_msg/2,send_msg/2]).
 %% Group based
--export([name/0,join/1,drop/1,connected_to/0,list_groups/0]).
+-export([name/0,join/1,leave/1,connected_to/0,list_groups/0]).
 %% Server based
 -export([list_users/1]).
 
@@ -125,8 +125,8 @@ join(Group) ->
 %% @spec drop(Group) -> {ok,Msg} | {error,Error}
 %% @end
 %%--------------------------------------------------------------------
-drop(Group) ->
-    determine_group_action(drop,Group).
+leave(Group) ->
+    determine_group_action(leave,Group).
 
 %%--------------------------------------------------------------------
 %% @doc
@@ -336,8 +336,8 @@ determine_group_action(Action,Group) ->
 		case Action of
 		    join ->
 			{join,{add_group,GroupName,GroupPid}};
-		    drop ->
-			{drop,{drop_group,GroupName}};
+		    leave ->
+			{leave,{drop_group,GroupName}};
 		    _ -> {error, {"Illegal action",Action}}
 		end,
 	    group_action(GroupCall,ClientCall,GroupPid);
