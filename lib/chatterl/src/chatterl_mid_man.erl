@@ -86,7 +86,7 @@ handle_call({connect, Nickname}, _From, State) ->
 			  process_flag(trap_exit, true),
 			  proxy_client([]) end),
 	  erlang:monitor(process, Pid),
-	   Reply = gen_server:call({global,chatterl_serv},{connect,Nickname}),
+	   Reply = chatterl_client:start(Nickname),
 	  {reply, Reply, dict:store(Nickname, Pid, State)};
     {ok, _} ->
       {reply, {error, duplicate_nick_found}, State}
@@ -155,8 +155,8 @@ proxy_client(Messages) ->
 	    io:format(MessageBody),
 	    proxy_client([Message|Messages]);
 	{private_msg, Sender, Client, Message} ->
-	    io:format("Sending private message~s~n",[Message]),
-	    
+	    io:format("Sending private message: ~s~n",[Message]),
+	    gen_server:call({global,Client},{private_msg,Sender,Message}),
 	    proxy_client(Messages);
 	{stop,Client} ->
 	    io:format("Proxy stopping...~s~n",[Client]),

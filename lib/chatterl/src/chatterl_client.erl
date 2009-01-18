@@ -161,16 +161,14 @@ handle_call({private_msg,Client,Message},From,State) ->
 		     case ClientName =:= State#client.name of
 			 false ->
 			     {name,Sender} = gen_server:call(ClientPid, client_name, infinity),
-			     io:format("receiving messages: ~s~n",[Message]),
-			     From ! {receive_msg, erlang:localtime(), Sender,Message};
+			     gen_server:call({global,ClientName},{receive_msg, erlang:localtime(), Sender,Message});
 			 true ->
 			     {error, "Can not send to self!"}
 		     end
 	     end,
     {reply,Result,State};
 handle_call({receive_msg, CreatedOn, Client, Msg}, From, State) ->
-    io:format("Received msg~p: ~p~n", [Client,Msg]),
-    gen_server:call(From, {receive_msg, CreatedOn, Client, Msg}),
+    io:format("~p:~p - ~p~n", [httpd_util:rfc1123_date(CreatedOn),Client,Msg]),
     {reply, {CreatedOn,Client,Msg}, State}.
 
 %%--------------------------------------------------------------------
