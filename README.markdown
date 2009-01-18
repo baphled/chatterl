@@ -1,7 +1,7 @@
-<h1>Chatterl</h1>
+<h1>The chatterl application</h1>
 <p>Copyright � 2008-2009 Yomi Colledge</p>
-<p><b>Version:</b> Jan 15 2009 01:55:58</p>
-<p><b>Authors:</b> Yomi (<a href="baphled@wordpress.com"><tt>baphled</tt></a>) Colledge.</p>
+<p><b>Version:</b> Jan 18 2009 22:22:22</p>
+<p><b>Authors:</b> Yomi Colledge (<a href="mailto:yomi@boodah.net"><tt>yomi@boodah.net</tt></a>).</p>
 
 <ul>
 	<li><a href="#Description">Description</a></li>
@@ -73,11 +73,11 @@ At the moment of this writing there are two ways to interact with Chatterl, thro
 <h3><a name="Shell_Interaction">Shell Interaction</a></h3>
 
 <b>Starting the server</b>
-<pre><code>erl -s chatterl</code></pre><p>
-Chatterl server runs as an OTP application &amp; uses a supervisor to manage it (in later versions there will be options to spawn multiple servers, allowing for a more fault tolerant chat system). To start up the server you simply need to run the following command:</p>
-
+<pre><code>erl -s chatterl -s reloader</code></pre>
 
 <p>Which will initialise the server &amp; CWIGA The backend allowing clients to connect &amp; groups to be created &amp; admin the ability to manage the system. Groups can be created on differing nodes as long as the node can communicate with the chatterl_serv.</p>
+
+<p>Chatterl server runs as an OTP application &amp; uses a supervisor to manage it (in later versions there will be options to spawn multiple servers, allowing for a more fault tolerant chat system).</p>
 
 <p>CWIGA allows for developers to interact with the API, giving them the ability use the basic CRUD functionalities of Chatterl as well as handle clients along with thier messages &amp; other functionality.</p>
 
@@ -97,32 +97,19 @@ For the moment node users must follow the basic OTP configurations (same cookie,
 <p>This will initialise a user &amp; connect them to chatterl_serv (must be done before users can join a group or communicate with other chatterl users).</p>
 
 <b>Disconnecting from chatterl</b> 
-<pre><code>chatterl_client:stop().</code></pre>
+<pre><code>chatterl_client:stop(UserName).</code></pre>
 
 <p>This will disconnect the user from all the groups they are currently connected to as well as the actual Chatterl server.</p>
 
-<b>Joining a group</b>
-<pre><code>chatterl_client:join(GroupName).</code></pre><p>
-If the group exists the user is able to join the group allowing them to send message to the room.</p>
+<b>Sending private messages</b>
+<pre><code>chatterl_client:private_msg(Sender,Recipient,Message).</code></pre><p>
+Where <b>Sender</b> is the client sending the message, <b>Recipient</b> as the name of the user the client wants to send the message to &amp; <b>Message</b> being the message that you want to send to the receiving client. If the message is sent successfully the <b>Recipient</b> will receive the message.</p>
 
-<b>Dropping from a group</b>
-<pre><code>chatterl_client:drop(GroupName).</code></pre><p>
-This will send a message to the group, which will handle the termination.</p>
+<h3><a name="CWIGA">CWIGA</a></h3><p>
+This is the main interface at the moment, allowing admin &amp; users to interact with Chatterl.</p>
 
-<b>Sending group message</b>
-<pre><code>chatterl_client:send_msg(GroupName,Message).</code></pre><p>
-GroupName being the name of the group the client is connected to, Message being the message that you want to send to the receiving client. If the message is sent successfully all users connected to the group will receive the message.</p>
+<p>As long as a group/client exists CWIGA can interact with it, to that note CWIGA can do what can be done by the Shell &amp; more.</p>
 
-<b>Sending a private message</b>
-<pre><code>chatterl_client:private_msg(RecipientName,Message).</code></pre><p>
-This allows a Chatterl client to send a private message to another client.</p>
-
-If the message is sent successfully then the sender will receive follow message:
-<pre><code>{ok,msg_sent}</code></pre>
-
-<p>in turn sending the message to the receipients node.</p>
-
-<h3><a name="CWIGA">CWIGA</a></h3>
 <ul>
 	<li><a href="#CWIGA_Brief">CWIGA Brief</a></li>
 	<li><a href="#Response_Types">Response Types</a></li>
@@ -131,7 +118,7 @@ If the message is sent successfully then the sender will receive follow message:
 </ul>
 
 <h3><a name="CWIGA_Brief">CWIGA Brief</a></h3><p>
-CWIGA handles all interaction with Chatterl, though for the moment the basics have only been implemented. It can respond in both XML &amp; JSON (at the moment of  writing only XML is functional).</p>
+CWIGA handles all interaction with Chatterl, responding in both XML &amp; JSON.</p>
 
 CWIGA's responses all come in a standardised structure, allowing for easy parsing and searching of data, all data is represented in the following formats:
 <ul>
@@ -284,7 +271,11 @@ CWIGA commands are as follows:
 	<li>Join a Group.</li>
 	<li>Leave a Group.</li>
 	<li>Send Group messages.</li>
+	<li>Send Private messages.</li>
 	<li>Poll Group messages.</li>
+	<li>Poll Private messages</li>
+	<li>Create a Group</li>
+	<li>Drop a Group</li>
 </ul>
 
 <b>Connect to Chatterl</b>
@@ -332,6 +323,10 @@ Where as displayed below:
 		&lt;failure&gt;Unable to drop from group&lt;/failure&gt;
 	&lt;/response&gt;
 &lt;/chatterl&gt;</code></pre>
+
+<b>Send private message</b>
+<pre><code>chatterl_client:private_msg("foo","bar","hello").</code></pre><p>
+Sends a private message to another client, as the response are the same as sending group messages, see 'Sending Group message' for more information.</p>
 
 <b>List Users on Chatterl</b>
 <pre><code>http://CWIGAURL:9000/users/list</code></pre><p>
@@ -476,6 +471,17 @@ Failure responses are returns as follows:
 		{"failure":"Can not send the same message twice"}
 	}
 }</code></pre>
+
+Successful messages are responded to in the following manner:
+<pre><code>{"chatterl":
+	{"response":
+		{"success":msg_sent"}
+	}
+}</code></pre>
+<b>Send Private message</b>
+<pre><code>http://CWIGAURL:9000/users/send/some_user?client=foo&amp;msg=hey%20all</code></pre><p>
+Responses for sending privates messages are exactly the same as sending group messages, so see above for example responses.</p>
+
 <b>Poll Group for messages</b>
 <pre><code>http://CWIGAURL:9000/groups/poll/some_group</code></pre>
 Checks a groups for a list of its messages, there are two types of successful requests:
@@ -543,3 +549,18 @@ It is possible for a group not to exist, in these cases the following response w
 		&lt;failure&gt;Group:some_group does'n exist;/failure&gt;
 	&lt;/response&gt;
 &lt;/chatterl&gt;</code></pre>
+
+<b>Polling private messages</b>
+<pre><code>http://CWIGAURL:9000/users/poll/some_user</code></pre><p>
+Will retrieve all the messages privately sent to a client, these responses are the same as the polling group messsages, so see above examples.</p>
+
+<b>Create a Group</b>
+<pre><code>curl -u admin:pass http://CWIGAURL:9000/groups/create/nu_group?description=some%20room</code></pre><p>
+This method can only be accessed by HTTP Basic Authentication, at the time of this writing the security of this is weak but it will be secured and customisable in the near future.</p>
+
+<p>Will create a new group 'nu_group' with the description 'some room'. From this point the group is available for client &amp; Chatterl interaction.</p>
+
+<b>Destroy a Group</b>
+Destroying a group also need Basic authenication in the same fashion as above
+<pre><code>curl -u admin:pass http://CWIGAURL:9000/groups/drop/nu_group</code></pre>
+Dropping all connected clients as it dies.
