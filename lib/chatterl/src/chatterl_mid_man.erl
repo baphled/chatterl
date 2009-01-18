@@ -150,10 +150,6 @@ code_change(_OldVsn, State, _Extra) ->
 %%--------------------------------------------------------------------
 proxy_client(Messages) ->
     receive
-	{receive_msg, SentOn,Sender,MessageBody} ->
-	    Message = {SentOn,Sender,MessageBody},
-	    io:format(MessageBody),
-	    proxy_client([Message|Messages]);
 	{private_msg, Sender, Client, Message} ->
 	    io:format("Sending private message: ~s~n",[Message]),
 	    gen_server:call({global,Client},{private_msg,Sender,Message}),
