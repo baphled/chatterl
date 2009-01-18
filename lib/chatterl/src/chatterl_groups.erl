@@ -79,7 +79,7 @@ init([Name,Description]) ->
      #group{
        name = Name,
        description = Description,
-       created = erlang:now(),
+       created = erlang:localtime(),
        messages = gb_trees:empty(),
        users = gb_trees:empty()}}.
 

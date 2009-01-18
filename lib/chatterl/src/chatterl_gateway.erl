@@ -239,6 +239,20 @@ handle("/groups/list",ContentType,Req) ->
 		{"success",build_carrier("groups",GroupsList)}
     end,
     send_response(Req,{get_content_type(ContentType),build_carrier(Type,Result)});
+handle("/groups/info/" ++ Group,ContentType,Req) ->
+    {Type,Result} = 
+	case gen_server:call({global,chatterl_serv},{group_exists,Group}) of
+	    true ->
+		
+		Data = gen_server:call({global,chatterl_serv},{group_info,Group}),
+		Results = [build_carrier(atom_to_list(Atom),Info)|| {Atom,Info} <- Data],
+		{"success",
+		 build_carrier("groups",Results)};
+	    false ->
+		{"error",""}
+	end,
+    %io:format(Result),
+    send_response(Req,{get_content_type(ContentType),build_carrier(Type,Result)});
 handle("/groups/join/" ++ Group,ContentType,Req) ->
     [Client] = get_properties(Req,["client"]),
     Record = 
@@ -378,6 +392,7 @@ format_messages({Client,Date,Message}) ->
 %%--------------------------------------------------------------------
 send_response(Req, {ContentType,Record}) when is_list(ContentType) ->
     Response = get_response_body(ContentType,Record),
+    %io:format(Response),
     Code = get_response_code(Record),
     Req:respond({Code, [{"Content-Type", ContentType}], list_to_binary(Response)}).
 
@@ -396,7 +411,9 @@ send_response(Req, {ContentType,Record}) when is_list(ContentType) ->
 get_response_body(ContentType,Record) ->
     case ContentType of
 	"text/plain" ->
-	    json_message(Record);
+	    Result = json_message(Record),
+	    %io:format(Result),
+	    Result;
 	"text/xml" ->
 	    xml_message(Record);
 	_ -> json_message(build_carrier("error","Illegal content type!"))
@@ -465,6 +482,7 @@ json_message(CarrierRecord) ->
 %% @end
 %%--------------------------------------------------------------------
 handle_messages_json(Type,MessagesCarrier,CarrierType) ->
+    %io:format(MessagesCarrier),
     case Type =:= "messages" of
 	true ->
 	    case MessagesCarrier of
@@ -478,7 +496,8 @@ handle_messages_json(Type,MessagesCarrier,CarrierType) ->
 			      {struct,[{Type,inner_loop_json_carrier(Messages)}]}}]}
 	    end;
 	false ->
-	    {struct,[{CarrierType,{struct,[{Type,loop_json_carrier(MessagesCarrier)}]}}]}
+	    Result = loop_json_carrier(MessagesCarrier),
+	    {struct,[{CarrierType,{struct,[{Type,Result}]}}]}
     end.
 
 %%--------------------------------------------------------------------
@@ -502,6 +521,7 @@ handle_messages_xml(Type,MessagesCarrier,CarrierType) ->
 	    end;
 	false ->
 	    Result = loop_xml_carrier(MessagesCarrier),
+	    %io:format(Result),
 	    xml_tuple(Type,[Result])
     end.
 %%--------------------------------------------------------------------
@@ -546,7 +566,7 @@ xml_message(CarrierRecord) ->
 %% @end
 %%--------------------------------------------------------------------
 loop_xml_carrier(CarrierRecord) ->
-    [loop_xml_tuple(DataType,[Data]) || {carrier,DataType,Data} <- CarrierRecord].
+    [loop_xml_tuple(DataType,clean_xml([Data])) || {carrier,DataType,Data} <- CarrierRecord].
 
 %%--------------------------------------------------------------------
 %% @private
@@ -559,6 +579,7 @@ loop_xml_carrier(CarrierRecord) ->
 %% @end
 %%--------------------------------------------------------------------
 inner_loop_xml_carrier(CarrierRecord) ->
+    io:format(CarrierRecord),
      [loop_xml_tuple(DataType,clean_xml([Data])) || {carrier,DataType,Data} <- CarrierRecord].
 
 %%--------------------------------------------------------------------

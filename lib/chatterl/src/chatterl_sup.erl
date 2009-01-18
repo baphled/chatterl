@@ -64,7 +64,7 @@ init([Port]) ->
               Restart, Shutdown, Type, [server_sup]},
     CWIGA = {cwiga_sup, {cwiga_sup, start_link, [Port]},
               Restart, Shutdown, Type, [cwiga_sup]},
-    {ok, {SupFlags, [Server]}}.
+    {ok, {SupFlags, [Server,CWIGA]}}.
 
 %%%===================================================================
 %%% Internal functions
