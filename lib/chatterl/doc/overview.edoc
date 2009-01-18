@@ -105,7 +105,7 @@ This will disconnect the user from all the groups they are currently connected t
 GroupName being the name of the group the client is connected to, Message being the message that you want to send to the receiving client. If the message is sent successfully all users connected to the group will receive the message.
 
 == CWIGA ==
-This is the main interface at the moment, allowing admin & users to interact with Chatterl.
+This is the main interface at the moment, allowing admin &amp; users to interact with Chatterl.
 
 As long as a group/client exists CWIGA can interact with it, to that note CWIGA can do what can be done by the Shell &amp; more.
 

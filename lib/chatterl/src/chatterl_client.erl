@@ -52,7 +52,7 @@ start(Client) ->
 %% Tells all joined groups and the server to drop the client from the
 %% system.
 %%
-%% @spec stop() -> stopped
+%% @spec stop(Client) -> stopped
 %% @end
 %%--------------------------------------------------------------------
 stop(Client) ->
@@ -72,7 +72,7 @@ join(Group) ->
 %% @doc
 %% Allows the uesr to drop from a group
 %%
-%% @spec drop(Group) -> {ok,Msg} | {error,Error}
+%% @spec leave(Group) -> {ok,Msg} | {error,Error}
 %% @end
 %%--------------------------------------------------------------------
 leave(Group) ->
@@ -158,7 +158,7 @@ handle_call({drop_group, Group}, _From, State) ->
 handle_call({private_msg,Client,Message},_From,State) ->
     Result = case gen_server:call({global, chatterl_serv}, {user_lookup, Client}, infinity) of
 	{error, Error} -> {error, Error};
-	{ok, ClientName, ClientPid} ->
+	{ok, ClientName, _ClientPid} ->
 		     case ClientName =:= State#client.name of
 			 false ->
 			     gen_server:call({global,Client},{receive_msg, erlang:localtime(),State#client.name ,Message});
@@ -167,7 +167,7 @@ handle_call({private_msg,Client,Message},_From,State) ->
 		     end
 	     end,
     {reply,Result,State};
-handle_call({receive_msg, CreatedOn, Client, Msg}, From, State) ->
+handle_call({receive_msg, CreatedOn, Client, Msg}, _From, State) ->
     io:format("~p:~p - ~p~n", [httpd_util:rfc1123_date(CreatedOn),Client,Msg]),
     {Reply, NewTree} = 
 	case gb_trees:is_defined({Client,CreatedOn},State#client.messages) of

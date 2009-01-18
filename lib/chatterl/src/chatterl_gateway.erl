@@ -301,8 +301,7 @@ handle("/groups/leave/" ++ Group,ContentType,Req) ->
 	end,
     send_response(Req,{get_content_type(ContentType),build_carrier(Type,Record)});
 handle("/groups/send/" ++ Group, ContentType, Req) ->
-    [Client] = get_properties(Req,["client"]),
-    [Sender,Message] = get_properties(Req,["client","msg"]),
+    [Client, Message] = get_properties(Req,["client","msg"]),
     {Type,Record} =
 	case gen_server:call({global,chatterl_serv},{user_exists,Client}) of
 	    true ->
@@ -336,7 +335,7 @@ handle("/groups/create/" ++Group,ContentType,Req) ->
 	case is_auth(Req) of
 	    {ok,_Msg} ->
 		case gen_server:call({global,chatterl_serv},{create,Group,Description}) of
-		    {error,Error} ->
+		    {error,_Error} ->
 			{"failure","Unable to create group"};
 		    {ok,_GroupPid} ->
 			{"success","Group added"}
@@ -562,7 +561,7 @@ handle_messages_json(Type,MessagesCarrier,CarrierType) ->
 %%
 %% Generates XML structure needed to create message responses.
 %%
-%% @spec handle_messages_json(CarrierType,MessagesCarrier,Type) -> XML
+%% @spec handle_messages_xml(Type,CarrierType,MessagesCarrier) -> XMLTuple
 %%
 %% @end
 %%--------------------------------------------------------------------
@@ -646,7 +645,7 @@ loop_xml_carrier(CarrierRecord) ->
 %%
 %% Loops over the inner record carriers building the tuple structure need to
 %% build out XML.
-%% @spec loop_xml_carrier(Carrier) -> [XMLTuple]
+%% @spec inner_loop_xml_carrier(CarrierRecord) -> [XMLTuple]
 %%
 %% @end
 %%--------------------------------------------------------------------
@@ -660,7 +659,7 @@ inner_loop_xml_carrier(CarrierRecord) ->
 %%
 %% Loops over the carrier tuple building the tuple structure need to
 %% build out XML.
-%% @spec loop_xml_carrier(Carrier) -> [XMLTuple]
+%% @spec inner_loop_xml_tuple(Messages) -> [XMLTuple]
 %%
 %% @end
 %%--------------------------------------------------------------------
@@ -672,7 +671,7 @@ inner_loop_xml_tuple(Messages) ->
 %% @doc
 %%
 %% Cleans our XML for us, especially modifying our date to a readable format.
-%% @spec loop_xml_carrier(Carrier) -> XMLTuple
+%% @spec clean_xml([Data]) -> XMLTuple
 %%
 %% @end
 %%--------------------------------------------------------------------
@@ -780,7 +779,7 @@ log(Req) ->
 %% Determines whether the client has successfully authenticated.
 %%
 %% Need to make this more secure.
-%% @spec log(Req) -> XmlTuple
+%% @spec is_auth(Req) -> {ok,Msg}|{error,Error}
 %%
 %% @end
 %%--------------------------------------------------------------------
