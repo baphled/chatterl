@@ -30,6 +30,8 @@
 %% Record used to pass our basic messages from the gateway to chatterl_web
 -record(carrier, {type,message}).
 -define(SERVER, ?MODULE).
+-define(REQ(RP), proplists:get_value(req, RP)).
+-define(PATH(RP), proplists:get_value(path, RP)).
 %%====================================================================
 %% API
 %%====================================================================
@@ -285,6 +287,20 @@ handle("/groups/poll/" ++ Group,ContentType,Req) ->
 		{"error","Group: "++ Group ++ " doesn't exist"}
 	end,
     send_response(Req,{get_content_type(ContentType),build_carrier(Type,Result)});
+handle("/groups/create/" ++Group,ContentType,Req) ->
+    {Type,Result} = case Req:get_header_value("authorization") of
+		 "Basic "++Base64 ->
+		     Str = base64:mime_decode_to_string(Base64),
+		     case string:tokens(Str, ":") of
+                       ["authdemo", "demo1"] ->
+                           {"success",Str};
+                       _ ->
+                           {"success",Str}
+                   end;
+		 _ ->
+		     {"error","Not authorized"}
+	     end,
+    send_response(Req,{get_content_type(ContentType),build_carrier(Type,Result)});
 handle(Unknown, ContentType,Req) ->
     send_response(Req,{get_content_type(ContentType),build_carrier("error", "Unknown command: " ++Unknown)}).
 
@@ -521,7 +537,6 @@ handle_messages_xml(Type,MessagesCarrier,CarrierType) ->
 	    end;
 	false ->
 	    Result = loop_xml_carrier(MessagesCarrier),
-	    %io:format(Result),
 	    xml_tuple(Type,[Result])
     end.
 %%--------------------------------------------------------------------
