@@ -39,7 +39,7 @@ connect(Client) ->
       {ok,_Msg} ->
 	  {ok,"Connected"};
       {error,Error} ->
-	  {error,atom_to_list(Error)}
+	  {error,"Unable to connect"}
   end.
 
 disconnect(Client) ->

@@ -30,7 +30,7 @@
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
 	 terminate/2, code_change/3]).
 
--record(client, {name, ip, groups}).
+-record(client, {name, ip, groups, messages}).
 
 %%====================================================================
 %% API
@@ -106,6 +106,7 @@ init([Client]) ->
 	    io:format("~p is ~p.~n", [Client, Message]),
 	    {ok, #client{
 	       name = Client,
+	       messages = gb_trees:empty(),
 	      groups = gb_trees:empty()}}
     end.
 
@@ -169,7 +170,15 @@ handle_call({private_msg,Client,Message},From,State) ->
     {reply,Result,State};
 handle_call({receive_msg, CreatedOn, Client, Msg}, From, State) ->
     io:format("~p:~p - ~p~n", [httpd_util:rfc1123_date(CreatedOn),Client,Msg]),
-    {reply, {CreatedOn,Client,Msg}, State}.
+    {Reply, NewTree} = 
+	case gb_trees:is_defined(Msg,State#client.messages) of
+	    true ->
+		{{error,no_duplicates},State#client.messages};
+	    false ->
+		{{ok,sent_msg},
+		 gb_trees:insert({Client,Msg}, {CreatedOn,Client,Msg}, State#client.messages)}
+	end,
+    {reply, Reply, State#client{messages = NewTree}}.
 
 %%--------------------------------------------------------------------
 %% @doc
