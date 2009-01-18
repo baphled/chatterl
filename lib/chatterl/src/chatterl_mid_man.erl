@@ -36,7 +36,7 @@ start() ->
 
 connect(Client) ->
   case gen_server:call({global, ?SERVER}, {connect, Client}) of
-      ok ->
+      {ok,_Msg} ->
 	  {ok,"Connected"};
       {error,Error} ->
 	  {error,atom_to_list(Error)}
@@ -86,7 +86,8 @@ handle_call({connect, Nickname}, _From, State) ->
 			  process_flag(trap_exit, true),
 			  proxy_client([]) end),
 	  erlang:monitor(process, Pid),
-	  {reply, ok, dict:store(Nickname, Pid, State)};
+	   Reply = gen_server:call({global,chatterl_serv},{connect,Nickname}),
+	  {reply, Reply, dict:store(Nickname, Pid, State)};
     {ok, _} ->
       {reply, {error, duplicate_nick_found}, State}
   end;
@@ -154,8 +155,8 @@ proxy_client(Messages) ->
 	    io:format(MessageBody),
 	    proxy_client([Message|Messages]);
 	{private_msg, Sender, Client, Message} ->
-	    io:format("Sending private message~n"),
-	    gen_server:call({global,Client},{private_msg,Sender,Message}),
+	    io:format("Sending private message~s~n",[Message]),
+	    
 	    proxy_client(Messages);
 	{stop,Client} ->
 	    io:format("Proxy stopping...~s~n",[Client]),
