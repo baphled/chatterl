@@ -170,12 +170,12 @@ handle_call({private_msg,Client,Message},_From,State) ->
 handle_call({receive_msg, CreatedOn, Client, Msg}, From, State) ->
     io:format("~p:~p - ~p~n", [httpd_util:rfc1123_date(CreatedOn),Client,Msg]),
     {Reply, NewTree} = 
-	case gb_trees:is_defined({Client,Msg},State#client.messages) of
+	case gb_trees:is_defined({Client,CreatedOn},State#client.messages) of
 	    true ->
 		{{error,no_duplicates},State#client.messages};
 	    false ->
 		{{ok,sent_msg},
-		 gb_trees:insert({Client,Msg}, {CreatedOn,Client,Msg}, State#client.messages)}
+		 gb_trees:insert({Client,CreatedOn}, {Client,CreatedOn,Msg}, State#client.messages)}
 	end,
     {reply, Reply, State#client{messages = NewTree}};
 handle_call(poll_messages, _From,State) ->
