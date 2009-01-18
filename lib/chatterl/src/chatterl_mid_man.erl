@@ -43,7 +43,7 @@ connect(Client) ->
   end.
 
 disconnect(Client) ->
-    case gen_server:cast({global, ?SERVER}, {disconnect, Client}) of
+    case gen_server:call({global, ?SERVER}, {disconnect, Client}) of
 	ok ->
 	    {ok,"Disconnected user"};
 	{error,Error} ->
@@ -90,7 +90,17 @@ handle_call({connect, Nickname}, _From, State) ->
       {reply, ok, dict:store(Nickname, Pid, State)};
     {ok, _} ->
       {reply, {error, duplicate_nick_found}, State}
-  end.
+  end;
+handle_call({disconnect, Client}, _From,State) ->
+    {Reply,NewState} = 
+	case dict:find(Client, State) of
+	    error ->
+		{{error,"Not connected"},State};
+	    {ok, Pid} ->
+		Pid ! {stop,Client},
+		{{ok,"Disconnected"},dict:erase(Client, State)}
+	end,
+    {reply, Reply, NewState}.
 
 %%--------------------------------------------------------------------
 %% Function: handle_cast(Msg, State) -> {noreply, State} |
@@ -106,16 +116,6 @@ handle_cast({send_message, Client, Group, Message}, State) ->
 	    Pid ! {send_message, Client, Group, Message}
     end,
     {noreply, State};
-handle_cast({disconnect, Client}, State) ->
-    NewState = 
-	case dict:find(Client, State) of
-	    error ->
-		State;
-	    {ok, Pid} ->
-		Pid ! {stop,Client},
-		dict:erase(Client, State)
-	end,
-    {noreply, NewState};
 handle_cast(_Msg, State) ->
     {noreply, State}.
 
@@ -158,6 +158,5 @@ proxy_client(Messages) ->
 	    proxy_client(Messages);
 	{stop,Client} ->
 	    io:format("Proxy stopping...~s~n",[Client]),
-	    gen_server:call({global,chatterl_serv},{disconnect,Client}),
-	    ok
+	    gen_server:call({global,chatterl_serv},{disconnect,Client})
     end.
