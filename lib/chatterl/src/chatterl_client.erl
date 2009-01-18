@@ -155,14 +155,13 @@ handle_call({drop_group, Group}, _From, State) ->
     io:format("Disconnecting from: ~p~n",[Group]),
     NewTree = gb_trees:delete(Group, State#client.groups),
     {reply, {ok,"Dropped from group"}, State#client{groups = NewTree}};
-handle_call({private_msg,Client,Message},From,State) ->
+handle_call({private_msg,Client,Message},_From,State) ->
     Result = case gen_server:call({global, chatterl_serv}, {user_lookup, Client}, infinity) of
 	{error, Error} -> {error, Error};
 	{ok, ClientName, ClientPid} ->
 		     case ClientName =:= State#client.name of
 			 false ->
-			     {name,Sender} = gen_server:call(ClientPid, client_name, infinity),
-			     gen_server:call({global,ClientName},{receive_msg, erlang:localtime(), Sender,Message});
+			     gen_server:call({global,Client},{receive_msg, erlang:localtime(),State#client.name ,Message});
 			 true ->
 			     {error, "Can not send to self!"}
 		     end
@@ -171,14 +170,16 @@ handle_call({private_msg,Client,Message},From,State) ->
 handle_call({receive_msg, CreatedOn, Client, Msg}, From, State) ->
     io:format("~p:~p - ~p~n", [httpd_util:rfc1123_date(CreatedOn),Client,Msg]),
     {Reply, NewTree} = 
-	case gb_trees:is_defined(Msg,State#client.messages) of
+	case gb_trees:is_defined({Client,Msg},State#client.messages) of
 	    true ->
 		{{error,no_duplicates},State#client.messages};
 	    false ->
 		{{ok,sent_msg},
 		 gb_trees:insert({Client,Msg}, {CreatedOn,Client,Msg}, State#client.messages)}
 	end,
-    {reply, Reply, State#client{messages = NewTree}}.
+    {reply, Reply, State#client{messages = NewTree}};
+handle_call(poll_messages, _From,State) ->
+    {reply,gb_trees:values(State#client.messages),State}.
 
 %%--------------------------------------------------------------------
 %% @doc

@@ -235,7 +235,7 @@ handle("/users/list/" ++Group,ContentType,Req) ->
     send_response(Req,{get_content_type(ContentType),build_carrier(Type,Record)});
 handle("/groups/list",ContentType,Req) ->
     {Type,Result} = 
-	case gen_server:call({global,chatterl_serv},list_groups) of
+	case chatterl_mid_man:list_groups() of
 	    [] -> {"success",build_carrier("groups","")};
 	    Groups -> 
 		GroupsList = [build_carrier("group",Group)||Group <- Groups],
