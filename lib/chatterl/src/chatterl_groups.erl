@@ -156,8 +156,8 @@ handle_call({send_msg,User,Message},_From,State) ->
 		    false ->
 			CreatedOn = erlang:localtime(),
 			io:format("~s: ~s~n", [User,Message]),
-			%determine_user_action(State#group.name,{receive_msg,{CreatedOn,User,Message}},
-					      %gb_trees:values(State#group.users)),
+			determine_user_action(State#group.name,{receive_msg,{CreatedOn,User,Message}},
+					      gb_trees:values(State#group.users)),
 			{{ok, msg_sent},
 			 gb_trees:insert(Message, {User,CreatedOn,Message}, State#group.messages)};
 		    true ->
