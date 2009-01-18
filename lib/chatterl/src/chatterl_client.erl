@@ -13,11 +13,8 @@
 %%% Clients can send messages to a specific group or to another client as
 %%% well as being able to what groups they are connected to.
 %%%
-%%% In the future we will have a client supervisor that will handle these
-%%% processes, but not before we have branched off and started to implement
-%%% a replacement client frontend for the system (Erlang and web based).
 %%% @end
-%%% @copyright 2008 by Yomi Colledge <yomi@boodah.net>
+%%% @copyright 2008-2009 by Yomi Colledge <yomi@boodah.net>
 %%%-------------------------------------------------------------------
 -module(chatterl_client).
 
@@ -25,7 +22,7 @@
 
 %% API
 %% Client based
--export([start/1,stop/1,private_msg/2]).
+-export([start/1,stop/1]).
 %% Group based
 -export([join/1,leave/1]).
 
@@ -80,27 +77,6 @@ join(Group) ->
 %%--------------------------------------------------------------------
 leave(Group) ->
     determine_group_action(leave,Group).
-
-%%--------------------------------------------------------------------
-%% @doc
-%% Sends a private message to a connected client.
-%%
-%% As this method makes a call to the clients recieve_msg, this seems
-%% like the best way to go about it.
-%%
-%% @spec private_msg(Client,Msg) -> {ok,Pid} | ignore | {error,Error}
-%% @end
-%%--------------------------------------------------------------------
-private_msg(Client,Msg) ->
-    case gen_server:call({global, chatterl_serv}, {user_lookup, Client}, infinity) of
-	{error, Error} -> {error, Error};
-	{ok, _ClientName, ClientPid} ->
-	    {name,From} = gen_server:call(ClientPid, client_name, infinity),
-	    case gen_server:call(ClientPid, {receive_msg, erlang:now(), From, Msg}, infinity) of
-		ok -> {ok, msg_sent};
-		_ -> {error, "Unable to send message!"}
-	    end
-    end.
 %%====================================================================
 %% gen_server callbacks
 %%====================================================================
@@ -178,6 +154,17 @@ handle_call({drop_group, Group}, _From, State) ->
     io:format("Disconnecting from: ~p~n",[Group]),
     NewTree = gb_trees:delete(Group, State#client.groups),
     {reply, {ok,"Dropped from group"}, State#client{groups = NewTree}};
+handle_call({private_msg,Client,Message},_From,State) ->
+    Result = case gen_server:call({global, chatterl_serv}, {user_lookup, Client}, infinity) of
+	{error, Error} -> {error, Error};
+	{ok, _ClientName, ClientPid} ->
+	    {name,From} = gen_server:call(ClientPid, client_name, infinity),
+	    case gen_server:call(ClientPid, {receive_msg, erlang:now(), From, Message}) of
+		ok -> {ok, msg_sent};
+		_ -> {error, "Unable to send message!"}
+	    end
+    end,
+    {reply,Result,State};
 handle_call({receive_msg, _CreatedOn, Client, Msg}, _From, State) ->
     io:format("Received msg~p: ~p~n", [Client,Msg]),
     {reply, ok, State}.
