@@ -144,9 +144,9 @@ handle_call({send_msg,User,Message},_From,State) ->
 		case gb_trees:is_defined(Message, State#group.messages) of
 		    false ->
 			CreatedOn = erlang:localtime(),
-		io:format("~s: ~s~n", [User,Message]),
-			determine_user_action(State#group.name,{receive_msg,{CreatedOn,User,Message}},
-					      gb_trees:values(State#group.users)),
+			io:format("~s: ~s~n", [User,Message]),
+			%determine_user_action(State#group.name,{receive_msg,{CreatedOn,User,Message}},
+					      %gb_trees:values(State#group.users)),
 			{{ok, msg_sent},
 			 gb_trees:insert(Message, {User,CreatedOn,Message}, State#group.messages)};
 		    true ->
@@ -237,7 +237,7 @@ determine_user_action(GroupName,{Action,PayLoad},UsersList) ->
 		{CreatedOn,Sender,Message} ->
 		    GroupMsg = "Sending to users ~s~n",
 		%Really this should only be used when sending private message & with a proxy.
-		    %send_msg_to_users({receive_msg, CreatedOn,Sender,Message},UsersList,GroupMsg);
+		    send_msg_to_users({receive_msg, CreatedOn,Sender,Message},UsersList,GroupMsg);
 		_ ->
 		    {error, "Illegal payload format"}
 	    end;
