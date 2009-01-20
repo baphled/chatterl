@@ -15,7 +15,8 @@
 
 %% API
 %% Client based
--export([start/0,connect/1,disconnect/1,list_users/0,list_users/1,list_groups/0]).
+-export([start/0,connect/1,disconnect/1,list_users/0,list_users/1]).
+-export([group_join/2,group_info/1,list_groups/0]).
 -export([private_msg/3,poll_client/1]).
 %% helpers
 -export([build_carrier/2]).
@@ -98,8 +99,43 @@ list_users(Group) ->
     build_carrier(Type,Record).
 
 list_groups() ->
-    gen_server:call({global, chatterl_serv}, list_groups, infinity).
+    {Type,Result} = 
+	case gen_server:call({global, chatterl_serv}, list_groups, infinity) of
+	    [] -> {"success",build_carrier("groups","")};
+	    Groups -> 
+		GroupsList = [build_carrier("group",Group)||Group <- Groups],
+		{"success",build_carrier("groups",GroupsList)}
+    end,
+    build_carrier(Type,Result).
 
+group_info(Group) ->
+    {Type,Result} = 
+	case gen_server:call({global,chatterl_serv},{group_exists,Group}) of
+	    true ->
+		
+		Data = gen_server:call({global,chatterl_serv},{group_info,Group}),
+		Results = [build_carrier(atom_to_list(Atom),Info)|| {Atom,Info} <- Data],
+		{"success",
+		 build_carrier("groups",Results)};
+	    false ->
+		{"error","Group doesn't exist!"}
+	end,
+    build_carrier(Type,Result).
+
+group_join(Group,Client) ->
+    {Type,Reply} = 
+	case gen_server:call({global,chatterl_serv},{group_exists,Group}) of
+	    true ->
+		 case gen_server:call({global,Group},{join,Client}) of
+			{ok,_} ->
+			    {"success",Client ++ " joined group"};
+			{error,Error} ->
+			    {"failure",Error}
+		    end;
+	    false ->
+		{"error","Group: "++ Group ++ " doesn't exist"}
+	end,
+    build_carrier(Type,Reply).
 %%--------------------------------------------------------------------
 %% @doc Allows a client to send a private message to another client.
 %%
@@ -141,6 +177,7 @@ poll_client(Client) ->
 		{"error","Client: "++ Client ++ " doesn't exist"}
 	end,
     build_carrier(Type,Result).
+
 %%====================================================================
 %% gen_server callbacks
 %%====================================================================
@@ -205,14 +242,6 @@ handle_call({private_msg, Sender, Client, Message}, _From, State) ->
 %%                                      {stop, Reason, State}
 %% Description: Handling cast messages
 %%--------------------------------------------------------------------
-handle_cast({private_msg, Sender, Client, Message}, State) ->
-    case dict:find(Client, State) of
-	error ->
-	    io:format("user not connected");
-	{ok, Pid} ->
-	    Pid ! {private_msg, Sender, Client, Message}
-    end,
-    {noreply, State};
 handle_cast(_Msg, State) ->
     {noreply, State}.
 

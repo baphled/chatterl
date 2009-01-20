@@ -211,43 +211,12 @@ handle("/users/send/" ++ Sender, ContentType, Req) ->
 handle("/users/poll/" ++ Client,ContentType,Req) ->
     send_response(Req,{get_content_type(ContentType),chatterl_mid_man:poll_client(Client)});
 handle("/groups/list",ContentType,Req) ->
-    {Type,Result} = 
-	case chatterl_mid_man:list_groups() of
-	    [] -> {"success",build_carrier("groups","")};
-	    Groups -> 
-		GroupsList = [build_carrier("group",Group)||Group <- Groups],
-		{"success",build_carrier("groups",GroupsList)}
-    end,
-    send_response(Req,{get_content_type(ContentType),build_carrier(Type,Result)});
+    send_response(Req,{get_content_type(ContentType),chatterl_mid_man:list_groups()});
 handle("/groups/info/" ++ Group,ContentType,Req) ->
-    {Type,Result} = 
-	case gen_server:call({global,chatterl_serv},{group_exists,Group}) of
-	    true ->
-		
-		Data = gen_server:call({global,chatterl_serv},{group_info,Group}),
-		Results = [build_carrier(atom_to_list(Atom),Info)|| {Atom,Info} <- Data],
-		{"success",
-		 build_carrier("groups",Results)};
-	    false ->
-		{"error",""}
-	end,
-    %io:format(Result),
-    send_response(Req,{get_content_type(ContentType),build_carrier(Type,Result)});
+    send_response(Req,{get_content_type(ContentType),chatterl_mid_man:group_info(Group)});
 handle("/groups/join/" ++ Group,ContentType,Req) ->
     [Client] = get_properties(Req,["client"]),
-    Record = 
-	case gen_server:call({global,chatterl_serv},{group_exists,Group}) of
-	    true ->
-		 case gen_server:call({global,Group},{join,Client}) of
-			{ok,_} ->
-			    build_carrier("success",Client ++ " joined group");
-			{error,Error} ->
-			    build_carrier("failure",Error)
-		    end;
-	    false ->
-		build_carrier("error","Group: "++ Group ++ " doesn't exist")
-	end,
-    send_response(Req,{get_content_type(ContentType),Record});
+    send_response(Req,{get_content_type(ContentType),chatterl_mid_man:group_join(Group,Client)});
 handle("/groups/leave/" ++ Group,ContentType,Req) ->
     [Client] = get_properties(Req,["client"]),
     {Type,Record} = 
