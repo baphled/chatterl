@@ -15,7 +15,7 @@
 
 %% API
 %% Client based
--export([start/0,connect/1,disconnect/1,list_users/0,list_groups/0,private_msg/3]).
+-export([start/0,connect/1,disconnect/1,list_users/0,list_users/1,list_groups/0,private_msg/3]).
 %% helpers
 -export([build_carrier/2]).
 %% gen_server callbacks
@@ -36,6 +36,12 @@
 start() ->
     gen_server:start_link({global, ?SERVER}, ?MODULE, [], []).
 
+%%--------------------------------------------------------------------
+%% @doc Connects a client to the Chatterl system.
+%%
+%% @spec connect(Client) -> {ResponseType,Message}
+%% @end
+%%--------------------------------------------------------------------
 connect(Client) ->
     {Type,Reply} = 
 	case gen_server:call({global, ?SERVER}, {connect, Client}) of
@@ -46,14 +52,28 @@ connect(Client) ->
 	end,
     build_carrier(Type,Reply).
 
+%%--------------------------------------------------------------------
+%% @doc Disconnects a client to the Chatterl system.
+%%
+%% @spec disconnect(Client) -> {ResponseType,Message}
+%% @end
+%%--------------------------------------------------------------------
 disconnect(Client) ->
-    case gen_server:call({global, ?SERVER}, {disconnect, Client}) of
+    {Type,Reply} = 
+	case gen_server:call({global, ?SERVER}, {disconnect, Client}) of
 	{ok,Msg} ->
-	    {ok,Msg};
+	    {"success",Msg};
 	{error,Error} ->
-	    {error,Error}
-    end.
+	    {"failure",Error}
+    end,
+    build_carrier(Type,Reply).
 
+%%--------------------------------------------------------------------
+%% @doc Allows a client to send a private message to another client.
+%%
+%% @spec private_msg(Sender,Client,Message) -> {ResponseType,Message}
+%% @end
+%%--------------------------------------------------------------------
 private_msg(Sender, Client, Message) ->
     case gen_server:call({global,chatterl_serv},{user_exists,Sender}) of
 	true ->
@@ -62,6 +82,12 @@ private_msg(Sender, Client, Message) ->
 	    {error,"Client does'nt exist!"}
     end.
 
+%%--------------------------------------------------------------------
+%% @doc Lists the clients connected to Chatterl
+%%
+%% @spec list_users() -> {ResponseType,Message}
+%% @end
+%%--------------------------------------------------------------------
 list_users() ->
     {Type,Result} = 
 	case gen_server:call({global,chatterl_serv},list_users) of
@@ -71,6 +97,18 @@ list_users() ->
 		{"success",build_carrier("clients",ClientsList)}
 	end,
     build_carrier(Type,Result).
+
+list_users(Group) ->
+    {Type,Record} = 
+	case gen_server:call({global,chatterl_serv},{group_exists,Group}) of
+	    true -> ClientsList = [build_carrier("client",Client)
+				   || {Client,{_Pid,_Ref}} 
+					  <- gen_server:call({global,Group},list_users)],
+		    {"success",build_carrier("clients",ClientsList)};
+	    false ->
+		{"error","Group: "++ Group ++ " doesn't exist"}
+	end,
+    build_carrier(Type,Record).
 
 list_groups() ->
     gen_server:call({global, chatterl_serv}, list_groups, infinity).

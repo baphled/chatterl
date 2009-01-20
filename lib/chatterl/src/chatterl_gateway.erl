@@ -200,25 +200,11 @@ get_content_type(Type) ->
 handle("/connect/" ++ Client,ContentType,Req) ->
     send_response(Req,{get_content_type(ContentType),chatterl_mid_man:connect(Client)});
 handle("/disconnect/" ++ Client,ContentType,Req) ->
-    {Type,Record} =
-    case chatterl_mid_man:disconnect(Client) of
-	{ok,Msg} -> {"success",Msg};
-	{error,Error} -> {"failure",Error}
-    end,
-    send_response(Req, {get_content_type(ContentType),build_carrier(Type,Record)});
+    send_response(Req, {get_content_type(ContentType),chatterl_mid_man:disconnect(Client)});
 handle("/users/list", ContentType ,Req) ->
     send_response(Req,{get_content_type(ContentType),chatterl_mid_man:list_users()});
 handle("/users/list/" ++Group,ContentType,Req) ->
-    {Type,Record} = 
-	case gen_server:call({global,chatterl_serv},{group_exists,Group}) of
-	    true -> ClientsList = [build_carrier("client",Client)
-				   || {Client,{_Pid,_Ref}} 
-					  <- gen_server:call({global,Group},list_users)],
-		    {"success",build_carrier("clients",ClientsList)};
-	    false ->
-		build_carrier("error","Group: "++ Group ++ " doesn't exist")
-	end,
-    send_response(Req,{get_content_type(ContentType),build_carrier(Type,Record)});
+    send_response(Req,{get_content_type(ContentType),chatterl_mid_man:list_users(Group)});
 handle("/users/send/" ++ Sender, ContentType, Req) ->
     [Client, Message] = get_properties(Req,["client","msg"]),
     {Type,Record} =
