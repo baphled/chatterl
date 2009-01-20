@@ -207,28 +207,9 @@ handle("/users/list/" ++Group,ContentType,Req) ->
     send_response(Req,{get_content_type(ContentType),chatterl_mid_man:list_users(Group)});
 handle("/users/send/" ++ Sender, ContentType, Req) ->
     [Client, Message] = get_properties(Req,["client","msg"]),
-    {Type,Record} =
-	case chatterl_mid_man:private_msg(Sender,Client,Message) of
-	    {ok,_Msg} ->
-		{"success","Sending msg..."};
-	    {error,Error} ->
-		{"failure",Error}
-	end,
-    send_response(Req,{get_content_type(ContentType),build_carrier(Type,Record)});
+    send_response(Req,{get_content_type(ContentType),chatterl_mid_man:private_msg(Sender,Client,Message)});
 handle("/users/poll/" ++ Client,ContentType,Req) ->
-    {Type,Result} = 
-	case gen_server:call({global,chatterl_serv},{user_exists,Client}) of
-	    true ->
-		case gen_server:call({global,Client},poll_messages) of
-		    [] -> {"success",build_carrier("messages","")};
-		    Messages ->
-			MessagesList = [build_carrier("message",format_messages(Message))||Message <- Messages],
-			{"success",build_carrier("messages",MessagesList)}
-		end;
-	    false ->
-		{"error","Client: "++ Client ++ " doesn't exist"}
-	end,
-    send_response(Req,{get_content_type(ContentType),build_carrier(Type,Result)});
+    send_response(Req,{get_content_type(ContentType),chatterl_mid_man:poll_client(Client)});
 handle("/groups/list",ContentType,Req) ->
     {Type,Result} = 
 	case chatterl_mid_man:list_groups() of

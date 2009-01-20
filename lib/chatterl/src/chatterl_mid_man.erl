@@ -15,7 +15,8 @@
 
 %% API
 %% Client based
--export([start/0,connect/1,disconnect/1,list_users/0,list_users/1,list_groups/0,private_msg/3]).
+-export([start/0,connect/1,disconnect/1,list_users/0,list_users/1,list_groups/0]).
+-export([private_msg/3,poll_client/1]).
 %% helpers
 -export([build_carrier/2]).
 %% gen_server callbacks
@@ -69,20 +70,6 @@ disconnect(Client) ->
     build_carrier(Type,Reply).
 
 %%--------------------------------------------------------------------
-%% @doc Allows a client to send a private message to another client.
-%%
-%% @spec private_msg(Sender,Client,Message) -> {ResponseType,Message}
-%% @end
-%%--------------------------------------------------------------------
-private_msg(Sender, Client, Message) ->
-    case gen_server:call({global,chatterl_serv},{user_exists,Sender}) of
-	true ->
-	    gen_server:call({global, Sender}, {private_msg, Client, Message});
-	false ->
-	    {error,"Client does'nt exist!"}
-    end.
-
-%%--------------------------------------------------------------------
 %% @doc Lists the clients connected to Chatterl
 %%
 %% @spec list_users() -> {ResponseType,Message}
@@ -112,6 +99,48 @@ list_users(Group) ->
 
 list_groups() ->
     gen_server:call({global, chatterl_serv}, list_groups, infinity).
+
+%%--------------------------------------------------------------------
+%% @doc Allows a client to send a private message to another client.
+%%
+%% @spec private_msg(Sender,Client,Message) -> {ResponseType,Message}
+%% @end
+%%--------------------------------------------------------------------
+private_msg(Sender, Client, Message) ->
+    {Type,Reply} = 
+	case gen_server:call({global,chatterl_serv},{user_exists,Sender}) of
+	    true ->
+		case gen_server:call({global, Sender}, {private_msg, Client, Message}) of
+		    {ok,_Msg} ->
+			{"success","Sending msg..."};
+		    {error,Error} ->
+			{"failure",Error}
+		end;
+	    false ->
+		{"failure","Client doesn't exist!"}
+    end,
+    build_carrier(Type,Reply).
+
+%%--------------------------------------------------------------------
+%% @doc Allows a client to retrieve private messages.
+%%
+%% @spec poll_client(Client) -> {ResponseType,Message}
+%% @end
+%%--------------------------------------------------------------------
+poll_client(Client) ->
+    {Type,Result} = 
+	case gen_server:call({global,chatterl_serv},{user_exists,Client}) of
+	    true ->
+		case gen_server:call({global,Client},poll_messages) of
+		    [] -> {"success",build_carrier("messages","")};
+		    Messages ->
+			MessagesList = [build_carrier("message",format_messages(Message))||Message <- Messages],
+			{"success",build_carrier("messages",MessagesList)}
+		end;
+	    false ->
+		{"error","Client: "++ Client ++ " doesn't exist"}
+	end,
+    build_carrier(Type,Result).
 %%====================================================================
 %% gen_server callbacks
 %%====================================================================
@@ -244,3 +273,18 @@ proxy_client(Messages) ->
 %%--------------------------------------------------------------------
 build_carrier(Type,Message) ->
     #carrier{ type=Type, message=Message}.
+
+%%--------------------------------------------------------------------
+%% @private
+%% @doc
+%%
+%% Generates the record for joining a Chatterl group.
+%%
+%% Have a feeling this can be cleaned up or used in other places, so
+%% I have place it here.
+%% @spec format_messages(MessageCarrier) -> [MessageRecord]
+%%
+%% @end
+%%--------------------------------------------------------------------
+format_messages({Client,Date,Message}) ->
+    [build_carrier("client",Client),build_carrier("date",Date),build_carrier("msgbody",Message)].
