@@ -14,8 +14,10 @@
 -behaviour(gen_server).
 
 %% API
+%% Client based
 -export([start/0,connect/1,disconnect/1,list_groups/0,private_msg/3]).
-
+%% helpers
+-export([build_carrier/2]).
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
 	 terminate/2, code_change/3]).
@@ -51,7 +53,12 @@ disconnect(Client) ->
     end.
 
 private_msg(Sender, Client, Message) ->
-  gen_server:cast({global, ?SERVER}, {private_msg, Sender, Client, Message}).
+    case gen_server:call({global,chatterl_serv},{user_exists,Sender}) of
+	true ->
+	    gen_server:call({global, Sender}, {private_msg, Client, Message});
+	false ->
+	    {error,"Client does'nt exist!"}
+    end.
 
 list_groups() ->
     gen_server:call({global, chatterl_serv}, list_groups, infinity).
@@ -101,7 +108,18 @@ handle_call({disconnect, Client}, _From,State) ->
 		Pid ! {stop,Client},
 		{{ok,"Disconnected"},dict:erase(Client, State)}
 	end,
-    {reply, Reply, NewState}.
+    {reply, Reply, NewState};
+handle_call({private_msg, Sender, Client, Message}, _From, State) ->
+    Reply = 
+	case dict:find(Client, State) of
+	    error ->
+		io:format("user not connected"),
+		{error,"Unable to connect!"};
+	    {ok, Pid} ->
+		Pid ! {private_msg, Sender, Client, Message},
+		{ok,"Sending msg"}
+	end,
+    {reply, Reply, State}.
 %%--------------------------------------------------------------------
 %% Function: handle_cast(Msg, State) -> {noreply, State} |
 %%                                      {noreply, State, Timeout} |

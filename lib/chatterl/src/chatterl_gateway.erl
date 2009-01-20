@@ -236,16 +236,11 @@ handle("/users/list/" ++Group,ContentType,Req) ->
 handle("/users/send/" ++ Sender, ContentType, Req) ->
     [Client, Message] = get_properties(Req,["client","msg"]),
     {Type,Record} =
-	case gen_server:call({global,chatterl_serv},{user_exists,Sender}) of
-	    true ->
-		case gen_server:call({global,Sender},{private_msg,Client,Message}, infinity) of
-		    {ok,Msg} ->
-			{"success",atom_to_list(Msg)};
-		    {error,Error} ->
-			{"failure",Error}
-		end;
-	    false ->
-		{"failure","User not joined"}
+	case chatterl_mid_man:private_msg(Sender,Client,Message) of
+	    {ok,_Msg} ->
+		{"success","Sending msg..."};
+	    {error,Error} ->
+		{"failure",Error}
 	end,
     send_response(Req,{get_content_type(ContentType),build_carrier(Type,Record)});
 handle("/users/poll/" ++ Client,ContentType,Req) ->
