@@ -15,7 +15,7 @@
 
 %% API
 %% Client based
--export([start/0,connect/1,disconnect/1,list_groups/0,private_msg/3]).
+-export([start/0,connect/1,disconnect/1,list_users/0,list_groups/0,private_msg/3]).
 %% helpers
 -export([build_carrier/2]).
 %% gen_server callbacks
@@ -37,12 +37,14 @@ start() ->
     gen_server:start_link({global, ?SERVER}, ?MODULE, [], []).
 
 connect(Client) ->
-  case gen_server:call({global, ?SERVER}, {connect, Client}) of
-      {ok,_Msg} ->
-	  {ok,"Connected"};
-      {error,_Error} ->
-	  {error,"Unable to connect"}
-  end.
+    {Type,Reply} = 
+	case gen_server:call({global, ?SERVER}, {connect, Client}) of
+	    {ok,_Msg} ->
+		{"success",Client++" now connected"};
+	    {error,_Error} ->
+		{"failure","Unable to connect"}
+	end,
+    build_carrier(Type,Reply).
 
 disconnect(Client) ->
     case gen_server:call({global, ?SERVER}, {disconnect, Client}) of
@@ -59,6 +61,16 @@ private_msg(Sender, Client, Message) ->
 	false ->
 	    {error,"Client does'nt exist!"}
     end.
+
+list_users() ->
+    {Type,Result} = 
+	case gen_server:call({global,chatterl_serv},list_users) of
+	    [] -> {"success",build_carrier("clients","")};
+	    Clients -> 
+		ClientsList = [build_carrier("client",Client)||Client <- Clients],
+		{"success",build_carrier("clients",ClientsList)}
+	end,
+    build_carrier(Type,Result).
 
 list_groups() ->
     gen_server:call({global, chatterl_serv}, list_groups, infinity).
