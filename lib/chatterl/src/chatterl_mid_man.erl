@@ -2,14 +2,13 @@
 %%% @author  Yomi Colledge <yomi@boodah.net>
 %%% @doc Web interface for Chatterl
 %%%
-%%% Chatterl Administration web interface
+%%% Chatterl Web Interface middleman, all communication to Chatterl
+%%% go via the middle man.
 %%%
-%%% Chatterl Web Interface middleman.
-%%%
-%%% Sends messages to Chatterl Serv and manages clients connected
-%%% to the interface.
+%%% Prepares &amp; sends messages to Chatterl Serv and manages 
+%%% clients connected to the interface.
 %%% @end
-%%% @copyright 2008 Yomi Colledge
+%%% @copyright 2008-2009 Yomi Colledge
 %%%---------------------------------------------------------------
 -module(chatterl_mid_man).
 -behaviour(gen_server).
@@ -22,6 +21,7 @@
 	 terminate/2, code_change/3]).
 
 -define(SERVER, ?MODULE).
+-record(carrier, {type,message}).
 %%====================================================================
 %% API
 %%====================================================================
@@ -38,7 +38,7 @@ connect(Client) ->
   case gen_server:call({global, ?SERVER}, {connect, Client}) of
       {ok,_Msg} ->
 	  {ok,"Connected"};
-      {error,Error} ->
+      {error,_Error} ->
 	  {error,"Unable to connect"}
   end.
 
@@ -80,17 +80,18 @@ init([]) ->
 %% Description: Handling call messages
 %%--------------------------------------------------------------------
 handle_call({connect, Nickname}, _From, State) ->
-    case dict:find(Nickname, State) of
-      error ->
-	  Pid = spawn(fun() ->
-			  process_flag(trap_exit, true),
-			  proxy_client([]) end),
-	  erlang:monitor(process, Pid),
-	   Reply = chatterl_client:start(Nickname),
-	  {reply, Reply, dict:store(Nickname, Pid, State)};
-    {ok, _} ->
-      {reply, {error, duplicate_nick_found}, State}
-  end;
+    {Reply,NewState} = 
+	case dict:find(Nickname, State) of
+	    error ->
+		Pid = spawn(fun() ->
+				    process_flag(trap_exit, true),
+				    proxy_client([]) end),
+		erlang:monitor(process, Pid),
+		{chatterl_client:start(Nickname), dict:store(Nickname, Pid, State)};
+	    {ok, _} ->
+		{{error, duplicate_nick_found}, State}
+    end,
+    {reply,Reply,NewState};
 handle_call({disconnect, Client}, _From,State) ->
     {Reply,NewState} = 
 	case dict:find(Client, State) of
@@ -160,3 +161,18 @@ proxy_client(Messages) ->
 	Other -> io:format("unknown proxy request ~s~n",[Other]),
 		 proxy_client(Messages)
     end.
+
+
+%%--------------------------------------------------------------------
+%% @private
+%% @doc
+%%
+%% Builds and returns our carrier message.
+%%
+%% This is used to pass around message retrieved from Chatterl.
+%% @spec build_carrier(Type,Message) -> Record
+%%
+%% @end
+%%--------------------------------------------------------------------
+build_carrier(Type,Message) ->
+    #carrier{ type=Type, message=Message}.

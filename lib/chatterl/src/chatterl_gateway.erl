@@ -12,7 +12,7 @@
 %%% All calls to CWIGA will only be allowed via a specified IP, which
 %%% will be defined with the configuration file.
 %%% @end
-%%% @copyright 2008-2009 Yomi Akindayini
+%%% @copyright 2008-2009 Yomi Colledge
 %%%---------------------------------------------------------------
 -module(chatterl_gateway).
 
