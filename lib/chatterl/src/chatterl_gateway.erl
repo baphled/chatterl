@@ -27,7 +27,6 @@
 
 -record(state, {}).
 %% Record used to pass our basic messages from the gateway to chatterl_web
--record(carrier, {type,message}).
 -define(SERVER, ?MODULE).
 -define(REQ(RP), proplists:get_value(req, RP)).
 -define(PATH(RP), proplists:get_value(path, RP)).
@@ -225,27 +224,22 @@ handle("/groups/send/" ++ Group, ContentType, Req) ->
     send_response(Req,{get_content_type(ContentType),chatterl_mid_man:group_send(Group,Sender,Message)});
 handle("/groups/poll/" ++ Group,ContentType,Req) ->
     send_response(Req,{get_content_type(ContentType),chatterl_mid_man:group_poll(Group)});
+%% Authentication based queries.
 handle("/groups/create/" ++Group,ContentType,Req) ->
     Description = mochiweb_util:shell_quote(get_properties(Req,["description"])),
-    Reply = 
-	case is_auth(Req) of
-	    {ok, _Msg} ->
-		chatterl_mid_man:group_create(Group,Description);
-	    {error,Error} ->
-		{error,Error}
-	end,
+    Reply = case is_auth(Req) of
+		{ok, _Msg} -> chatterl_mid_man:group_create(Group,Description);
+		{error,Error} -> chatterl_mid_man:build_carrier("error",Error)
+	    end,
     send_response(Req,{get_content_type(ContentType),Reply});
 handle("/groups/drop/" ++Group,ContentType,Req) ->
-    Reply = 
-	case is_auth(Req) of
-	    {ok,_Msg} ->
-		chatterl_mid_man:group_drop(Group);
-	    {error,Error} ->
-		{"error",Error}
-	end,
+    Reply = case is_auth(Req) of
+		{ok,_Msg} -> chatterl_mid_man:group_drop(Group);
+		{error,Error} -> chatterl_mid_man:build_carrier("error",Error)
+	    end,
     send_response(Req,{get_content_type(ContentType),Reply});
 handle(Unknown, ContentType,Req) ->
-    send_response(Req,{get_content_type(ContentType),build_carrier("error", "Unknown command: " ++Unknown)}).
+    send_response(Req,{get_content_type(ContentType),chatterl_mid_man:build_carrier("error", "Unknown command: " ++Unknown)}).
 
 %%--------------------------------------------------------------------
 %% @private
@@ -259,35 +253,6 @@ handle(Unknown, ContentType,Req) ->
 get_properties(Req,WantedParams) ->
     Params = Req:parse_qs(),
     [proplists:get_value(Property, Params)|| Property <-  WantedParams].
-
-%%--------------------------------------------------------------------
-%% @private
-%% @doc
-%%
-%% Builds and returns our carrier message.
-%%
-%% This is used to pass around message retrieved from Chatterl.
-%% @spec build_carrier(Type,Message) -> Record
-%%
-%% @end
-%%--------------------------------------------------------------------
-build_carrier(Type,Message) ->
-    #carrier{ type=Type, message=Message}.
-
-%%--------------------------------------------------------------------
-%% @private
-%% @doc
-%%
-%% Generates the record for joining a Chatterl group.
-%%
-%% Have a feeling this can be cleaned up or used in other places, so
-%% I have place it here.
-%% @spec format_messages(MessageCarrier) -> [MessageRecord]
-%%
-%% @end
-%%--------------------------------------------------------------------
-format_messages({Client,Date,Message}) ->
-    [build_carrier("client",Client),build_carrier("date",Date),build_carrier("msgbody",Message)].
 
 %%--------------------------------------------------------------------
 %% @private
@@ -326,7 +291,7 @@ get_response_body(ContentType,Record) ->
 	    Result;
 	"text/xml" ->
 	    xml_message(Record);
-	_ -> json_message(build_carrier("error","Illegal content type!"))
+	_ -> json_message(chatterl_mid_man:build_carrier("error","Illegal content type!"))
     end.
 
 %%--------------------------------------------------------------------
@@ -644,19 +609,6 @@ strip_whitespace({El,Attr,Children}) ->
   end,Children),
   Ch = lists:map(fun(X) -> strip_whitespace(X) end,NChild),
   {El,Attr,Ch}.
-
-%%--------------------------------------------------------------------
-%% @private
-%% @doc
-%%
-%% Logs all our requests.
-%% @spec log(Req) -> XmlTuple
-%%
-%% @end
-%%--------------------------------------------------------------------
-log(Req) ->
- Ip = Req:get(peer),
- gen_server:call(?MODULE, {dolog, Req, Ip}).
 
 %%--------------------------------------------------------------------
 %% @private

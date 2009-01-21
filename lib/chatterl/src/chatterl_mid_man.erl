@@ -19,6 +19,7 @@
 -export([group_join/2,group_leave/2,group_info/1,group_send/3,group_poll/1,group_list/0]).
 -export([group_create/2,group_drop/1]).
 -export([private_msg/3,poll_client/1]).
+-export([build_carrier/2]).
 %% helpers
 -export([build_carrier/2]).
 %% gen_server callbacks
