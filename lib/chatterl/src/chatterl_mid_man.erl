@@ -16,7 +16,7 @@
 %% API
 %% Client based
 -export([start/0,connect/1,disconnect/1,list_users/0,list_users/1]).
--export([group_join/2,group_info/1,list_groups/0]).
+-export([group_join/2,group_leave/2,group_info/1,list_groups/0]).
 -export([private_msg/3,poll_client/1]).
 %% helpers
 -export([build_carrier/2]).
@@ -136,6 +136,21 @@ group_join(Group,Client) ->
 		{"error","Group: "++ Group ++ " doesn't exist"}
 	end,
     build_carrier(Type,Reply).
+
+group_leave(Group,Client) ->
+    {Type,Record} = 
+	case gen_server:call({global,chatterl_serv},{user_exists,Client}) of
+	    true ->
+		case gen_server:call({global,Group},{leave,Client}) of
+		    {ok, _ } ->
+			{"success",Client ++ " has disconnected from " ++ Group};
+		    {error,Error} ->
+			{"failure",Error}
+		end;
+	    false ->
+		{"failure","User not joined"}
+	end,
+    build_carrier(Type,Record).
 %%--------------------------------------------------------------------
 %% @doc Allows a client to send a private message to another client.
 %%

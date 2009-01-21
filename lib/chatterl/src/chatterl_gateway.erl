@@ -219,19 +219,7 @@ handle("/groups/join/" ++ Group,ContentType,Req) ->
     send_response(Req,{get_content_type(ContentType),chatterl_mid_man:group_join(Group,Client)});
 handle("/groups/leave/" ++ Group,ContentType,Req) ->
     [Client] = get_properties(Req,["client"]),
-    {Type,Record} = 
-	case gen_server:call({global,chatterl_serv},{user_exists,Client}) of
-	    true ->
-		case gen_server:call({global,Group},{leave,Client}) of
-		    {ok, _ } ->
-			{"success",Client ++ " has disconnected from " ++ Group};
-		    {error,Error} ->
-			{"failure",Error}
-		end;
-	    false ->
-		{"failure","User not joined"}
-	end,
-    send_response(Req,{get_content_type(ContentType),build_carrier(Type,Record)});
+    send_response(Req,{get_content_type(ContentType),chatterl_mid_man:group_leave(Group,Client)});
 handle("/groups/send/" ++ Group, ContentType, Req) ->
     [Client, Message] = get_properties(Req,["client","msg"]),
     {Type,Record} =
