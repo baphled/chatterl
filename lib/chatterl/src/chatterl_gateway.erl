@@ -198,6 +198,7 @@ get_content_type(Type) ->
 handle(Path,ContentType,Req) ->
     Response =
 	case Path of
+	    %% Client based requests
 	    "/connect/" ++ Client -> chatterl_mid_man:connect(Client);
 	    "/disconnect/" ++ Client -> chatterl_mid_man:disconnect(Client);
 	    "/users/list" -> chatterl_mid_man:user_list();
@@ -217,9 +218,10 @@ handle(Path,ContentType,Req) ->
 	    "/groups/poll/" ++ Group -> chatterl_mid_man:group_poll(Group);
 	    %% Authentication based queries.
 	    "/groups/create/" ++ Group -> 
-		Description = mochiweb_util:shell_quote(get_properties(Req,["description"])),
+		[Description] = get_properties(Req,["description"]),
 		case is_auth(Req) of
-		    {ok, _Msg} -> chatterl_mid_man:group_create(Group,Description);
+		    {ok, _Msg} -> 
+			chatterl_mid_man:group_create(Group,Description);
 		    {error,Error} -> chatterl_mid_man:build_carrier("error",Error)
 		end;
 	    "/groups/drop/" ++ Group -> case is_auth(Req) of
@@ -228,6 +230,7 @@ handle(Path,ContentType,Req) ->
 					    {error,Error} -> 
 						chatterl_mid_man:build_carrier("error",Error)
 					end;
+	    %% Catch all
 	    Unknown -> chatterl_mid_man:build_carrier("error", "Unknown command: " ++Unknown)
     end,
     send_response(Req,{get_content_type(ContentType),Response}).
