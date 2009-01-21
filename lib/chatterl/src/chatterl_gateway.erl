@@ -223,7 +223,7 @@ handle("/groups/leave/" ++ Group,ContentType,Req) ->
 handle("/groups/send/" ++ Group, ContentType, Req) ->
     [Client, Message] = get_properties(Req,["client","msg"]),
     {Type,Record} =
-	case gen_server:call({global,chatterl_serv},{user_exists,Client}) of
+	case gen_server:call({global,chatterl_serv},{group_exists,Group}) of
 	    true ->
 		case gen_server:call({global,Group},{send_msg,Client,Message}, infinity) of
 		    {ok,Msg} ->

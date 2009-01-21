@@ -46,12 +46,12 @@ start() ->
 %%--------------------------------------------------------------------
 connect(Client) ->
     {Type,Reply} = 
-	case gen_server:call({global, ?SERVER}, {connect, Client}) of
-	    {ok,_Msg} ->
-		{"success",Client++" now connected"};
-	    {error,_Error} ->
-		{"failure","Unable to connect"}
-	end,
+		case gen_server:call({global, ?SERVER}, {connect, Client}) of
+		    {ok,_Msg} ->
+			{"success",Client++" now connected"};
+		    {error,_Error} ->
+			{"failure","Unable to connect"}
+		end,
     build_carrier(Type,Reply).
 
 %%--------------------------------------------------------------------
