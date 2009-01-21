@@ -210,7 +210,6 @@ terminate(Reason, State) ->
 	true ->
 	    io:format("No users to inform of shutdown~n")
     end,
-    gen_server:call({global,chatterl_serv}, {drop_group,State#group.name}),
     io:format("Shutdown ~s:~nReason:~s~n",[State#group.name,Reason]),
     {shutdown, State#group.name}.
 
@@ -241,8 +240,8 @@ code_change(_OldVsn, State, _Extra) ->
 determine_user_action(GroupName,{Action,PayLoad},UsersList) ->
     case Action of
 	drop_group ->
-	    GroupMsg = "Sending disconnect message to ~s~n";
-	    %send_msg_to_users({drop_group,GroupName},UsersList,GroupMsg);
+	    GroupMsg = "Sending disconnect message to ~s~n",
+	    send_msg_to_users({drop_group,GroupName},UsersList,GroupMsg);
 	receive_msg ->
 	    case PayLoad of
 		{CreatedOn,Sender,Message} ->
