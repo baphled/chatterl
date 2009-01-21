@@ -16,7 +16,8 @@
 %% API
 %% Client based
 -export([start/0,connect/1,disconnect/1,list_users/0,list_users/1]).
--export([group_join/2,group_leave/2,group_info/1,group_send/3,list_groups/0]).
+-export([group_join/2,group_leave/2,group_info/1,group_send/3,group_poll/1,group_list/0]).
+-export([group_create/2]).
 -export([private_msg/3,poll_client/1]).
 %% helpers
 -export([build_carrier/2]).
@@ -98,7 +99,7 @@ list_users(Group) ->
 	end,
     build_carrier(Type,Record).
 
-list_groups() ->
+group_list() ->
     {Type,Result} = 
 	case gen_server:call({global, chatterl_serv}, list_groups, infinity) of
 	    [] -> {"success",build_carrier("groups","")};
@@ -106,6 +107,16 @@ list_groups() ->
 		GroupsList = [build_carrier("group",Group)||Group <- Groups],
 		{"success",build_carrier("groups",GroupsList)}
     end,
+    build_carrier(Type,Result).
+
+group_create(Group,Description) ->
+    {Type,Result} = 
+	case gen_server:call({global,chatterl_serv},{create,Group,Description}) of
+	    {error,_Error} ->
+		{"failure","Unable to create group"};
+	    {ok,_GroupPid} ->
+		{"success","Group added"}
+	end,
     build_carrier(Type,Result).
 
 group_info(Group) ->
@@ -166,6 +177,21 @@ group_send(Group,Sender,Message) ->
 		{"failure","User not joined"}
 	end,
     build_carrier(Type,Reply).
+
+group_poll(Group) ->
+     {Type,Result} = 
+	case gen_server:call({global,chatterl_serv},{group_exists,Group}) of
+	    true ->
+		case gen_server:call({global,Group},poll_messages) of
+		    [] -> {"success",build_carrier("messages","")};
+		    Messages ->
+			MessagesList = [build_carrier("message",format_messages(Message))||Message <- Messages],
+			{"success",build_carrier("messages",MessagesList)}
+		end;
+	    false ->
+		{"error","Group: "++ Group ++ " doesn't exist"}
+	end,
+    build_carrier(Type,Result).
 %%--------------------------------------------------------------------
 %% @doc Allows a client to send a private message to another client.
 %%

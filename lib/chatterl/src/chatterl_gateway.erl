@@ -211,7 +211,7 @@ handle("/users/send/" ++ Sender, ContentType, Req) ->
 handle("/users/poll/" ++ Client,ContentType,Req) ->
     send_response(Req,{get_content_type(ContentType),chatterl_mid_man:poll_client(Client)});
 handle("/groups/list",ContentType,Req) ->
-    send_response(Req,{get_content_type(ContentType),chatterl_mid_man:list_groups()});
+    send_response(Req,{get_content_type(ContentType),chatterl_mid_man:group_list()});
 handle("/groups/info/" ++ Group,ContentType,Req) ->
     send_response(Req,{get_content_type(ContentType),chatterl_mid_man:group_info(Group)});
 handle("/groups/join/" ++ Group,ContentType,Req) ->
@@ -224,34 +224,17 @@ handle("/groups/send/" ++ Group, ContentType, Req) ->
     [Sender, Message] = get_properties(Req,["client","msg"]),
     send_response(Req,{get_content_type(ContentType),chatterl_mid_man:group_send(Group,Sender,Message)});
 handle("/groups/poll/" ++ Group,ContentType,Req) ->
-    {Type,Result} = 
-	case gen_server:call({global,chatterl_serv},{group_exists,Group}) of
-	    true ->
-		case gen_server:call({global,Group},poll_messages) of
-		    [] -> {"success",build_carrier("messages","")};
-		    Messages ->
-			MessagesList = [build_carrier("message",format_messages(Message))||Message <- Messages],
-			{"success",build_carrier("messages",MessagesList)}
-		end;
-	    false ->
-		{"error","Group: "++ Group ++ " doesn't exist"}
-	end,
-    send_response(Req,{get_content_type(ContentType),build_carrier(Type,Result)});
+    send_response(Req,{get_content_type(ContentType),chatterl_mid_man:group_poll(Group)});
 handle("/groups/create/" ++Group,ContentType,Req) ->
     Description = mochiweb_util:shell_quote(get_properties(Req,["description"])),
-    {Type,Result} = 
+    Reply = 
 	case is_auth(Req) of
-	    {ok,_Msg} ->
-		case gen_server:call({global,chatterl_serv},{create,Group,Description}) of
-		    {error,_Error} ->
-			{"failure","Unable to create group"};
-		    {ok,_GroupPid} ->
-			{"success","Group added"}
-		end;
+	    {ok, _Msg} ->
+		chatterl_mid_man:group_create(Group,Description);
 	    {error,Error} ->
-		{"error",Error}
+		{error,Error}
 	end,
-    send_response(Req,{get_content_type(ContentType),build_carrier(Type,Result)});
+    send_response(Req,{get_content_type(ContentType),Reply});
 handle("/groups/drop/" ++Group,ContentType,Req) ->
     {Type,Result} = 
 	case is_auth(Req) of
