@@ -16,7 +16,7 @@
 %% API
 %% Client based
 -export([start/0,connect/1,disconnect/1,list_users/0,list_users/1]).
--export([group_join/2,group_leave/2,group_info/1,list_groups/0]).
+-export([group_join/2,group_leave/2,group_info/1,group_send/3,list_groups/0]).
 -export([private_msg/3,poll_client/1]).
 %% helpers
 -export([build_carrier/2]).
@@ -151,6 +151,21 @@ group_leave(Group,Client) ->
 		{"failure","User not joined"}
 	end,
     build_carrier(Type,Record).
+
+group_send(Group,Sender,Message) ->
+    {Type,Reply} =
+	case gen_server:call({global,chatterl_serv},{group_exists,Group}) of
+	    true ->
+		case gen_server:call({global,Group},{send_msg,Sender,Message}, infinity) of
+		    {ok,Msg} ->
+			{"success",atom_to_list(Msg)};
+		    {error,Error} ->
+			{"failure",Error}
+		end;
+	    false ->
+		{"failure","User not joined"}
+	end,
+    build_carrier(Type,Reply).
 %%--------------------------------------------------------------------
 %% @doc Allows a client to send a private message to another client.
 %%
@@ -311,7 +326,7 @@ proxy_client(Messages) ->
 %% Builds and returns our carrier message.
 %%
 %% This is used to pass around message retrieved from Chatterl.
-%% @spec build_carrier(Type,Message) -> Record
+%% @spec build_carrier(Type,Message) -> Carrier
 %%
 %% @end
 %%--------------------------------------------------------------------
