@@ -200,14 +200,14 @@ handle("/connect/" ++ Client,ContentType,Req) ->
 handle("/disconnect/" ++ Client,ContentType,Req) ->
     send_response(Req, {get_content_type(ContentType),chatterl_mid_man:disconnect(Client)});
 handle("/users/list", ContentType ,Req) ->
-    send_response(Req,{get_content_type(ContentType),chatterl_mid_man:list_users()});
+    send_response(Req,{get_content_type(ContentType),chatterl_mid_man:user_list()});
 handle("/users/list/" ++Group,ContentType,Req) ->
-    send_response(Req,{get_content_type(ContentType),chatterl_mid_man:list_users(Group)});
+    send_response(Req,{get_content_type(ContentType),chatterl_mid_man:user_list(Group)});
 handle("/users/send/" ++ Sender, ContentType, Req) ->
     [Client, Message] = get_properties(Req,["client","msg"]),
-    send_response(Req,{get_content_type(ContentType),chatterl_mid_man:private_msg(Sender,Client,Message)});
+    send_response(Req,{get_content_type(ContentType),chatterl_mid_man:user_msg(Sender,Client,Message)});
 handle("/users/poll/" ++ Client,ContentType,Req) ->
-    send_response(Req,{get_content_type(ContentType),chatterl_mid_man:poll_client(Client)});
+    send_response(Req,{get_content_type(ContentType),chatterl_mid_man:user_poll(Client)});
 handle("/groups/list",ContentType,Req) ->
     send_response(Req,{get_content_type(ContentType),chatterl_mid_man:group_list()});
 handle("/groups/info/" ++ Group,ContentType,Req) ->
