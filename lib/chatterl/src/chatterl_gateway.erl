@@ -236,19 +236,14 @@ handle("/groups/create/" ++Group,ContentType,Req) ->
 	end,
     send_response(Req,{get_content_type(ContentType),Reply});
 handle("/groups/drop/" ++Group,ContentType,Req) ->
-    {Type,Result} = 
+    Reply = 
 	case is_auth(Req) of
 	    {ok,_Msg} ->
-		case gen_server:call({global,chatterl_serv},{drop,Group}) of
-		    {error,{Error,_GroupName}} ->
-			{"failure",Error};
-		    {ok,ResponseMsg} ->
-			{"success",ResponseMsg}
-		end;
+		chatterl_mid_man:group_drop(Group);
 	    {error,Error} ->
 		{"error",Error}
 	end,
-    send_response(Req,{get_content_type(ContentType),build_carrier(Type,Result)});
+    send_response(Req,{get_content_type(ContentType),Reply});
 handle(Unknown, ContentType,Req) ->
     send_response(Req,{get_content_type(ContentType),build_carrier("error", "Unknown command: " ++Unknown)}).
 

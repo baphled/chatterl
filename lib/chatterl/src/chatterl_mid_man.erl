@@ -17,7 +17,7 @@
 %% Client based
 -export([start/0,connect/1,disconnect/1,list_users/0,list_users/1]).
 -export([group_join/2,group_leave/2,group_info/1,group_send/3,group_poll/1,group_list/0]).
--export([group_create/2]).
+-export([group_create/2,group_drop/1]).
 -export([private_msg/3,poll_client/1]).
 %% helpers
 -export([build_carrier/2]).
@@ -116,6 +116,16 @@ group_create(Group,Description) ->
 		{"failure","Unable to create group"};
 	    {ok,_GroupPid} ->
 		{"success","Group added"}
+	end,
+    build_carrier(Type,Result).
+
+group_drop(Group) ->
+    {Type,Result} = 
+	case gen_server:call({global,chatterl_serv},{drop,Group}) of
+	    {error,{Error,_GroupName}} ->
+		{"failure",Error};
+	    {ok,ResponseMsg} ->
+		{"success",ResponseMsg}
 	end,
     build_carrier(Type,Result).
 
