@@ -177,9 +177,9 @@ group_send(Group,Sender,Message) ->
     {Type,Reply} =
 	case gen_server:call({global,chatterl_serv},{group_exists,Group}) of
 	    true ->
-		case gen_server:call({global,Group},{send_msg,Sender,Message}, infinity) of
+		case gen_server:call({global,?MODULE},{group_msg,Sender,Group,Message}, infinity) of
 		    {ok,Msg} ->
-			{"success",atom_to_list(Msg)};
+			{"success",Msg};
 		    {error,Error} ->
 			{"failure",Error}
 		end;
@@ -291,6 +291,16 @@ handle_call({disconnect, Client}, _From,State) ->
 		{{ok,"Disconnected"},dict:erase(Client, State)}
 	end,
     {reply, Reply, NewState};
+handle_call({group_msg, Sender, Group, Message}, _From, State) ->
+    Reply = case dict:find(Sender, State) of
+		error ->
+		    io:format("user not connected"),
+		    {error,"Unable to send msg!"};
+		{ok, Pid} ->
+		    Pid ! {group_msg, Sender, Group, Message},
+		    {ok, "Sending group msg..."}
+	    end,
+    {reply, Reply, State};
 handle_call({private_msg, Sender, Client, Message}, _From, State) ->
     Reply = 
 	case dict:find(Client, State) of
@@ -344,8 +354,12 @@ code_change(_OldVsn, State, _Extra) ->
 proxy_client(Messages) ->
     receive
 	{private_msg, Sender, Client, Message} ->
-	    io:format("Sending private message: ~s~n",[Message]),
+	    io:format("Sending private message...~n"),
 	    gen_server:call({global,Sender},{private_msg,Client,Message}),
+	    proxy_client(Messages);
+	{group_msg, Sender, Group, Message} ->
+	    io:format("Sending group message: ~s...~n", [Message]),
+	    gen_server:call({global,Group},{send_msg,Sender,Message}),
 	    proxy_client(Messages);
 	{stop,Client} ->
 	    io:format("Proxy stopping...~s~n",[Client]),
