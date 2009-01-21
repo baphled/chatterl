@@ -19,7 +19,7 @@
 -behaviour(gen_server).
 
 %% API
--export([start/1,dispatch_requests/1,tuple_to_xml/2]).
+-export([start/1,dispatch_requests/1]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -89,9 +89,6 @@ init([Port]) ->
 %%                                      {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_call({dolog,Req,Ip},_From,State) ->
-    stat_logger:log("~p ~p~n", [Ip, Req:get(path)]),
-    {reply,ok,State};
 handle_call(_Request, _From, State) ->
     {reply,ok,State}.
     
