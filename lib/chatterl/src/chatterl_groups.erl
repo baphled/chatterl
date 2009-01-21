@@ -19,13 +19,13 @@
 %%% server is terminated/stop, this will be modified once the storage
 %%% system has been implemented.
 %%% @end
-%%% @copyright 2008 by Yomi Colledge <yomi@boodah.net>
+%%% @copyright 2008-2009 by Yomi Colledge <yomi@boodah.net>
 %%%-------------------------------------------------------------------
 -module(chatterl_groups).
 -behaviour(gen_server).
 
 %% API
--export([start/2,stop/0]).
+-export([start/2,stop/1]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -44,8 +44,8 @@
 %% @spec start(Name,Description) -> {ok,Pid} | ignore | {error,Error} 
 %% @end
 %%--------------------------------------------------------------------
-start(Name,Description) ->
-    gen_server:start_link({global, Name}, ?MODULE, [Name,Description], []).
+start(Group,Description) ->
+    gen_server:start_link({global, Group}, ?MODULE, [Group,Description], []).
 
 %%--------------------------------------------------------------------
 %% @doc
@@ -55,8 +55,9 @@ start(Name,Description) ->
 %% @spec stop() -> stopped
 %% @end
 %%--------------------------------------------------------------------
-stop() ->
-    gen_server:call({global,?MODULE},stop,infinity).
+stop(Group) ->
+    gen_server:call({global,Group},stop,infinity).
+
 %%====================================================================
 %% gen_server callbacks
 %%====================================================================

@@ -212,7 +212,7 @@ private_msg(Sender, Client, Message) ->
     {Type,Reply} = 
 	case gen_server:call({global,chatterl_serv},{user_exists,Sender}) of
 	    true ->
-		case gen_server:call({global, Sender}, {private_msg, Client, Message}) of
+		case gen_server:call({global, ?MODULE}, {private_msg, Sender, Client, Message}) of
 		    {ok,_Msg} ->
 			{"success","Sending msg..."};
 		    {error,Error} ->
@@ -345,12 +345,11 @@ proxy_client(Messages) ->
     receive
 	{private_msg, Sender, Client, Message} ->
 	    io:format("Sending private message: ~s~n",[Message]),
-	    gen_server:call({global,Client},{private_msg,Sender,Message}),
+	    gen_server:call({global,Sender},{private_msg,Client,Message}),
 	    proxy_client(Messages);
 	{stop,Client} ->
 	    io:format("Proxy stopping...~s~n",[Client]),
 	    chatterl_client:stop(Client);
-	    %gen_server:call({global,chatterl_serv},{disconnect,Client});
 	Other -> io:format("unknown proxy request ~s~n",[Other]),
 		 proxy_client(Messages)
     end.
