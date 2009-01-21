@@ -52,7 +52,6 @@ start(Port) ->
 %% @end
 %%--------------------------------------------------------------------
 dispatch_requests(Req) ->
-    %log(Req),
     [Path|Ext] = string:tokens(Req:get(path),"."),
     Action = clean_path(Path),
     handle(Action,Ext,Req).
@@ -238,6 +237,7 @@ handle("/groups/drop/" ++Group,ContentType,Req) ->
 		{error,Error} -> chatterl_mid_man:build_carrier("error",Error)
 	    end,
     send_response(Req,{get_content_type(ContentType),Reply});
+%% Catch all
 handle(Unknown, ContentType,Req) ->
     send_response(Req,{get_content_type(ContentType),chatterl_mid_man:build_carrier("error", "Unknown command: " ++Unknown)}).
 
@@ -267,7 +267,6 @@ get_properties(Req,WantedParams) ->
 %%--------------------------------------------------------------------
 send_response(Req, {ContentType,Record}) when is_list(ContentType) ->
     Response = get_response_body(ContentType,Record),
-    %io:format(Response),
     Code = get_response_code(Record),
     Req:respond({Code, [{"Content-Type", ContentType}], list_to_binary(Response)}).
 
@@ -286,9 +285,7 @@ send_response(Req, {ContentType,Record}) when is_list(ContentType) ->
 get_response_body(ContentType,Record) ->
     case ContentType of
 	"text/plain" ->
-	    Result = json_message(Record),
-	    %io:format(Result),
-	    Result;
+	    json_message(Record);
 	"text/xml" ->
 	    xml_message(Record);
 	_ -> json_message(chatterl_mid_man:build_carrier("error","Illegal content type!"))
@@ -371,7 +368,6 @@ xml_message(CarrierRecord) ->
 	    end;
 	_ -> xml_tuple_single(MessageType,Message)
     end,
-    %io:format(XMLTuple),
     tuple_to_xml(XMLTuple,[]).
 
 %%--------------------------------------------------------------------
@@ -388,7 +384,6 @@ xml_message(CarrierRecord) ->
 %% @end
 %%--------------------------------------------------------------------
 handle_messages_json(Type,MessagesCarrier,CarrierType) ->
-    %io:format(MessagesCarrier),
     case Type =:= "messages" of
 	true ->
 	    case MessagesCarrier of
@@ -501,7 +496,6 @@ loop_xml_carrier(CarrierRecord) ->
 %% @end
 %%--------------------------------------------------------------------
 inner_loop_xml_carrier(CarrierRecord) ->
-    %io:format(CarrierRecord),
     [loop_xml_tuple(DataType,clean_xml([Data])) || {carrier,DataType,Data} <- CarrierRecord].
 
 %%--------------------------------------------------------------------
