@@ -195,51 +195,42 @@ get_content_type(Type) ->
 %%
 %% @end
 %%--------------------------------------------------------------------
-handle("/connect/" ++ Client,ContentType,Req) ->
-    send_response(Req,{get_content_type(ContentType),chatterl_mid_man:connect(Client)});
-handle("/disconnect/" ++ Client,ContentType,Req) ->
-    send_response(Req, {get_content_type(ContentType),chatterl_mid_man:disconnect(Client)});
-handle("/users/list", ContentType ,Req) ->
-    send_response(Req,{get_content_type(ContentType),chatterl_mid_man:user_list()});
-handle("/users/list/" ++Group,ContentType,Req) ->
-    send_response(Req,{get_content_type(ContentType),chatterl_mid_man:user_list(Group)});
-handle("/users/send/" ++ Sender, ContentType, Req) ->
-    [Client, Message] = get_properties(Req,["client","msg"]),
-    send_response(Req,{get_content_type(ContentType),chatterl_mid_man:user_msg(Sender,Client,Message)});
-handle("/users/poll/" ++ Client,ContentType,Req) ->
-    send_response(Req,{get_content_type(ContentType),chatterl_mid_man:user_poll(Client)});
-handle("/groups/list",ContentType,Req) ->
-    send_response(Req,{get_content_type(ContentType),chatterl_mid_man:group_list()});
-handle("/groups/info/" ++ Group,ContentType,Req) ->
-    send_response(Req,{get_content_type(ContentType),chatterl_mid_man:group_info(Group)});
-handle("/groups/join/" ++ Group,ContentType,Req) ->
-    [Client] = get_properties(Req,["client"]),
-    send_response(Req,{get_content_type(ContentType),chatterl_mid_man:group_join(Group,Client)});
-handle("/groups/leave/" ++ Group,ContentType,Req) ->
-    [Client] = get_properties(Req,["client"]),
-    send_response(Req,{get_content_type(ContentType),chatterl_mid_man:group_leave(Group,Client)});
-handle("/groups/send/" ++ Group, ContentType, Req) ->
-    [Sender, Message] = get_properties(Req,["client","msg"]),
-    send_response(Req,{get_content_type(ContentType),chatterl_mid_man:group_send(Group,Sender,Message)});
-handle("/groups/poll/" ++ Group,ContentType,Req) ->
-    send_response(Req,{get_content_type(ContentType),chatterl_mid_man:group_poll(Group)});
-%% Authentication based queries.
-handle("/groups/create/" ++Group,ContentType,Req) ->
-    Description = mochiweb_util:shell_quote(get_properties(Req,["description"])),
-    Reply = case is_auth(Req) of
-		{ok, _Msg} -> chatterl_mid_man:group_create(Group,Description);
-		{error,Error} -> chatterl_mid_man:build_carrier("error",Error)
-	    end,
-    send_response(Req,{get_content_type(ContentType),Reply});
-handle("/groups/drop/" ++Group,ContentType,Req) ->
-    Reply = case is_auth(Req) of
-		{ok,_Msg} -> chatterl_mid_man:group_drop(Group);
-		{error,Error} -> chatterl_mid_man:build_carrier("error",Error)
-	    end,
-    send_response(Req,{get_content_type(ContentType),Reply});
-%% Catch all
-handle(Unknown, ContentType,Req) ->
-    send_response(Req,{get_content_type(ContentType),chatterl_mid_man:build_carrier("error", "Unknown command: " ++Unknown)}).
+handle(Path,ContentType,Req) ->
+    Response =
+	case Path of
+	    "/connect/" ++ Client -> chatterl_mid_man:connect(Client);
+	    "/disconnect/" ++ Client -> chatterl_mid_man:disconnect(Client);
+	    "/users/list" -> chatterl_mid_man:user_list();
+	    "/users/list/" ++Group -> chatterl_mid_man:user_list(Group);
+	    "/users/send/" ++ Sender -> [Client, Message] = get_properties(Req,["client","msg"]),
+					chatterl_mid_man:user_msg(Sender,Client,Message);
+	    "/users/poll/" ++ Client -> chatterl_mid_man:user_poll(Client);
+	    %% Group based requests
+	    "/groups/list" -> chatterl_mid_man:group_list();
+	    "/groups/info/" ++ Group -> chatterl_mid_man:group_info(Group);
+	    "/groups/join/" ++ Group -> [Client] = get_properties(Req,["client"]),
+					chatterl_mid_man:group_join(Group,Client);
+	    "/groups/leave/" ++ Group -> [Client] = get_properties(Req,["client"]),
+					 chatterl_mid_man:group_leave(Group,Client);
+	    "/groups/send/" ++ Group -> [Sender, Message] = get_properties(Req,["client","msg"]),
+					chatterl_mid_man:group_send(Group,Sender,Message);
+	    "/groups/poll/" ++ Group -> chatterl_mid_man:group_poll(Group);
+	    %% Authentication based queries.
+	    "/groups/create/" ++ Group -> 
+		Description = mochiweb_util:shell_quote(get_properties(Req,["description"])),
+		case is_auth(Req) of
+		    {ok, _Msg} -> chatterl_mid_man:group_create(Group,Description);
+		    {error,Error} -> chatterl_mid_man:build_carrier("error",Error)
+		end;
+	    "/groups/drop/" ++ Group -> case is_auth(Req) of
+					    {ok,_Msg} -> 
+						chatterl_mid_man:group_drop(Group);
+					    {error,Error} -> 
+						chatterl_mid_man:build_carrier("error",Error)
+					end;
+	    Unknown -> chatterl_mid_man:build_carrier("error", "Unknown command: " ++Unknown)
+    end,
+    send_response(Req,{get_content_type(ContentType),Response}).
 
 %%--------------------------------------------------------------------
 %% @private
