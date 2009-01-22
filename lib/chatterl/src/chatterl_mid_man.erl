@@ -74,7 +74,7 @@ disconnect(Client) ->
 %%--------------------------------------------------------------------
 %% @doc Lists the clients connected to Chatterl
 %%
-%% @spec list_users() -> {carrier,ResponseType,Message}
+%% @spec user_list() -> {carrier,ResponseType,Message}
 %% @end
 %%--------------------------------------------------------------------
 user_list() ->
@@ -90,7 +90,7 @@ user_list() ->
 %%--------------------------------------------------------------------
 %% @doc List users connected to a specified group
 %%
-%% @spec disconnect(Client) -> {carrier,ResponseType,Message}
+%% @spec user_list(Group) -> {carrier,ResponseType,Message}
 %% @end
 %%--------------------------------------------------------------------
 user_list(Group) ->
@@ -108,7 +108,7 @@ user_list(Group) ->
 %%--------------------------------------------------------------------
 %% @doc Allows a client to send a private message to another client.
 %%
-%% @spec private_msg(Sender,Client,Message) -> {carrier,ResponseType,Message}
+%% @spec user_msg(Sender,Client,Message) -> {carrier,ResponseType,Message}
 %% @end
 %%--------------------------------------------------------------------
 user_msg(Sender, Client, Message) ->

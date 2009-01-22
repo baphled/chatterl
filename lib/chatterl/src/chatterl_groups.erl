@@ -52,7 +52,7 @@ start(Group,Description) ->
 %% Stops the process, sending messages to all clients connected and to the
 %% server handling its process and information.
 %%
-%% @spec stop() -> stopped
+%% @spec stop(Group) -> stopped
 %% @end
 %%--------------------------------------------------------------------
 stop(Group) ->
