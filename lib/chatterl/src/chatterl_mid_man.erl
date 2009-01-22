@@ -74,7 +74,7 @@ disconnect(Client) ->
 %%--------------------------------------------------------------------
 %% @doc Lists the clients connected to Chatterl
 %%
-%% @spec list_users() -> {ResponseType,Message}
+%% @spec list_users() -> {carrier,ResponseType,Message}
 %% @end
 %%--------------------------------------------------------------------
 user_list() ->
@@ -87,6 +87,12 @@ user_list() ->
 	end,
     build_carrier(Type,Result).
 
+%%--------------------------------------------------------------------
+%% @doc List users connected to a specified group
+%%
+%% @spec disconnect(Client) -> {carrier,ResponseType,Message}
+%% @end
+%%--------------------------------------------------------------------
 user_list(Group) ->
     {Type,Record} = 
 	case gen_server:call({global,chatterl_serv},{group_exists,Group}) of
@@ -102,7 +108,7 @@ user_list(Group) ->
 %%--------------------------------------------------------------------
 %% @doc Allows a client to send a private message to another client.
 %%
-%% @spec private_msg(Sender,Client,Message) -> {ResponseType,Message}
+%% @spec private_msg(Sender,Client,Message) -> {carrier,ResponseType,Message}
 %% @end
 %%--------------------------------------------------------------------
 user_msg(Sender, Client, Message) ->
@@ -123,7 +129,7 @@ user_msg(Sender, Client, Message) ->
 %%--------------------------------------------------------------------
 %% @doc Allows a client to retrieve private messages.
 %%
-%% @spec poll_client(Client) -> {ResponseType,Message}
+%% @spec user_poll(Client) -> {carrier,ResponseType,Message}
 %% @end
 %%--------------------------------------------------------------------
 user_poll(Client) ->
@@ -142,6 +148,12 @@ user_poll(Client) ->
 	end,
     build_carrier(Type,Result).
 
+%%--------------------------------------------------------------------
+%% @doc lists the groups on Chatterl
+%%
+%% @spec group_list() -> {carrier,ResponseType,Message}
+%% @end
+%%--------------------------------------------------------------------
 group_list() ->
     {Type,Result} = 
 	case gen_server:call({global, chatterl_serv}, list_groups, infinity) of
@@ -152,6 +164,12 @@ group_list() ->
     end,
     build_carrier(Type,Result).
 
+%%--------------------------------------------------------------------
+%% @doc Creates a group on Chatterl.
+%%
+%% @spec group_create(Group,Description) -> {carrier,ResponseType,Message}
+%% @end
+%%--------------------------------------------------------------------
 group_create(Group,Description) ->
     {Type,Result} = 
 	case gen_server:call({global,chatterl_serv},{create,Group,Description}) of
@@ -162,6 +180,12 @@ group_create(Group,Description) ->
 	end,
     build_carrier(Type,Result).
 
+%%--------------------------------------------------------------------
+%% @doc Drops a group from Chatterl.
+%%
+%% @spec group_drop(Group) -> {carrier,ResponseType,Message}
+%% @end
+%%--------------------------------------------------------------------
 group_drop(Group) ->
     {Type,Result} = 
 	case gen_server:call({global,chatterl_serv},{drop,Group}) of
@@ -172,6 +196,12 @@ group_drop(Group) ->
 	end,
     build_carrier(Type,Result).
 
+%%--------------------------------------------------------------------
+%% @doc Retrieves information on a specified Chatterl group.
+%%
+%% @spec group_info(Group) -> {carrier,ResponseType,Message}
+%% @end
+%%--------------------------------------------------------------------
 group_info(Group) ->
     {Type,Result} = 
 	case gen_server:call({global,chatterl_serv},{group_exists,Group}) of
@@ -186,6 +216,12 @@ group_info(Group) ->
 	end,
     build_carrier(Type,Result).
 
+%%--------------------------------------------------------------------
+%% @doc Allows a client to join a Chatterl group.
+%%
+%% @spec group_join(Group,Client) -> {carrier,ResponseType,Message}
+%% @end
+%%--------------------------------------------------------------------
 group_join(Group,Client) ->
     {Type,Reply} = 
 	case gen_server:call({global,chatterl_serv},{group_exists,Group}) of
@@ -201,6 +237,12 @@ group_join(Group,Client) ->
 	end,
     build_carrier(Type,Reply).
 
+%%--------------------------------------------------------------------
+%% @doc Allows a client to leave a Chatterl group.
+%%
+%% @spec group_leave(Group,Client) -> {carrier,ResponseType,Message}
+%% @end
+%%--------------------------------------------------------------------
 group_leave(Group,Client) ->
     {Type,Record} = 
 	case gen_server:call({global,chatterl_serv},{user_exists,Client}) of
@@ -216,6 +258,12 @@ group_leave(Group,Client) ->
 	end,
     build_carrier(Type,Record).
 
+%%--------------------------------------------------------------------
+%% @doc Allows a client to send a message to a Chatterl group.
+%%
+%% @spec group_send(Group,Sender,Message) -> {carrier,ResponseType,Message}
+%% @end
+%%--------------------------------------------------------------------
 group_send(Group,Sender,Message) ->
     {Type,Reply} =
 	case gen_server:call({global,chatterl_serv},{group_exists,Group}) of
@@ -231,6 +279,12 @@ group_send(Group,Sender,Message) ->
 	end,
     build_carrier(Type,Reply).
 
+%%--------------------------------------------------------------------
+%% @doc Allows a client to retrieve messages from a Chatterl group.
+%%
+%% @spec group_poll(Group) -> {carrier,ResponseType,Message}
+%% @end
+%%--------------------------------------------------------------------
 group_poll(Group) ->
      {Type,Result} = 
 	case gen_server:call({global,chatterl_serv},{group_exists,Group}) of
@@ -369,7 +423,6 @@ proxy_client(Messages) ->
 	Other -> io:format("unknown proxy request ~s~n",[Other]),
 		 proxy_client(Messages)
     end.
-
 
 %%--------------------------------------------------------------------
 %% @private
