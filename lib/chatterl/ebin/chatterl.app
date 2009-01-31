@@ -13,7 +13,7 @@
 	     server_sup,
 	     cwiga_sup]},
    {registered,[chatterl.groups, chatterl_mid_man, chatterl,serv, chatterl_sup]},
-   {applications, [kernel, stdlib,mochiweb]},
+   {applications, [kernel, stdlib, mochiweb]},
    {mod, {chatterl,9000}},
    {start_phases, []}]}.
 
