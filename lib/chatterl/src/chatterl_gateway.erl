@@ -193,6 +193,7 @@ get_content_type(Type) ->
 %% @end
 %%--------------------------------------------------------------------
 handle(Path,ContentType,Req) ->
+
     Response =
 	case Path of
 	    %% Client based requests
@@ -228,7 +229,7 @@ handle(Path,ContentType,Req) ->
 						chatterl_mid_man:build_carrier("error",Error)
 					end;
 	    %% Catch all
-	    Unknown -> chatterl_mid_man:build_carrier("error", "Unknown command: " ++Unknown)
+	    Unknown -> message_handler:build_carrier("error", "Unknown command: " ++Unknown)
     end,
   Req:respond({200, [{"Content-Type", ContentType}], list_to_binary(Response)}).
 

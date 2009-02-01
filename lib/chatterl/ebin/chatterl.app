@@ -1,9 +1,10 @@
 %% This is the application resource file (.app file) for the chatterl,
 %% application.
-{application, chatterl, 
+{application, chatterl,
   [{description, "Erlang based chat system."},
    {vsn, "0.1.1.8"},
    {modules, [chatterl,
+   	     message_handler,
 	     chatterl_gateway,
 	     chatterl_mid_man,
    	     chatterl_groups,
@@ -16,4 +17,3 @@
    {applications, [kernel, stdlib, mochiweb]},
    {mod, {chatterl,9000}},
    {start_phases, []}]}.
-
