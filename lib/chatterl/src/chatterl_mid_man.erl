@@ -469,10 +469,9 @@ format_messages({Client,Date,Message}) ->
 %%--------------------------------------------------------------------
 get_response_body(ContentType,Record) ->
   case ContentType of
-    "text/json" ->
+    ["text/json"] ->
       json_message(Record);
-    "text/xml" ->
-      io:format("~s~n",[ContentType]),
+    ["text/xml"] ->
       xml_message(Record);
     _ -> json_message(build_carrier("error","Illegal content type!"))
   end.
