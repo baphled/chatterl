@@ -5,7 +5,7 @@
 %%% Chatterl Web Interface middleman, all communication to Chatterl
 %%% go via the middle man.
 %%%
-%%% Prepares &amp; sends messages to Chatterl Serv and manages 
+%%% Prepares &amp; sends messages to Chatterl Serv and manages
 %%% clients connected to the interface.
 %%% @end
 %%% @copyright 2008-2009 Yomi Colledge
@@ -14,11 +14,15 @@
 -behaviour(gen_server).
 
 %% API
-%% Client based
--export([start/0,connect/1,disconnect/1,user_list/0,user_list/1]).
--export([group_join/2,group_leave/2,group_info/1,group_send/3,group_poll/1,group_list/0]).
--export([group_create/2,group_drop/1]).
--export([user_msg/3,user_poll/1]).
+%% Client based calls
+-export([start/0,connect/2,disconnect/2,user_list/1,user_list/2,user_msg/2,user_poll/2]).
+
+%% Group based calls
+-export([group_join/2,group_leave/2,group_info/2,group_send/2,group_poll/2,group_list/1]).
+
+%% Admin based calls
+-export([group_create/2,group_drop/2]).
+
 %% helpers
 -export([build_carrier/2]).
 %% gen_server callbacks
@@ -45,15 +49,15 @@ start() ->
 %% @spec connect(Client) -> {ResponseType,Message}
 %% @end
 %%--------------------------------------------------------------------
-connect(Client) ->
-    {Type,Reply} = 
-		case gen_server:call({global, ?SERVER}, {connect, Client}) of
-		    {ok,_Msg} ->
-			{"success",Client++" now connected"};
-		    {error,_Error} ->
-			{"failure","Unable to connect"}
-		end,
-    build_carrier(Type,Reply).
+connect(ContentType,Client) ->
+  {Type,Reply} =
+    case gen_server:call({global, ?SERVER}, {connect, Client}) of
+      {ok,_Msg} ->
+        {"success",Client++" now connected"};
+      {error,_Error} ->
+        {"failure","Unable to connect"}
+    end,
+  get_response_body(ContentType,build_carrier(Type,Reply)).
 
 %%--------------------------------------------------------------------
 %% @doc Disconnects a client to the Chatterl system.
@@ -61,15 +65,15 @@ connect(Client) ->
 %% @spec disconnect(Client) -> {ResponseType,Message}
 %% @end
 %%--------------------------------------------------------------------
-disconnect(Client) ->
-    {Type,Reply} = 
-	case gen_server:call({global, ?SERVER}, {disconnect, Client}) of
-	{ok,Msg} ->
-	    {"success",Msg};
-	{error,Error} ->
-	    {"failure",Error}
+disconnect(ContentType,Client) ->
+  {Type,Reply} =
+    case gen_server:call({global, ?SERVER}, {disconnect, Client}) of
+      {ok,Msg} ->
+        {"success",Msg};
+      {error,Error} ->
+        {"failure",Error}
     end,
-    build_carrier(Type,Reply).
+  get_response_body(ContentType,build_carrier(Type,Reply)).
 
 %%--------------------------------------------------------------------
 %% @doc Lists the clients connected to Chatterl
@@ -77,15 +81,15 @@ disconnect(Client) ->
 %% @spec user_list() -> {carrier,ResponseType,Message}
 %% @end
 %%--------------------------------------------------------------------
-user_list() ->
-    {Type,Result} = 
-	case gen_server:call({global,chatterl_serv},list_users) of
-	    [] -> {"success",build_carrier("clients","")};
-	    Clients -> 
-		ClientsList = [build_carrier("client",Client)||Client <- Clients],
-		{"success",build_carrier("clients",ClientsList)}
-	end,
-    build_carrier(Type,Result).
+user_list(ContentType) ->
+  {Type,Result} =
+    case gen_server:call({global,chatterl_serv},list_users) of
+      [] -> {"success",build_carrier("clients","")};
+      Clients ->
+        ClientsList = [build_carrier("client",Client)||Client <- Clients],
+        {"success",build_carrier("clients",ClientsList)}
+    end,
+  get_response_body(ContentType,build_carrier(Type,Result)).
 
 %%--------------------------------------------------------------------
 %% @doc List users connected to a specified group
@@ -93,17 +97,17 @@ user_list() ->
 %% @spec user_list(Group) -> {carrier,ResponseType,Message}
 %% @end
 %%--------------------------------------------------------------------
-user_list(Group) ->
-    {Type,Record} = 
-	case gen_server:call({global,chatterl_serv},{group_exists,Group}) of
-	    true -> ClientsList = [build_carrier("client",Client)
-				   || {Client,{_Pid,_Ref}} 
-					  <- gen_server:call({global,Group},list_users)],
-		    {"success",build_carrier("clients",ClientsList)};
-	    false ->
-		{"error","Group: "++ Group ++ " doesn't exist"}
-	end,
-    build_carrier(Type,Record).
+user_list(ContentType,Group) ->
+  {Type,Record} =
+    case gen_server:call({global,chatterl_serv},{group_exists,Group}) of
+      true -> ClientsList = [build_carrier("client",Client)
+                             || {Client,{_Pid,_Ref}}
+                                  <- gen_server:call({global,Group},list_users)],
+              {"success",build_carrier("clients",ClientsList)};
+      false ->
+        {"error","Group: "++ Group ++ " doesn't exist"}
+    end,
+  get_response_body(ContentType,build_carrier(Type,Record)).
 
 %%--------------------------------------------------------------------
 %% @doc Allows a client to send a private message to another client.
@@ -111,20 +115,20 @@ user_list(Group) ->
 %% @spec user_msg(Sender,Client,Message) -> {carrier,ResponseType,Message}
 %% @end
 %%--------------------------------------------------------------------
-user_msg(Sender, Client, Message) ->
-    {Type,Reply} = 
-	case gen_server:call({global,chatterl_serv},{user_exists,Sender}) of
-	    true ->
-		case gen_server:call({global, ?MODULE}, {private_msg, Sender, Client, Message}) of
-		    {ok,_Msg} ->
-			{"success","Sending msg..."};
-		    {error,Error} ->
-			{"failure",Error}
-		end;
-	    false ->
-		{"failure","Client doesn't exist!"}
+user_msg(ContentType,{Sender, Client, Message}) ->
+  {Type,Reply} =
+    case gen_server:call({global,chatterl_serv},{user_exists,Sender}) of
+      true ->
+        case gen_server:call({global, ?MODULE}, {private_msg, Sender, Client, Message}) of
+          {ok,_Msg} ->
+            {"success","Sending msg..."};
+          {error,Error} ->
+            {"failure",Error}
+        end;
+      false ->
+        {"failure","Client doesn't exist!"}
     end,
-    build_carrier(Type,Reply).
+  get_response_body(ContentType,build_carrier(Type,Reply)).
 
 %%--------------------------------------------------------------------
 %% @doc Allows a client to retrieve private messages.
@@ -132,21 +136,21 @@ user_msg(Sender, Client, Message) ->
 %% @spec user_poll(Client) -> {carrier,ResponseType,Message}
 %% @end
 %%--------------------------------------------------------------------
-user_poll(Client) ->
-    {Type,Result} = 
-	case gen_server:call({global,chatterl_serv},{user_exists,Client}) of
-	    true ->
-		case gen_server:call({global,Client},poll_messages) of
-		    [] -> {"success",build_carrier("messages","")};
-		    Messages ->
-			MessagesList = [build_carrier("message",format_messages(Message))
-					||Message <- Messages],
-			{"success",build_carrier("messages",MessagesList)}
-		end;
-	    false ->
-		{"error","Client: "++ Client ++ " doesn't exist"}
-	end,
-    build_carrier(Type,Result).
+user_poll(ContentType,Client) ->
+  {Type,Result} =
+    case gen_server:call({global,chatterl_serv},{user_exists,Client}) of
+      true ->
+        case gen_server:call({global,Client},poll_messages) of
+          [] -> {"success",build_carrier("messages","")};
+          Messages ->
+            MessagesList = [build_carrier("message",format_messages(Message))
+                            ||Message <- Messages],
+            {"success",build_carrier("messages",MessagesList)}
+        end;
+      false ->
+        {"error","Client: "++ Client ++ " doesn't exist"}
+    end,
+  get_response_body(ContentType,build_carrier(Type,Result)).
 
 %%--------------------------------------------------------------------
 %% @doc lists the groups on Chatterl
@@ -154,15 +158,15 @@ user_poll(Client) ->
 %% @spec group_list() -> {carrier,ResponseType,Message}
 %% @end
 %%--------------------------------------------------------------------
-group_list() ->
-    {Type,Result} = 
-	case gen_server:call({global, chatterl_serv}, list_groups, infinity) of
-	    [] -> {"success",build_carrier("groups","")};
-	    Groups -> 
-		GroupsList = [build_carrier("group",Group)||Group <- Groups],
-		{"success",build_carrier("groups",GroupsList)}
+group_list(ContentType) ->
+  {Type,Result} =
+    case gen_server:call({global, chatterl_serv}, list_groups, infinity) of
+      [] -> {"success",build_carrier("groups","")};
+      Groups ->
+        GroupsList = [build_carrier("group",Group)||Group <- Groups],
+        {"success",build_carrier("groups",GroupsList)}
     end,
-    build_carrier(Type,Result).
+  get_response_body(ContentType,build_carrier(Type,Result)).
 
 %%--------------------------------------------------------------------
 %% @doc Creates a group on Chatterl.
@@ -170,15 +174,15 @@ group_list() ->
 %% @spec group_create(Group,Description) -> {carrier,ResponseType,Message}
 %% @end
 %%--------------------------------------------------------------------
-group_create(Group,Description) ->
-    {Type,Result} = 
-	case gen_server:call({global,chatterl_serv},{create,Group,Description}) of
-	    {error,_Error} ->
-		{"failure","Unable to create group"};
-	    {ok,_GroupPid} ->
-		{"success","Group added"}
-	end,
-    build_carrier(Type,Result).
+group_create(ContentType,{Group,Description}) ->
+  {Type,Result} =
+    case gen_server:call({global,chatterl_serv},{create,Group,Description}) of
+      {error,_Error} ->
+        {"failure","Unable to create group"};
+      {ok,_GroupPid} ->
+        {"success","Group added"}
+    end,
+  get_response_body(ContentType,build_carrier(Type,Result)).
 
 %%--------------------------------------------------------------------
 %% @doc Drops a group from Chatterl.
@@ -186,15 +190,15 @@ group_create(Group,Description) ->
 %% @spec group_drop(Group) -> {carrier,ResponseType,Message}
 %% @end
 %%--------------------------------------------------------------------
-group_drop(Group) ->
-    {Type,Result} = 
-	case gen_server:call({global,chatterl_serv},{drop,Group}) of
-	    {error,{Error,_GroupName}} ->
-		{"failure",Error};
-	    {ok,ResponseMsg} ->
-		{"success",ResponseMsg}
-	end,
-    build_carrier(Type,Result).
+group_drop(ContentType,Group) ->
+  {Type,Result} =
+    case gen_server:call({global,chatterl_serv},{drop,Group}) of
+      {error,{Error,_GroupName}} ->
+        {"failure",Error};
+      {ok,ResponseMsg} ->
+        {"success",ResponseMsg}
+    end,
+  get_response_body(ContentType,build_carrier(Type,Result)).
 
 %%--------------------------------------------------------------------
 %% @doc Retrieves information on a specified Chatterl group.
@@ -202,19 +206,17 @@ group_drop(Group) ->
 %% @spec group_info(Group) -> {carrier,ResponseType,Message}
 %% @end
 %%--------------------------------------------------------------------
-group_info(Group) ->
-    {Type,Result} = 
-	case gen_server:call({global,chatterl_serv},{group_exists,Group}) of
-	    true ->
-		
-		Data = gen_server:call({global,chatterl_serv},{group_info,Group}),
-		Results = [build_carrier(atom_to_list(Atom),Info)|| {Atom,Info} <- Data],
-		{"success",
-		 build_carrier("groups",Results)};
-	    false ->
-		{"error","Group doesn't exist!"}
-	end,
-    build_carrier(Type,Result).
+group_info(ContentType,Group) ->
+  {Type,Result} =
+    case gen_server:call({global,chatterl_serv},{group_exists,Group}) of
+      true ->
+        Data = gen_server:call({global,chatterl_serv},{group_info,Group}),
+        Results = [build_carrier(atom_to_list(Atom),Info)|| {Atom,Info} <- Data],
+        {"success",build_carrier("groups",Results)};
+      false ->
+        {"error","Group doesn't exist!"}
+    end,
+  get_response_body(ContentType,build_carrier(Type,Result)).
 
 %%--------------------------------------------------------------------
 %% @doc Allows a client to join a Chatterl group.
@@ -222,8 +224,8 @@ group_info(Group) ->
 %% @spec group_join(Group,Client) -> {carrier,ResponseType,Message}
 %% @end
 %%--------------------------------------------------------------------
-group_join(Group,Client) ->
-    {Type,Reply} = 
+group_join(ContentType,{Group,Client}) ->
+  {Type,Reply} =
 	case gen_server:call({global,chatterl_serv},{group_exists,Group}) of
 	    true ->
 		 case gen_server:call({global,Group},{join,Client}) of
@@ -235,7 +237,7 @@ group_join(Group,Client) ->
 	    false ->
 		{"error","Group: "++ Group ++ " doesn't exist"}
 	end,
-    build_carrier(Type,Reply).
+  get_response_body(ContentType,build_carrier(Type,Reply)).
 
 %%--------------------------------------------------------------------
 %% @doc Allows a client to leave a Chatterl group.
@@ -243,8 +245,8 @@ group_join(Group,Client) ->
 %% @spec group_leave(Group,Client) -> {carrier,ResponseType,Message}
 %% @end
 %%--------------------------------------------------------------------
-group_leave(Group,Client) ->
-    {Type,Record} = 
+group_leave(ContentType,{Group,Client}) ->
+    {Type,Record} =
 	case gen_server:call({global,chatterl_serv},{user_exists,Client}) of
 	    true ->
 		case gen_server:call({global,Group},{leave,Client}) of
@@ -256,7 +258,7 @@ group_leave(Group,Client) ->
 	    false ->
 		{"failure","User not joined"}
 	end,
-    build_carrier(Type,Record).
+  get_response_body(ContentType,build_carrier(Type,Record)).
 
 %%--------------------------------------------------------------------
 %% @doc Allows a client to send a message to a Chatterl group.
@@ -264,7 +266,7 @@ group_leave(Group,Client) ->
 %% @spec group_send(Group,Sender,Message) -> {carrier,ResponseType,Message}
 %% @end
 %%--------------------------------------------------------------------
-group_send(Group,Sender,Message) ->
+group_send(ContentType,{Group,Sender,Message}) ->
     {Type,Reply} =
 	case gen_server:call({global,chatterl_serv},{group_exists,Group}) of
 	    true ->
@@ -277,7 +279,7 @@ group_send(Group,Sender,Message) ->
 	    false ->
 		{"failure","User not joined"}
 	end,
-    build_carrier(Type,Reply).
+  get_response_body(ContentType,build_carrier(Type,Reply)).
 
 %%--------------------------------------------------------------------
 %% @doc Allows a client to retrieve messages from a Chatterl group.
@@ -285,8 +287,8 @@ group_send(Group,Sender,Message) ->
 %% @spec group_poll(Group) -> {carrier,ResponseType,Message}
 %% @end
 %%--------------------------------------------------------------------
-group_poll(Group) ->
-     {Type,Result} = 
+group_poll(ContentType,Group) ->
+     {Type,Result} =
 	case gen_server:call({global,chatterl_serv},{group_exists,Group}) of
 	    true ->
 		case gen_server:call({global,Group},poll_messages) of
@@ -298,7 +300,7 @@ group_poll(Group) ->
 	    false ->
 		{"error","Group: "++ Group ++ " doesn't exist"}
 	end,
-    build_carrier(Type,Result).
+  get_response_body(ContentType,build_carrier(Type,Result)).
 
 %%====================================================================
 %% gen_server callbacks
@@ -325,7 +327,7 @@ init([]) ->
 %% Description: Handling call messages
 %%--------------------------------------------------------------------
 handle_call({connect, Nickname}, _From, State) ->
-    {Reply,NewState} = 
+    {Reply,NewState} =
 	case dict:find(Nickname, State) of
 	    error ->
 		Pid = spawn(fun() ->
@@ -338,7 +340,7 @@ handle_call({connect, Nickname}, _From, State) ->
     end,
     {reply,Reply,NewState};
 handle_call({disconnect, Client}, _From,State) ->
-    {Reply,NewState} = 
+    {Reply,NewState} =
 	case dict:find(Client, State) of
 	    error ->
 		{{error,"Not connected"},State};
@@ -358,7 +360,7 @@ handle_call({group_msg, Sender, Group, Message}, _From, State) ->
 	    end,
     {reply, Reply, State};
 handle_call({private_msg, Sender, Client, Message}, _From, State) ->
-    Reply = 
+    Reply =
 	case dict:find(Client, State) of
 	    error ->
 		io:format("user not connected"),
@@ -452,3 +454,295 @@ build_carrier(Type,Message) ->
 %%--------------------------------------------------------------------
 format_messages({Client,Date,Message}) ->
     [build_carrier("client",Client),build_carrier("date",Date),build_carrier("msgbody",Message)].
+
+%%--------------------------------------------------------------------
+%% @private
+%% @doc
+%%
+%% Gets the actual response body to return to the client.
+%%
+%% Responses are either in JSON or XML, if the wrong content type is passed
+%% the client will recieve an error in XML format.
+%% @spec get_response_body(ContentType,Record) -> [ResponseBody]
+%%
+%% @end
+%%--------------------------------------------------------------------
+get_response_body(ContentType,Record) ->
+  case ContentType of
+    "text/json" ->
+      json_message(Record);
+    "text/xml" ->
+      io:format("~s~n",[ContentType]),
+      xml_message(Record);
+    _ -> json_message(build_carrier("error","Illegal content type!"))
+  end.
+
+%%--------------------------------------------------------------------
+%% @private
+%% @doc
+%%
+%% Converts our carrier Record into a JSON format.
+%% @spec json_message(CarrierRecord) -> JSON
+%%
+%% @end
+%%--------------------------------------------------------------------
+json_message(CarrierRecord) ->
+    {carrier, CarrierType, Message} = CarrierRecord,
+    Struct =
+	case Message of
+	    {carrier,Type,MessagesCarrier} ->
+		case Type =:= "groups"
+		    orelse Type =:= "clients"
+		    orelse Type =:= "messages" of
+		    true ->
+			handle_messages_json(Type,MessagesCarrier,CarrierType);
+		    false ->
+			io:format("dont know ~s~n",[Type])
+		end;
+	    _ ->
+		{struct,[{CarrierType,list_to_binary(Message)}]}
+	end,
+    mochijson2:encode({struct,[{chatterl,{struct,[{response,Struct}]}}]}).
+
+%%--------------------------------------------------------------------
+%% @private
+%% @doc
+%%
+%% Generates JSON structure needed to create message responses.
+%%
+%% As messages are a different format that the other responses, they
+%% need to be handled uniquely. We also want to make sure that all three
+%% clauses are meet (empty,single message, multiple messages).
+%% @spec handle_messages_json(CarrierType,MessagesCarrier,Type) -> JSON
+%%
+%% @end
+%%--------------------------------------------------------------------
+handle_messages_json(Type,MessagesCarrier,CarrierType) ->
+    case Type =:= "messages" of
+	true ->
+	    case MessagesCarrier of
+		[] -> %Empty list.
+		    {struct,[{Type,[]}]};
+		[{carrier,_MessageType,MessageData}] ->	% A Single message.
+		    {struct,[{CarrierType,
+			      {struct,[{Type,loop_json_carrier(MessageData)}]}}]};
+		Messages -> % Multiple messages
+		    {struct,[{CarrierType,
+			      {struct,[{Type,inner_loop_json_carrier(Messages)}]}}]}
+	    end;
+	false ->
+	    Result = loop_json_carrier(MessagesCarrier),
+	    {struct,[{CarrierType,{struct,[{Type,Result}]}}]}
+    end.
+
+%%--------------------------------------------------------------------
+%% @private
+%% @doc
+%%
+%% Loops over the record carrier building the tuple structure need to
+%% build our JSON.
+%% @spec loop_json_carrier(Carrier) -> JSONTuple
+%%
+%% @end
+%%--------------------------------------------------------------------
+loop_json_carrier(CarrierRecord) ->
+    [{struct,[{DataType,clean_message(Data)}]} || {carrier,DataType,Data} <- CarrierRecord].
+
+%%--------------------------------------------------------------------
+%% @private
+%% @doc
+%%
+%% Loops over the message carrier building the tuple structure need to
+%% build our JSON.
+%%
+%% We use this to build each message retrieved from a group, as they
+%% have a number of elements we need to parse those the same as the
+%% outer elements.
+%% @spec inner_loop_json_carrier(CarrierRecord) -> JSONTuple
+%%
+%% @end
+%%--------------------------------------------------------------------
+inner_loop_json_carrier(CarrierRecord) ->
+    [{struct,[{MsgType,loop_json_carrier(Msg)}]} || {carrier,MsgType,Msg} <- CarrierRecord].
+
+%%--------------------------------------------------------------------
+%% @private
+%% @doc
+%%
+%% Cleans up our messages, ready for JSON/XML construction.
+%%
+%% We need this so that we can clean our date format, later we will
+%% format dates properly but this works as a quick fix.
+%% @spec clean_message(Carrier) -> XMLTuple
+%%
+%% @end
+%%--------------------------------------------------------------------
+clean_message(Data) when is_tuple(Data) ->
+    list_to_binary([httpd_util:rfc1123_date(Data)]);
+clean_message(Data) ->
+    list_to_binary(Data).
+
+%%--------------------------------------------------------------------
+%% @private
+%% @doc
+%%
+%% Generates out actual XML message.
+%%
+%% Takes the record and converts it into a tuple which can be further
+%% converted into a valid XML format using tuple_to_xml.
+%% Example of XML tuple structure.
+%% <code>{carrier,"groups",[{carrier,"group","nu"},{carrier,"group","nu2"}]}</code>
+%%
+%% @spec xml_message(Record) -> XML
+%%
+%% @end
+%%--------------------------------------------------------------------
+xml_message(CarrierRecord) ->
+    {carrier, MessageType, Message} = CarrierRecord,
+    XMLTuple = case Message of
+	{carrier, Type, Record} ->
+	    case Type =:= "groups"
+		orelse Type =:= "clients"
+		orelse Type =:= "messages" of
+		true ->
+		    handle_messages_xml(Type,Record,MessageType);
+		false -> io:format("dont know ~s~n",[Type])
+	    end;
+	_ -> xml_tuple_single(MessageType,Message)
+    end,
+    tuple_to_xml(XMLTuple,[]).
+
+%%--------------------------------------------------------------------
+%% @private
+%% @doc
+%%
+%% Generates XML structure needed to create message responses.
+%%
+%% @spec handle_messages_xml(Type,CarrierType,MessagesCarrier) -> XMLTuple
+%%
+%% @end
+%%--------------------------------------------------------------------
+handle_messages_xml(Type,MessagesCarrier,CarrierType) ->
+    case Type =:= "messages" of
+	true ->
+	    case MessagesCarrier of
+		_ ->
+		    Result = inner_loop_xml_tuple(MessagesCarrier),
+		    Data = loop_xml_tuple(Type,Result),
+		    xml_tuple_single(CarrierType,Data)
+	    end;
+	false ->
+	    Result = loop_xml_carrier(MessagesCarrier),
+	    xml_tuple(Type,[Result])
+    end.
+
+%%--------------------------------------------------------------------
+%% @private
+%% @doc
+%%
+%% Loops over the record carrier building the tuple structure need to
+%% build out XML.
+%% @spec loop_xml_carrier(Carrier) -> XMLTuple
+%%
+%% @end
+%%--------------------------------------------------------------------
+loop_xml_carrier(CarrierRecord) ->
+    [loop_xml_tuple(DataType,clean_xml([Data])) || {carrier,DataType,Data} <- CarrierRecord].
+
+%%--------------------------------------------------------------------
+%% @private
+%% @doc
+%%
+%% Loops over the inner record carriers building the tuple structure need to
+%% build out XML.
+%% @spec inner_loop_xml_carrier(CarrierRecord) -> [XMLTuple]
+%%
+%% @end
+%%--------------------------------------------------------------------
+inner_loop_xml_carrier(CarrierRecord) ->
+    [loop_xml_tuple(DataType,clean_xml([Data])) || {carrier,DataType,Data} <- CarrierRecord].
+
+%%--------------------------------------------------------------------
+%% @private
+%% @doc
+%%
+%% Loops over the carrier tuple building the tuple structure need to
+%% build out XML.
+%% @spec inner_loop_xml_tuple(Messages) -> [XMLTuple]
+%%
+%% @end
+%%--------------------------------------------------------------------
+inner_loop_xml_tuple(Messages) ->
+    [loop_xml_tuple(Type,inner_loop_xml_carrier(Message))|| {carrier,Type,Message} <- Messages].
+
+%%--------------------------------------------------------------------
+%% @private
+%% @doc
+%%
+%% Cleans our XML for us, especially modifying our date to a readable format.
+%% @spec clean_xml([Data]) -> XMLTuple
+%%
+%% @end
+%%--------------------------------------------------------------------
+clean_xml([Data]) when is_tuple(Data) ->
+    [httpd_util:rfc1123_date(Data)];
+clean_xml([Data]) ->
+    [Data].
+
+%%--------------------------------------------------------------------
+%% @private
+%% @doc
+%%
+%% Prepares our tuple used to generate our XML.
+%% @spec xml_tuple(Type,Message) -> {XmlBody}
+%%
+%% @end
+%%--------------------------------------------------------------------
+xml_tuple(Type,Message) when is_list(Message) ->
+    case Message of
+	[Data] ->
+	    Data;
+	Data ->
+	    Data
+    end,
+    {chatterl,[],[{response,[],[{list_to_atom(Type),[],Data}]}]}.
+
+%%--------------------------------------------------------------------
+%% @private
+%% @doc
+%%
+%% Prepares our tuple used to generate our sinlge XML elements.
+%% @spec xml_tuple_single(Type,Message) -> {XmlBody}
+%%
+%% @end
+%%--------------------------------------------------------------------
+xml_tuple_single(Type,Message) ->
+    {chatterl,[],[{response,[],[{list_to_atom(Type),[],[Message]}]}]}.
+
+%%--------------------------------------------------------------------
+%% @private
+%% @doc
+%%
+%% Prepares our tuple used to generate our XML.
+%% @spec loop_xml_tuple(Type,Message) -> XmlTuple
+%%
+%% @end
+%%--------------------------------------------------------------------
+loop_xml_tuple(Type,Message) when is_list(Type) ->
+    {list_to_atom(Type),[],Message};
+loop_xml_tuple(Type,Message) ->
+    {list_to_atom(Type),[],[Message]}.
+
+%%--------------------------------------------------------------------
+%% @private
+%% @doc
+%% Converts a tuple into XML.
+%%
+%% Inspired by the below link.
+%% <a target="_blank" href="http://arandomurl.com/post/Simple-XML-in-Erlang">Link</a>
+%% @spec tuple_to_xml(Xml,Prolog) -> [XML]
+%%
+%% @endy
+%%--------------------------------------------------------------------
+tuple_to_xml(XmlTuple,Prolog) ->
+  lists:flatten(xmerl:export_simple([XmlTuple],xmerl_xml,[{prolog,Prolog}])).
