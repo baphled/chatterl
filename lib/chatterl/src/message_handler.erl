@@ -59,8 +59,8 @@ build_carrier(Type,Message) ->
 %%
 %% @end
 %%--------------------------------------------------------------------
-format_messages({Client,Date,Message}) ->
-    [build_carrier("client",Client),build_carrier("date",Date),build_carrier("msgbody",Message)].
+format_messages({Date,Client,Message}) ->
+    [build_carrier("date",Date),build_carrier("client",Client),build_carrier("msgbody",Message)].
 
 %%--------------------------------------------------------------------
 %% @private
@@ -85,7 +85,8 @@ json_message(CarrierRecord) ->
 			io:format("dont know ~s~n",[Type])
 		end;
 	    _ ->
-		{struct,[{CarrierType,list_to_binary(Message)}]}
+            io:format("~s~n",[Message]),
+            {struct,[{CarrierType,list_to_binary(Message)}]}
 	end,
     mochijson2:encode({struct,[{chatterl,{struct,[{response,Struct}]}}]}).
 
@@ -109,8 +110,9 @@ handle_messages_json(Type,MessagesCarrier,CarrierType) ->
 		[] -> %Empty list.
 		    {struct,[{Type,[]}]};
 		[{carrier,_MessageType,MessageData}] ->	% A Single message.
+                io:format("~s~n",[_MessageType]),
 		    {struct,[{CarrierType,
-			      {struct,[{Type,loop_json_carrier(MessageData)}]}}]};
+			      {struct,[{Type,{struct,[{_MessageType,loop_json_carrier(MessageData)}]}}]}}]};
 		Messages -> % Multiple messages
 		    {struct,[{CarrierType,
 			      {struct,[{Type,inner_loop_json_carrier(Messages)}]}}]}
