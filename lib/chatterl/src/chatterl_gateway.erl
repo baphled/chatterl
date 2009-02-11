@@ -193,43 +193,43 @@ get_content_type(Type) ->
 %% @end
 %%--------------------------------------------------------------------
 handle(Path,ContentType,Req) ->
-
-    Response =
-	case Path of
-	    %% Client based requests
-	    "/connect/" ++ Client -> chatterl_mid_man:connect(ContentType,Client);
-	    "/disconnect/" ++ Client -> chatterl_mid_man:disconnect(ContentType,Client);
-	    "/users/list" -> chatterl_mid_man:user_list(ContentType);
-	    "/users/list/" ++Group -> chatterl_mid_man:user_list(ContentType,Group);
-	    "/users/send/" ++ Sender -> [Client, Message] = get_properties(Req,["client","msg"]),
-					chatterl_mid_man:user_msg(ContentType,{Sender,Client,Message});
-	    "/users/poll/" ++ Client -> chatterl_mid_man:user_poll(ContentType,Client);
-	    %% Group based requests
-	    "/groups/list" -> chatterl_mid_man:group_list(ContentType);
-	    "/groups/info/" ++ Group -> chatterl_mid_man:group_info(ContentType,Group);
-	    "/groups/join/" ++ Group -> [Client] = get_properties(Req,["client"]),
-					chatterl_mid_man:group_join(ContentType,{Group,Client});
-	    "/groups/leave/" ++ Group -> [Client] = get_properties(Req,["client"]),
-					 chatterl_mid_man:group_leave(ContentType,{Group,Client});
-	    "/groups/send/" ++ Group -> [Sender, Message] = get_properties(Req,["client","msg"]),
-					chatterl_mid_man:group_send(ContentType,{Group,Sender,Message});
-	    "/groups/poll/" ++ Group -> chatterl_mid_man:group_poll(ContentType,Group);
-	    %% Authentication based queries.
-	    "/groups/create/" ++ Group ->
-		[Description] = get_properties(Req,["description"]),
-		case is_auth(Req) of
-		    {ok, _Msg} ->
-			chatterl_mid_man:group_create(ContentType,{Group,Description});
-		    {error,Error} -> chatterl_mid_man:build_carrier("error",Error)
-		end;
-	    "/groups/drop/" ++ Group -> case is_auth(Req) of
-					    {ok,_Msg} ->
-						chatterl_mid_man:group_drop(ContentType,Group);
-					    {error,Error} ->
-						chatterl_mid_man:build_carrier("error",Error)
-					end;
-	    %% Catch all
-	    Unknown -> message_handler:build_carrier("error", "Unknown command: " ++Unknown)
+  io:format("Executing Path: ~s~nContent Type: ~s",[Path,ContentType]),
+  Response =
+    case Path of
+      %% Client based requests
+      "/connect/" ++ Client -> chatterl_mid_man:connect(ContentType,Client);
+      "/disconnect/" ++ Client -> chatterl_mid_man:disconnect(ContentType,Client);
+      "/users/list" -> chatterl_mid_man:user_list(ContentType);
+      "/users/list/" ++Group -> chatterl_mid_man:user_list(ContentType,Group);
+      "/users/send/" ++ Sender -> [Client, Message] = get_properties(Req,["client","msg"]),
+                                  chatterl_mid_man:user_msg(ContentType,{Sender,Client,Message});
+      "/users/poll/" ++ Client -> chatterl_mid_man:user_poll(ContentType,Client);
+      %% Group based requests
+      "/groups/list" -> chatterl_mid_man:group_list(ContentType);
+      "/groups/info/" ++ Group -> chatterl_mid_man:group_info(ContentType,Group);
+      "/groups/join/" ++ Group -> [Client] = get_properties(Req,["client"]),
+                                  chatterl_mid_man:group_join(ContentType,{Group,Client});
+      "/groups/leave/" ++ Group -> [Client] = get_properties(Req,["client"]),
+                                   chatterl_mid_man:group_leave(ContentType,{Group,Client});
+      "/groups/send/" ++ Group -> [Sender, Message] = get_properties(Req,["client","msg"]),
+                                  chatterl_mid_man:group_send(ContentType,{Group,Sender,Message});
+      "/groups/poll/" ++ Group -> chatterl_mid_man:group_poll(ContentType,Group);
+      %% Authentication based queries.
+      "/groups/create/" ++ Group ->
+        [Description] = get_properties(Req,["description"]),
+        case is_auth(Req) of
+          {ok, _Msg} ->
+            chatterl_mid_man:group_create(ContentType,{Group,Description});
+          {error,Error} -> chatterl_mid_man:build_carrier("error",Error)
+        end;
+      "/groups/drop/" ++ Group -> case is_auth(Req) of
+                                    {ok,_Msg} ->
+                                      chatterl_mid_man:group_drop(ContentType,Group);
+                                    {error,Error} ->
+                                      chatterl_mid_man:build_carrier("error",Error)
+                                  end;
+      %% Catch all
+      Unknown -> message_handler:build_carrier("error", "Unknown command: " ++Unknown)
     end,
   Req:respond({200, [{"Content-Type", ContentType}], list_to_binary(Response)}).
 
@@ -245,49 +245,6 @@ handle(Path,ContentType,Req) ->
 get_properties(Req,WantedParams) ->
     Params = Req:parse_qs(),
     [proplists:get_value(Property, Params)|| Property <-  WantedParams].
-
-%%--------------------------------------------------------------------
-%% @private
-%% @doc
-%%
-%% Gets our response code depending on the type of message passed by
-%% the carrier record.
-%%
-%% @spec get_response_code(Record) -> integer()
-%%
-%% @end
-%%--------------------------------------------------------------------
-get_response_code(Record) ->
-    case Record of
-	{carrier,Type,_Message} ->
-	    case Type of
-		"failure" -> 200;
-		"success" -> 200;
-		"error" -> 500;
-		_ -> 500
-	    end
-    end.
-
-%%--------------------------------------------------------------------
-%% @private
-%% @doc
-%% Strips out whitespaces out of out XML tuple.
-%%
-%% Extracted from the link below.
-%% <a target="_blank" href="http://arandomurl.com/post/Simple-XML-in-Erlang">Link</a>
-%% @spec strip_whitespace(XMLTuple) -> [XML]
-%%
-%% @end
-%%--------------------------------------------------------------------
-strip_whitespace({El,Attr,Children}) ->
-  NChild = lists:filter(fun(X) ->
-    case X of
-    " " -> false;
-    _   -> true
-    end
-  end,Children),
-  Ch = lists:map(fun(X) -> strip_whitespace(X) end,NChild),
-  {El,Attr,Ch}.
 
 %%--------------------------------------------------------------------
 %% @private
