@@ -41,7 +41,7 @@
 %% @doc
 %% Starts the group process, passing the group name and description.
 %%
-%% @spec start(Name,Description) -> {ok,Pid} | ignore | {error,Error} 
+%% @spec start(Name,Description) -> {ok,Pid} | ignore | {error,Error}
 %% @end
 %%--------------------------------------------------------------------
 start(Group,Description) ->
@@ -123,11 +123,11 @@ handle_call({join, User}, From, State) ->
 		{{error, "Already joined"}, State#group.users};
 	    false ->
 		case is_list(User) of
-		    true -> 
+		    true ->
 			case gen_server:call({global,chatterl_serv},{user_exists,User}) of
 			    true ->
 				io:format("~s joined ~s~n", [User,State#group.name]),
-				{{ok, "User added"}, 
+				{{ok, "User added"},
 				 gb_trees:insert(User, {User,From}, State#group.users)};
 			    false ->
 				{{error, "not connected"}, State#group.users}
@@ -153,14 +153,14 @@ handle_call({send_msg,User,Message},_From,State) ->
 	    false ->
 		{{error, user_not_joined}, State#group.messages};
 	    true ->
-		case gb_trees:is_defined(Message, State#group.messages) of
+            CreatedOn = erlang:localtime(),
+		case gb_trees:is_defined(CreatedOn, State#group.messages) of
 		    false ->
-			CreatedOn = erlang:localtime(),
 			io:format("~s: ~s~n", [User,Message]),
 			determine_user_action(State#group.name,{receive_msg,{CreatedOn,User,Message}},
 					      gb_trees:values(State#group.users)),
 			{{ok, msg_sent},
-			 gb_trees:insert(Message, {User,CreatedOn,Message}, State#group.messages)};
+			 gb_trees:insert(CreatedOn, {CreatedOn,User,Message}, State#group.messages)};
 		    true ->
 			{{error, already_sent}, State#group.messages}
 		end
@@ -280,4 +280,3 @@ send_msg_to_users(PayLoad,UsersList,GroupMsg) ->
 	      end
       end,
       UsersList).
-
