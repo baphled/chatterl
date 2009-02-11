@@ -78,8 +78,16 @@ join(Group) ->
 leave(Group) ->
     determine_group_action(leave,Group).
 
+%%--------------------------------------------------------------------
+%% @doc
+%% Allows the uesr to drop from a group
+%%
+%% @spec private_msg(Sender,Client,Message) -> {ok,Msg} | {error,Error}
+%% @end
+%%--------------------------------------------------------------------
 private_msg(Sender,Client,Message) ->
     gen_server:call({global,Sender},{private_msg,Client,Message}).
+
 %%====================================================================
 %% gen_server callbacks
 %%====================================================================
