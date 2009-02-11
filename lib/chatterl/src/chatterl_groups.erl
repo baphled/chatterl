@@ -154,13 +154,13 @@ handle_call({send_msg,User,Message},_From,State) ->
 		{{error, user_not_joined}, State#group.messages};
 	    true ->
             CreatedOn = erlang:localtime(),
-		case gb_trees:is_defined(CreatedOn, State#group.messages) of
+		case gb_trees:is_defined({User,CreatedOn}, State#group.messages) of
 		    false ->
 			io:format("~s: ~s~n", [User,Message]),
 			determine_user_action(State#group.name,{receive_msg,{CreatedOn,User,Message}},
 					      gb_trees:values(State#group.users)),
 			{{ok, msg_sent},
-			 gb_trees:insert(CreatedOn, {CreatedOn,User,Message}, State#group.messages)};
+			 gb_trees:insert({User,CreatedOn}, {CreatedOn,User,Message}, State#group.messages)};
 		    true ->
 			{{error, already_sent}, State#group.messages}
 		end
@@ -247,7 +247,6 @@ determine_user_action(GroupName,{Action,PayLoad},UsersList) ->
 	    case PayLoad of
 		{CreatedOn,Sender,Message} ->
 		    GroupMsg = "Sending to users ~s~n",
-		%Really this should only be used when sending private message & with a proxy.
 		    send_msg_to_users({receive_msg, CreatedOn,Sender,Message},UsersList,GroupMsg);
 		_ ->
 		    {error, "Illegal payload format"}
@@ -269,14 +268,10 @@ send_msg_to_users(PayLoad,UsersList,GroupMsg) ->
     lists:foreach(
       fun(User) ->
 	      {Client,_PidInfo} = User,
-	      case gen_server:call({global, chatterl_serv},
-				   {user_lookup, Client}, infinity) of
-		  {error, Error} ->
-		      io:format("Error: ~s~n",[Error]);
-		  {ok, ClientName, _ClientPid} ->
-		      io:format(GroupMsg,
-				[ClientName]),
-		      gen_server:call({global,ClientName},PayLoad)
+	      case gen_server:call({global, chatterl_serv}, {user_lookup, Client}, infinity) of
+		  {error, Error} -> io:format("Error: ~s~n",[Error]);
+		  {ok, ClientName, _ClientPid} -> io:format(GroupMsg, [ClientName]),
+                                                  gen_server:call({global,ClientName},PayLoad)
 	      end
       end,
       UsersList).
