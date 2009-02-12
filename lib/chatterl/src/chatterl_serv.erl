@@ -36,7 +36,7 @@
 %% @doc
 %% Starts the server
 %%
-%% @spec start() -> {ok,Pid} | ignore | {error,Error} 
+%% @spec start() -> {ok,Pid} | ignore | {error,Error}
 %% @end
 %%--------------------------------------------------------------------
 start() ->
@@ -68,7 +68,7 @@ connect(User) ->
 %% Disconnect a client from the server, doing so will automatically disconnect
 %% the client from the groups, they are logged into.
 %%
-%% @spec disconnect(User) -> {ok,Message} | {error,Error} 
+%% @spec disconnect(User) -> {ok,Message} | {error,Error}
 %% @end
 %%--------------------------------------------------------------------
 disconnect(User) ->
@@ -78,12 +78,12 @@ disconnect(User) ->
 %% @doc
 %% Retrieves a group processes description
 %%
-%% @spec group_description(Group) -> {description,Description} | {error,Error} 
+%% @spec group_description(Group) -> {description,Description} | {error,Error}
 %% @end
 %%--------------------------------------------------------------------
 group_description(Group) ->
     case gen_server:call({global, ?MODULE}, {get_group, Group}, infinity) of
-	{Name, GroupPid} -> 
+	{Name, GroupPid} ->
 	    case is_pid(GroupPid) of
 		true -> gen_server:call(GroupPid, description);
 		_ -> {error, {"Unable to find pid for ~",[Name]}}
@@ -95,7 +95,7 @@ group_description(Group) ->
 %% @doc
 %% Create a new chatterl group
 %%
-%% @spec create(Group,Description) -> {ok,Group} | {error,Error} 
+%% @spec create(Group,Description) -> {ok,Group} | {error,Error}
 %% @end
 %%--------------------------------------------------------------------
 create(Group, Description) ->
@@ -106,7 +106,7 @@ create(Group, Description) ->
 %% Drop a chatterl group from the server, this will send a message to
 %% all users and the group to terminate related processes.
 %%
-%% @spec drop(Group) -> {ok,Message} | {error,Error} 
+%% @spec drop(Group) -> {ok,Message} | {error,Error}
 %% @end
 %%--------------------------------------------------------------------
 drop(Group) ->
@@ -116,7 +116,7 @@ drop(Group) ->
 %% @doc
 %% Lists all the users connected to chatterl
 %%
-%% @spec list_users() -> [Users] | [] 
+%% @spec list_users() -> [Users] | []
 %% @end
 %%--------------------------------------------------------------------
 list_users() ->
@@ -126,7 +126,7 @@ list_users() ->
 %% @doc
 %% Lists all the users connected to a specific chatterl group
 %%
-%% @spec list_users(GroupName) -> [Users] | [] 
+%% @spec list_users(GroupName) -> [Users] | []
 %% @end
 %%--------------------------------------------------------------------
 list_users(GroupName) ->
@@ -139,7 +139,7 @@ list_users(GroupName) ->
 %% @doc
 %% List all the groups on chatterl.
 %%
-%% @spec list_groups() -> [Groups] | [] 
+%% @spec list_groups() -> [Groups] | []
 %% @end
 %%--------------------------------------------------------------------
 list_groups() ->
@@ -155,7 +155,7 @@ list_groups() ->
 %%                         {ok, State, Timeout} |
 %%                         ignore               |
 %%                         {stop, Reason}
-%% @end 
+%% @end
 %%--------------------------------------------------------------------
 init([]) ->
     process_flag(trap_exit, true),
@@ -189,7 +189,7 @@ handle_call({get_group, Group}, _From, State) ->
 	    end,
     {reply, Reply, State};
 handle_call({group_info,Group}, _From, State) ->
-    Reply = [gen_server:call({global,Group},name), 
+    Reply = [gen_server:call({global,Group},name),
 	     gen_server:call({global,Group},description),
 	     gen_server:call({global,Group},created)],
     {reply,Reply,State};
@@ -197,9 +197,9 @@ handle_call(list_users, _From, State) ->
     Reply = gb_trees:keys(State#chatterl.users),
     {reply, Reply, State};
 handle_call({connect,User}, From, State) ->
-    {Reply, NewTree} = 
+    {Reply, NewTree} =
 	case gb_trees:is_defined(User, State#chatterl.users) of
-	    false-> 
+	    false->
 		io:format("~s connected to ~s~n", [User,?MODULE]),
 		{{ok, "connected"},
 		 gb_trees:insert(User, {User,From}, State#chatterl.users)};
@@ -210,11 +210,11 @@ handle_call({connect,User}, From, State) ->
 handle_call({disconnect, User}, _From, State) ->
      {Reply,NewTree} =
 	case gb_trees:is_defined(User, State#chatterl.users) of
-	    true -> 
+	    true ->
 		io:format("~s disconnecting...~n", [User]),
 		{{ok, "User dropped"},
 		 gb_trees:delete(User, State#chatterl.users)};
-	    false -> 
+	    false ->
 		{{error, "Unable to drop group."},
 		 State#chatterl.users}
 	end,
@@ -230,14 +230,14 @@ handle_call({disconnect, User, Groups}, _From, State) ->
 			  gen_server:call(Pid, {drop, User}, infinity) end,
 		  Groups),
 		{{ok, "User dropped"}, gb_trees:delete(User, State#chatterl.users)};
-	    false -> 
+	    false ->
 		{{error, "Unable to drop user."},State#chatterl.users}
 	end,
     {reply, Reply, State#chatterl{ users = NewTree }};
 handle_call({create, Group, Description}, _From, State) ->
     {Reply, NewTree} =
 	case gb_trees:is_defined(Group, State#chatterl.groups) of
-	    true ->		
+	    true ->
 		{{error, already_created},
 		 State#chatterl.groups};
  	    false ->
