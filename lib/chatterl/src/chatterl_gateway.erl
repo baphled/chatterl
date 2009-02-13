@@ -204,6 +204,7 @@ handle(Path,ContentType,Req) ->
       "/users/send/" ++ Sender -> [Client, Message] = get_properties(Req,["client","msg"]),
                                   chatterl_mid_man:user_msg(ContentType,{Sender,Client,Message});
       "/users/poll/" ++ Client -> chatterl_mid_man:user_poll(ContentType,Client);
+      "/users/groups/" ++ Client -> chatterl_mid_man:user_groups(ContentType,Client);
       %% Group based requests
       "/groups/list" -> chatterl_mid_man:group_list(ContentType);
       "/groups/info/" ++ Group -> chatterl_mid_man:group_info(ContentType,Group);
