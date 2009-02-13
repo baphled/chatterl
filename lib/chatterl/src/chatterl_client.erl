@@ -164,7 +164,7 @@ handle_call({join_group, Group}, _From, State) ->
       {Group, GroupPid} ->
         case gen_server:call(GroupPid, {join, State#client.name}, infinity) of
           {ok, _Msg} ->
-            {gb_trees:insert(Group, {Group, GroupPid}, State#client.groups),
+            {gb_trees:insert(Group, {Group, erlang:localtime(), GroupPid}, State#client.groups),
              {ok, joined_group}};
           _ -> {State#client.groups,{error, "Unable to connect!"}}
         end;
