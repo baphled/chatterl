@@ -227,7 +227,7 @@ handle_call({disconnect, User, Groups}, _From, State) ->
 		  fun(Group) ->
 			  {Name,_JoinedOn,Pid} = Group,
 			  io:format("~s disconnecting from ~s...~n", [User,Name]),
-			  gen_server:call(Pid, {drop, User}, infinity) end,
+			  gen_server:call(Name, {leave, User}) end,
 		  Groups),
 		{{ok, "User dropped"}, gb_trees:delete(User, State#chatterl.users)};
 	    false ->
