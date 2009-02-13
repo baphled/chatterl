@@ -39,7 +39,7 @@
 %% @doc
 %% Connects the client to Chatterl
 %%
-%% @spec start(Client) -> {ok,Pid} | ignore | {error,Error} 
+%% @spec start(Client) -> {ok,Pid} | ignore | {error,Error}
 %% @end
 %%--------------------------------------------------------------------
 start(Client) ->
@@ -138,7 +138,7 @@ handle_call(stop, _From, State) ->
 handle_call({stop,Reason},_From,State) ->
     {stop,Reason,stopped,State};
 handle_call({group_msg,Group,Msg},_From,State) ->
-    Reply = 
+    Reply =
 	case gen_server:call({global, chatterl_serv}, {get_group, Group}, infinity) of
 	    false ->
 		{error, "Unable to send message"};
@@ -158,10 +158,24 @@ handle_call(client_name, _From, State) ->
 handle_call(groups, _From, State) ->
     Reply = gb_trees:values(State#client.groups),
     {reply, Reply, State};
+handle_call({join_group, Group}, _From, State) ->
+  {NewTree,Result} =
+    case gen_server:call({global, chatterl_serv}, {get_group, Group}, infinity) of
+      {Group, GroupPid} ->
+        case gen_server:call(GroupPid, {join, State#client.name}, infinity) of
+          {ok, _Msg} ->
+            {gb_trees:insert(Group, {Group, GroupPid}, State#client.groups),
+             {ok, joined_group}};
+          _ -> {State#client.groups,{error, "Unable to connect!"}}
+        end;
+      _ ->
+        {State#client.groups,{error, "Unknown error!"}}
+    end,
+  {reply, Result, State#client{groups = NewTree}};
 handle_call({add_group, Group, Pid}, _From, State) ->
-    io:format("Joining group: ~p~n",[Group]),
-    NewTree = gb_trees:insert(Group, {Group, Pid}, State#client.groups),
-    {reply, {ok, "Joined group"}, State#client{groups = NewTree}};
+  io:format("Joining group: ~p~n",[Group]),
+  NewTree = gb_trees:insert(Group, {Group, Pid}, State#client.groups),
+  {reply, {ok, "Joined group"}, State#client{groups = NewTree}};
 handle_call({drop_group, Group}, _From, State) ->
     io:format("Disconnecting from: ~p~n",[Group]),
     NewTree = gb_trees:delete(Group, State#client.groups),
@@ -181,7 +195,7 @@ handle_call({private_msg,Client,Message},_From,State) ->
     {reply,Result,State};
 handle_call({receive_msg, CreatedOn, Client, Msg}, _From, State) ->
     io:format("~p:~p - ~p~n", [httpd_util:rfc1123_date(CreatedOn),Client,Msg]),
-    {Reply, NewTree} = 
+    {Reply, NewTree} =
 	case gb_trees:is_defined({Client,CreatedOn},State#client.messages) of
 	    true ->
 		{{error,no_duplicates},State#client.messages};
