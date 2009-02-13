@@ -15,7 +15,7 @@
 
 %% API
 %% Client based calls
--export([start/0,connect/2,disconnect/2,user_list/1,user_list/2,user_msg/2,user_poll/2]).
+-export([start/0,connect/2,disconnect/2,user_list/1,user_list/2,user_msg/2,user_poll/2,user_groups/2]).
 
 %% Group based calls
 -export([group_join/2,group_leave/2,group_info/2,group_send/2,group_poll/2,group_list/1]).
@@ -151,6 +151,22 @@ user_poll(ContentType,Client) ->
     end,
   get_response_body(ContentType,build_carrier(Type,Result)).
 
+user_groups(ContentType,Client) ->
+  {Type,Result} =
+    case gen_server:call({global,chatterl_serv},{user_exists,Client}) of
+      true ->
+        case gen_server:call({global,Client},groups) of
+          [] ->
+             {"success",build_carrier("groups","")};
+          Groups ->
+            GroupsList = [build_carrier("group",format_messages(Group)) || Group <- Groups],
+            {"success",build_carrier("groups",GroupsList)}
+        end;
+      false ->
+        {"error","Client: " ++ Client ++ " doesn't exist"}
+    end,
+  get_response_body(ContentType,build_carrier(Type,Result)).
+
 %%--------------------------------------------------------------------
 %% @doc lists the groups on Chatterl
 %%
@@ -227,7 +243,7 @@ group_join(ContentType,{Group,Client}) ->
   {Type,Reply} =
 	case gen_server:call({global,chatterl_serv},{group_exists,Group}) of
 	    true ->
-		 case gen_server:call({global,Group},{join,Client}) of
+		 case gen_server:call({global,Client},{join_group,Group}) of
 			{ok,_} ->
 			    {"success",Client ++ " joined group"};
 			{error,Error} ->
@@ -248,7 +264,7 @@ group_leave(ContentType,{Group,Client}) ->
     {Type,Record} =
 	case gen_server:call({global,chatterl_serv},{user_exists,Client}) of
 	    true ->
-		case gen_server:call({global,Group},{leave,Client}) of
+		case gen_server:call({global,Client},{leave_group,Group}) of
 		    {ok, _ } ->
 			{"success",Client ++ " has disconnected from " ++ Group};
 		    {error,Error} ->
