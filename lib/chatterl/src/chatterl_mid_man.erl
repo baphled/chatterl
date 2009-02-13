@@ -159,7 +159,7 @@ user_groups(ContentType,Client) ->
           [] ->
              {"success",build_carrier("groups","")};
           Groups ->
-            GroupsList = [build_carrier("group",Group) || {Group,_Pid} <- Groups],
+            GroupsList = [build_carrier("group",Group) || {Group,_JoinedOn,_Pid} <- Groups],
             {"success",build_carrier("groups",GroupsList)}
         end;
       false ->
@@ -351,7 +351,7 @@ handle_call({connect, Nickname}, _From, State) ->
 		erlang:monitor(process, Pid),
 		{chatterl_client:start(Nickname), dict:store(Nickname, Pid, State)};
 	    {ok, _} ->
-		{{error, duplicate_nick_found}, State}
+		{{error, "Already connected"}, State}
     end,
     {reply,Reply,NewState};
 handle_call({disconnect, Client}, _From,State) ->
@@ -367,7 +367,7 @@ handle_call({disconnect, Client}, _From,State) ->
 handle_call({group_msg, Sender, Group, Message}, _From, State) ->
     Reply = case dict:find(Sender, State) of
 		error ->
-		    io:format("user not connected"),
+		    io:format("~s is not joined to group: ~s~n",[Sender,Group]),
 		    {error,"Unable to send msg!"};
 		{ok, Pid} ->
 		    Pid ! {group_msg, Sender, Group, Message},
@@ -426,17 +426,20 @@ code_change(_OldVsn, State, _Extra) ->
 %%--------------------------------------------------------------------
 proxy_client(Messages) ->
     receive
-	{private_msg, Sender, Client, Message} ->
-	    io:format("Sending private message...~n"),
-	    gen_server:call({global,Sender},{private_msg,Client,Message}),
-	    proxy_client(Messages);
-	{group_msg, Sender, Group, Message} ->
-	    io:format("Sending group message: ~s...~n", [Message]),
-	    gen_server:call({global,Group},{send_msg,Sender,Message}),
-	    proxy_client(Messages);
-	{stop,Client} ->
-	    io:format("Proxy stopping...~s~n",[Client]),
-	    chatterl_client:stop(Client);
-	Other -> io:format("unknown proxy request ~s~n",[Other]),
-		 proxy_client(Messages)
+      {'Exit',_SomePid,Reason} ->
+        io:format("Crash: ~s~n",[Reason]);
+      {private_msg, Sender, Client, Message} ->
+        gen_server:call({global,Sender},{private_msg,Client,Message}),
+        io:format("Sent private message~n"),
+        proxy_client(Messages);
+      {group_msg, Sender, Group, Message} ->
+        gen_server:call({global,Group},{send_msg,Sender,Message}),
+        io:format("Sent message from ~s to group: ~s~n", [Sender,Group]),
+        proxy_client(Messages);
+      {stop,Client} ->
+        chatterl_client:stop(Client),
+        io:format("Stopped proxy for ~s~n",[Client]);
+      Other ->
+        io:format("unknown proxy request ~s~n",[Other]),
+        proxy_client(Messages)
     end.
