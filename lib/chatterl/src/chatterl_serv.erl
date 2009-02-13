@@ -225,7 +225,7 @@ handle_call({disconnect, User, Groups}, _From, State) ->
 	    true ->
 		lists:foreach(
 		  fun(Group) ->
-			  {Name,Pid} = Group,
+			  {Name,_JoinedOn,Pid} = Group,
 			  io:format("~s disconnecting from ~s...~n", [User,Name]),
 			  gen_server:call(Pid, {drop, User}, infinity) end,
 		  Groups),
