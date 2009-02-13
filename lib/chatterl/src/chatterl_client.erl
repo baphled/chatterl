@@ -257,7 +257,7 @@ terminate(Reason, State) ->
     GroupsList = gb_trees:values(State#client.groups),
     gen_server:call({global, chatterl_serv},
 		    {disconnect,State#client.name,GroupsList}, infinity),
-    io:format("~p is disconnecting...~p~n", [State#client.name,Reason]),
+    io:format("~p is disconnected...~p~n", [State#client.name,Reason]),
     ok.
 
 %%--------------------------------------------------------------------
