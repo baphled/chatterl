@@ -172,6 +172,20 @@ handle_call({join_group, Group}, _From, State) ->
         {State#client.groups,{error, "Unknown error!"}}
     end,
   {reply, Result, State#client{groups = NewTree}};
+handle_call({leave_group,Group},_From,State) ->
+  {NewTree,Result} =
+    case gen_server:call({global, chatterl_serv}, {get_group, Group}, infinity) of
+      {Group, GroupPid} ->
+        case gen_server:call(GroupPid, {leave, State#client.name}, infinity) of
+          {ok, _Msg} ->
+            {gb_trees:delete(Group, State#client.groups),
+             {ok, drop_group}};
+          _ -> {State#client.groups,{error, "Unable to disconnect!"}}
+        end;
+      _ ->
+        {State#client.groups,{error, "Unknown error!"}}
+    end,
+  {reply, Result, State#client{groups = NewTree}};
 handle_call({add_group, Group, Pid}, _From, State) ->
   io:format("Joining group: ~p~n",[Group]),
   NewTree = gb_trees:insert(Group, {Group, Pid}, State#client.groups),
