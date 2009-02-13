@@ -66,7 +66,7 @@ stop(Client) ->
 %% @end
 %%--------------------------------------------------------------------
 join(Group) ->
-    determine_group_action(join,Group).
+    gen_server:call({global,self()},{join_group,Group}).
 
 %%--------------------------------------------------------------------
 %% @doc
@@ -76,7 +76,7 @@ join(Group) ->
 %% @end
 %%--------------------------------------------------------------------
 leave(Group) ->
-    determine_group_action(leave,Group).
+    gen_server:call({global,self()},{leave_group,Group}).
 
 %%--------------------------------------------------------------------
 %% @doc
@@ -186,14 +186,6 @@ handle_call({leave_group,Group},_From,State) ->
         {State#client.groups,{error, "Unknown error!"}}
     end,
   {reply, Result, State#client{groups = NewTree}};
-handle_call({add_group, Group, Pid}, _From, State) ->
-  io:format("Joining group: ~p~n",[Group]),
-  NewTree = gb_trees:insert(Group, {Group, Pid}, State#client.groups),
-  {reply, {ok, "Joined group"}, State#client{groups = NewTree}};
-handle_call({drop_group, Group}, _From, State) ->
-    io:format("Disconnecting from: ~p~n",[Group]),
-    NewTree = gb_trees:delete(Group, State#client.groups),
-    {reply, {ok,"Dropped from group"}, State#client{groups = NewTree}};
 handle_call({private_msg,Client,Message},_From,State) ->
     Result = case gen_server:call({global, chatterl_serv}, {user_lookup, Client}, infinity) of
 	{error, Error} -> {error, Error};
@@ -278,59 +270,3 @@ terminate(Reason, State) ->
 code_change(OldVsn, State, _Extra) ->
     io:format("Updating system from:~p~n",[OldVsn]),
     {ok, State}.
-
-%%--------------------------------------------------------------------
-%%% Internal functions
-%%--------------------------------------------------------------------
-%%--------------------------------------------------------------------
-%% @private
-%% @doc
-%% Determines the action that needs to be taken out on a group
-%%
-%% Is used by the client API to simply the calls made to drop and join
-%% as both pieces of functionality are simular, it made sense to refactor
-%% them into the below code.
-%%
-%% @spec determine_group_action(Action,Group) -> {ok,Message}
-%%                                               | {error,Error}
-%% @end
-%%--------------------------------------------------------------------
-determine_group_action(Action,Group) ->
-    case gen_server:call({global, chatterl_serv}, {get_group, Group}, infinity) of
-	{GroupName, GroupPid} ->
-	    {GroupCall,ClientCall} =
-		case Action of
-		    join ->
-			{join,{add_group,GroupName,GroupPid}};
-		    leave ->
-			{leave,{drop_group,GroupName}};
-		    _ -> {error, {"Illegal action",Action}}
-		end,
-	    group_action(GroupCall,ClientCall,GroupPid);
-	false ->
-	    {error, "Group doesn't exist!"}
-    end.
-%%--------------------------------------------------------------------
-%% @private
-%% @doc
-%% Makes a call to our Chatterl client.
-%%
-%% Used by determine_group_action to carry out a actual call to our
-%% client process.
-%%
-%% @see determine_group_action
-%% @spec group_action(GroupCall,ClientCall,GroupPid) -> {ok,joined_group} | {error,Error}
-%% @end
-%%--------------------------------------------------------------------
-group_action(GroupCall,ClientCall,GroupPid) ->
-    case gen_server:call(self(), client_name, infinity) of
-	{name, Client} ->
-	    case gen_server:call(GroupPid, {GroupCall, Client}, infinity) of
-		{ok, _Msg} ->
-		    gen_server:call(chatterl_client, ClientCall, infinity),
-		    {ok, joined_group};
-		_ -> {error, "Unable to connect!"}
-	    end;
-	_ ->
-	    {error, "Unknown error!"}
-    end.
