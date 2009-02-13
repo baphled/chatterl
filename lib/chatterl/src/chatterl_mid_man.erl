@@ -159,7 +159,7 @@ user_groups(ContentType,Client) ->
           [] ->
              {"success",build_carrier("groups","")};
           Groups ->
-            GroupsList = [build_carrier("group",format_messages(Group)) || Group <- Groups],
+            GroupsList = [build_carrier("group",Group) || {Group,_Pid} <- Groups],
             {"success",build_carrier("groups",GroupsList)}
         end;
       false ->
