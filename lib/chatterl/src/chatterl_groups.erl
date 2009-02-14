@@ -156,7 +156,6 @@ handle_call({send_msg,User,Message},_From,State) ->
             CreatedOn = erlang:localtime(),
 		case gb_trees:is_defined({User,CreatedOn}, State#group.messages) of
 		    false ->
-			io:format("~s: ~s~n", [User,Message]),
 			determine_user_action(State#group.name,{receive_msg,{CreatedOn,{group,User},Message}},
 					      gb_trees:values(State#group.users)),
 			{{ok, msg_sent},
