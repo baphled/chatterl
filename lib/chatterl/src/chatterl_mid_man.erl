@@ -370,7 +370,7 @@ handle_call({group_msg, Sender, Group, Message}, _From, State) ->
 		    {error,"Unable to send msg!"};
 		{ok, Pid} ->
 		    Pid ! {group_msg, Sender, Group, Message},
-		    {ok, "Sending group msg..."}
+		    {ok,"Message sent"}
 	    end,
     {reply, Reply, State};
 handle_call({private_msg, Sender, Client, Message}, _From, State) ->
