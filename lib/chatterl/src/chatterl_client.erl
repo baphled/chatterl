@@ -207,7 +207,7 @@ handle_call({receive_msg, CreatedOn, Client, Msg}, _From, State) ->
 		{{error,no_duplicates},State#client.messages};
 	    false ->
 		{{ok,sent_msg},
-		 gb_trees:insert({Client,CreatedOn}, {Client,CreatedOn,Msg}, State#client.messages)}
+		 gb_trees:insert({Client,CreatedOn}, {CreatedOn,Client,Msg}, State#client.messages)}
 	end,
     {reply, Reply, State#client{messages = NewTree}};
 handle_call(poll_messages, _From,State) ->
