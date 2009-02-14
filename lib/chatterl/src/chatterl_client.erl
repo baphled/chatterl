@@ -190,9 +190,9 @@ handle_call({private_msg,Client,Message},_From,State) ->
     Result = case gen_server:call({global, chatterl_serv}, {user_lookup, Client}, infinity) of
 	{error, Error} -> {error, Error};
 	{ok, ClientName, _ClientPid} ->
-		     case ClientName =:= State#client.name of
+		     case ClientName =:= {client,State#client.name} of
 			 false ->
-			     gen_server:call({global,Client},{receive_msg, erlang:localtime(),{client,State#client.name} ,Message}),
+			     gen_server:call({global,Client},{receive_msg,erlang:localtime(),{client,ClientName},Message}),
 			     {ok,msg_send};
 			 true ->
 			     {error, "Can not send to self!"}
