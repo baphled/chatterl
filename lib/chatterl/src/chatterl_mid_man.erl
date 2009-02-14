@@ -142,8 +142,7 @@ user_poll(ContentType,Client) ->
         case gen_server:call({global,Client},poll_messages) of
           [] -> {"success",build_carrier("messages","")};
           Messages ->
-            MessagesList = [build_carrier("message",format_messages(Message))
-                            ||Message <- Messages],
+            MessagesList = [build_carrier("message",format_messages(Message))  || Message <- Messages],
             {"success",build_carrier("messages",MessagesList)}
         end;
       false ->
