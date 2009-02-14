@@ -60,7 +60,8 @@ build_carrier(Type,Message) ->
 %% @end
 %%--------------------------------------------------------------------
 format_messages({Date,Client,Message}) ->
-    [build_carrier("date",Date),build_carrier("client",Client),build_carrier("msgbody",Message)].
+  {Type,Name} = Client,
+  [build_carrier("date",Date),build_carrier(atom_to_list(Type),Name),build_carrier("msgbody",Message)].
 
 %%--------------------------------------------------------------------
 %% @private
