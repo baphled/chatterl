@@ -109,7 +109,7 @@ handle_messages_json(Type,MessagesCarrier,CarrierType) ->
 	true ->
 	    case MessagesCarrier of
 		[] -> %Empty list.
-		    {struct,[{Type,[]}]};
+		    {struct,[{CarrierType,{struct,[{Type,[]}]}}]};
 		[{carrier,_MessageType,MessageData}] ->	% A Single message.
                 io:format("~s~n",[_MessageType]),
 		    {struct,[{CarrierType,
