@@ -157,10 +157,10 @@ handle_call({send_msg,User,Message},_From,State) ->
 		case gb_trees:is_defined({User,CreatedOn}, State#group.messages) of
 		    false ->
 			io:format("~s: ~s~n", [User,Message]),
-			determine_user_action(State#group.name,{receive_msg,{CreatedOn,User,Message}},
+			determine_user_action(State#group.name,{receive_msg,{CreatedOn,{group,User},Message}},
 					      gb_trees:values(State#group.users)),
 			{{ok, msg_sent},
-			 gb_trees:insert({User,CreatedOn}, {CreatedOn,User,Message}, State#group.messages)};
+			 gb_trees:insert({User,CreatedOn}, {CreatedOn,{client,User},Message}, State#group.messages)};
 		    true ->
 			{{error, already_sent}, State#group.messages}
 		end
@@ -247,7 +247,7 @@ determine_user_action(GroupName,{Action,PayLoad},UsersList) ->
 	    case PayLoad of
 		{CreatedOn,Sender,Message} ->
 		    GroupMsg = "Sending to users ~s~n",
-		    send_msg_to_users({receive_msg, CreatedOn,Sender,Message},UsersList,GroupMsg);
+		    send_msg_to_users({receive_msg,CreatedOn,Sender,Message},UsersList,GroupMsg);
 		_ ->
 		    {error, "Illegal payload format"}
 	    end;
