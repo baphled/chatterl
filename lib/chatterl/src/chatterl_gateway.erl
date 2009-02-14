@@ -193,7 +193,8 @@ get_content_type(Type) ->
 %% @end
 %%--------------------------------------------------------------------
 handle(Path,ContentType,Req) ->
-  io:format("~s - Executing Path: ~s~n",[httpd_util:rfc1123_date(erlang:localtime()),Path]),
+  % Log Action
+  %io:format("~s - Executing Path: ~s~n",[httpd_util:rfc1123_date(erlang:localtime()),Path]),
   Response =
     case Path of
       %% Client based requests
