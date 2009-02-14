@@ -28,8 +28,6 @@
 -record(state, {}).
 %% Record used to pass our basic messages from the gateway to chatterl_web
 -define(SERVER, ?MODULE).
--define(REQ(RP), proplists:get_value(req, RP)).
--define(PATH(RP), proplists:get_value(path, RP)).
 %%====================================================================
 %% API
 %%====================================================================
