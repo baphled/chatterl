@@ -159,7 +159,7 @@ handle_call({send_msg,User,Message},_From,State) ->
 			determine_user_action(State#group.name,{receive_msg,{CreatedOn,{group,State#group.name},User ++ ": " ++Message}},
 					      gb_trees:values(State#group.users)),
 			{{ok, msg_sent},
-			 gb_trees:insert({User,CreatedOn}, {{client,User},CreatedOn,Message}, State#group.messages)};
+			 gb_trees:insert({User,CreatedOn}, {CreatedOn,{client,User},Message}, State#group.messages)};
 		    true ->
 			{{error, already_sent}, State#group.messages}
 		end
