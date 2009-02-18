@@ -50,7 +50,7 @@ start() ->
 %%--------------------------------------------------------------------
 connect(ContentType,Client) ->
   {Type,Reply} =
-    case gen_server:call({global, ?SERVER}, {connect, Client}) of
+    case gen_server:call({global, ?SERVER}, {connect, Client},infinity) of
       {ok,_Msg} ->
         {"success",Client++" now connected"};
       {error,_Error} ->
@@ -66,7 +66,7 @@ connect(ContentType,Client) ->
 %%--------------------------------------------------------------------
 disconnect(ContentType,Client) ->
   {Type,Reply} =
-    case gen_server:call({global, ?SERVER}, {disconnect, Client}) of
+    case gen_server:call({global, ?SERVER}, {disconnect, Client},infinity) of
       {ok,Msg} ->
         {"success",Msg};
       {error,Error} ->
@@ -82,7 +82,7 @@ disconnect(ContentType,Client) ->
 %%--------------------------------------------------------------------
 user_list(ContentType) ->
   {Type,Result} =
-    case gen_server:call({global,chatterl_serv},list_users) of
+    case gen_server:call({global,chatterl_serv},list_users,infinity) of
       [] -> {"success",build_carrier("clients","")};
       Clients ->
         ClientsList = [build_carrier("client",Client)||Client <- Clients],
@@ -98,7 +98,7 @@ user_list(ContentType) ->
 %%--------------------------------------------------------------------
 user_list(ContentType,Group) ->
   {Type,Record} =
-    case gen_server:call({global,chatterl_serv},{group_exists,Group}) of
+    case gen_server:call({global,chatterl_serv},{group_exists,Group},infinity) of
       true -> ClientsList = [build_carrier("client",Client)
                              || {Client,{_Pid,_Ref}}
                                   <- gen_server:call({global,Group},list_users)],
@@ -116,9 +116,9 @@ user_list(ContentType,Group) ->
 %%--------------------------------------------------------------------
 user_msg(ContentType,{Sender, Client, Message}) ->
   {Type,Reply} =
-    case gen_server:call({global,chatterl_serv},{user_exists,Sender}) of
+    case gen_server:call({global,chatterl_serv},{user_exists,Sender},infinity) of
       true ->
-        case gen_server:call({global, ?MODULE}, {private_msg, Sender, Client, Message}) of
+        case gen_server:call({global, ?MODULE}, {private_msg, Sender, Client, Message},infinity) of
           {ok,_Msg} ->
             {"success","Sending msg..."};
           {error,Error} ->
@@ -139,7 +139,7 @@ user_poll(ContentType,Client) ->
   {Type,Result} =
     case gen_server:call({global,chatterl_serv},{user_exists,Client}) of
       true ->
-        case gen_server:call({global,Client},poll_messages) of
+        case gen_server:call({global,Client},poll_messages,infinity) of
           [] -> {"success",build_carrier("messages","")};
           Messages ->
             MessagesList = [build_carrier("message",format_messages(Message))  || Message <- Messages],
@@ -152,7 +152,7 @@ user_poll(ContentType,Client) ->
 
 user_groups(ContentType,Client) ->
   {Type,Result} =
-    case gen_server:call({global,chatterl_serv},{user_exists,Client}) of
+    case gen_server:call({global,chatterl_serv},{user_exists,Client},infinity) of
       true ->
         case gen_server:call({global,Client},groups) of
           [] ->
@@ -207,7 +207,7 @@ group_create(ContentType,{Group,Description}) ->
 %%--------------------------------------------------------------------
 group_drop(ContentType,Group) ->
   {Type,Result} =
-    case gen_server:call({global,chatterl_serv},{drop,Group}) of
+    case gen_server:call({global,chatterl_serv},{drop,Group},infinity) of
       {error,{Error,_GroupName}} ->
         {"failure",Error};
       {ok,ResponseMsg} ->
@@ -223,9 +223,9 @@ group_drop(ContentType,Group) ->
 %%--------------------------------------------------------------------
 group_info(ContentType,Group) ->
   {Type,Result} =
-    case gen_server:call({global,chatterl_serv},{group_exists,Group}) of
+    case gen_server:call({global,chatterl_serv},{group_exists,Group},infinity) of
       true ->
-        Data = gen_server:call({global,chatterl_serv},{group_info,Group}),
+        Data = gen_server:call({global,chatterl_serv},{group_info,Group},infinity),
         Results = [build_carrier(atom_to_list(Atom),Info)|| {Atom,Info} <- Data],
         {"success",build_carrier("groups",Results)};
       false ->
@@ -241,9 +241,9 @@ group_info(ContentType,Group) ->
 %%--------------------------------------------------------------------
 group_join(ContentType,{Group,Client}) ->
   {Type,Reply} =
-	case gen_server:call({global,chatterl_serv},{group_exists,Group}) of
+	case gen_server:call({global,chatterl_serv},{group_exists,Group},infinity) of
 	    true ->
-		 case gen_server:call({global,Client},{join_group,Group}) of
+		 case gen_server:call({global,Client},{join_group,Group},infinity) of
 			{ok,_} ->
 			    {"success",Client ++ " joined group"};
 			{error,Error} ->
@@ -262,9 +262,9 @@ group_join(ContentType,{Group,Client}) ->
 %%--------------------------------------------------------------------
 group_leave(ContentType,{Group,Client}) ->
     {Type,Record} =
-	case gen_server:call({global,chatterl_serv},{user_exists,Client}) of
+	case gen_server:call({global,chatterl_serv},{user_exists,Client},infinity) of
 	    true ->
-		case gen_server:call({global,Client},{leave_group,Group}) of
+		case gen_server:call({global,Client},{leave_group,Group},infinity) of
 		    {ok, _ } ->
 			{"success",Client ++ " has disconnected from " ++ Group};
 		    {error,Error} ->
@@ -283,7 +283,7 @@ group_leave(ContentType,{Group,Client}) ->
 %%--------------------------------------------------------------------
 group_send(ContentType,{Group,Sender,Message}) ->
     {Type,Reply} =
-	case gen_server:call({global,chatterl_serv},{group_exists,Group}) of
+	case gen_server:call({global,chatterl_serv},{group_exists,Group},infinity) of
 	    true ->
 		case gen_server:call({global,?MODULE},{group_msg,Sender,Group,Message}, infinity) of
 		    {ok,Msg} ->
@@ -304,9 +304,9 @@ group_send(ContentType,{Group,Sender,Message}) ->
 %%--------------------------------------------------------------------
 group_poll(ContentType,Group) ->
      {Type,Result} =
-	case gen_server:call({global,chatterl_serv},{group_exists,Group}) of
+	case gen_server:call({global,chatterl_serv},{group_exists,Group},infinity) of
 	    true ->
-		case gen_server:call({global,Group},poll_messages) of
+		case gen_server:call({global,Group},poll_messages,infinity) of
 		    [] -> {"success",build_carrier("messages","")};
 		    Messages ->
 			MessagesList = [build_carrier("message",format_messages(Message))||Message <- Messages],
@@ -429,11 +429,11 @@ proxy_client(Messages) ->
       {'Exit',_SomePid,Reason} ->
         io:format("Crash: ~s~n",[Reason]);
       {private_msg, Sender, Client, Message} ->
-        gen_server:call({global,Sender},{private_msg,Client,Message}),
+        gen_server:call({global,Sender},{private_msg,Client,Message},infinity),
         io:format("Sent private message~n"),
         proxy_client(Messages);
       {group_msg, Sender, Group, Message} ->
-        gen_server:call({global,Group},{send_msg,Sender,Message}),
+        gen_server:call({global,Group},{send_msg,Sender,Message},infinity),
         io:format("Sent message from ~s to group: ~s~n", [Sender,Group]),
         proxy_client(Messages);
       {stop,Client} ->
