@@ -190,11 +190,12 @@ group_list(ContentType) ->
 %%--------------------------------------------------------------------
 group_create(ContentType,{Group,Description}) ->
   {Type,Result} =
-    case gen_server:call({global,chatterl_serv},{create,Group,Description}) of
+    case gen_server:call({global,chatterl_serv},{create,Group,Description}, infinity) of
       {error,_Error} ->
         {"failure","Unable to create group"};
       {ok,_GroupPid} ->
-        {"success","Group added"}
+        {"success","Group added"};
+      _ -> {"error","Unknown response."}
     end,
   get_response_body(ContentType,build_carrier(Type,Result)).
 
