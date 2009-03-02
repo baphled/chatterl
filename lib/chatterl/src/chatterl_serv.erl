@@ -184,7 +184,7 @@ handle_call(list_groups, _Client, State) ->
     {reply, gb_trees:keys(State#chatterl.groups), State};
 handle_call({get_group, Group}, _From, State) ->
     Reply = case gb_trees:lookup(Group, State#chatterl.groups) of
-		{value, Value} -> Value;
+		{value,Value} -> Value;
 	        _ -> false
 	    end,
     {reply, Reply, State};
@@ -249,7 +249,7 @@ handle_call({create, Group, Description}, _From, State) ->
 			link(GroupPid),
 			io:format("Group created: ~s~n",[Group]),
 			{{ok, GroupPid},
-			 gb_trees:insert(Group, {Description, GroupPid}, State#chatterl.groups)}
+			 gb_trees:insert(Group, {Group, Description, GroupPid}, State#chatterl.groups)}
 		end
 	end,
     {reply, Reply, State#chatterl{ groups=NewTree }};
