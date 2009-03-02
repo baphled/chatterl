@@ -326,7 +326,7 @@ loop_xml_tuple(Type,Message) ->
 %% <a target="_blank" href="http://arandomurl.com/post/Simple-XML-in-Erlang">Link</a>
 %% @spec tuple_to_xml(Xml,Prolog) -> [XML]
 %%
-%% @endy
+%% @end
 %%--------------------------------------------------------------------
 tuple_to_xml(XmlTuple,Prolog) ->
   lists:flatten(xmerl:export_simple([XmlTuple],xmerl_xml,[{prolog,Prolog}])).

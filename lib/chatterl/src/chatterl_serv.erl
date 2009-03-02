@@ -83,10 +83,10 @@ disconnect(User) ->
 %%--------------------------------------------------------------------
 group_description(Group) ->
     case gen_server:call({global, ?MODULE}, {get_group, Group}, infinity) of
-	{Name, GroupPid} ->
+	{_Name, GroupPid} ->
 	    case is_pid(GroupPid) of
 		true -> gen_server:call(GroupPid, description);
-		_ -> {error, {"Unable to find pid for ~",[Name]}}
+		_ -> {error, {"Unable to find find " ++ Group}}
 	    end;
 	_ -> {error, "Can not find group."}
     end.

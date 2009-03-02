@@ -15,19 +15,46 @@
 
 %% API
 %% Client based calls
--export([start/0,connect/2,disconnect/2,user_list/1,user_list/2,user_msg/2,user_poll/2,user_groups/2]).
+-export([
+         start/0,
+         connect/2,
+         disconnect/2,
+         user_list/1,
+         user_list/2,
+         user_msg/2,
+         user_poll/2,
+         user_groups/2
+        ]).
 
 %% Group based calls
--export([group_join/2,group_leave/2,group_info/2,group_send/2,group_poll/2,group_list/1]).
+-export([
+         group_join/2,
+         group_leave/2,
+         group_info/2,
+         group_send/2,
+         group_poll/2,
+         group_list/1
+        ]).
 
 %% Admin based calls
 -export([group_create/2,group_drop/2]).
 
 %% gen_server callbacks
--export([init/1, handle_call/3, handle_cast/2, handle_info/2,
-	 terminate/2, code_change/3]).
+-export([
+         init/1,
+         handle_call/3,
+         handle_cast/2,
+         handle_info/2,
+	 terminate/2,
+         code_change/3
+        ]).
 
--import(message_handler, [get_response_body/2,build_carrier/2,format_messages/1]).
+%% Message handler methods used to handle our API calls
+-import(message_handler, [
+                          get_response_body/2,
+                          build_carrier/2,
+                          format_messages/1
+                         ]).
 
 -define(SERVER, ?MODULE).
 %%====================================================================
@@ -45,7 +72,7 @@ start() ->
 %%--------------------------------------------------------------------
 %% @doc Connects a client to the Chatterl system.
 %%
-%% @spec connect(Client) -> {ResponseType,Message}
+%% @spec connect(ContentType,Client) -> {ResponseType,Message}
 %% @end
 %%--------------------------------------------------------------------
 connect(ContentType,Client) ->
@@ -61,7 +88,7 @@ connect(ContentType,Client) ->
 %%--------------------------------------------------------------------
 %% @doc Disconnects a client to the Chatterl system.
 %%
-%% @spec disconnect(Client) -> {ResponseType,Message}
+%% @spec disconnect(ContentType,Client) -> {ResponseType,Message}
 %% @end
 %%--------------------------------------------------------------------
 disconnect(ContentType,Client) ->
@@ -77,7 +104,7 @@ disconnect(ContentType,Client) ->
 %%--------------------------------------------------------------------
 %% @doc Lists the clients connected to Chatterl
 %%
-%% @spec user_list() -> {carrier,ResponseType,Message}
+%% @spec user_list(ContentType) -> {carrier,ResponseType,Message}
 %% @end
 %%--------------------------------------------------------------------
 user_list(ContentType) ->
@@ -93,7 +120,7 @@ user_list(ContentType) ->
 %%--------------------------------------------------------------------
 %% @doc List users connected to a specified group
 %%
-%% @spec user_list(Group) -> {carrier,ResponseType,Message}
+%% @spec user_list(ContentType,Group) -> {carrier,ResponseType,Message}
 %% @end
 %%--------------------------------------------------------------------
 user_list(ContentType,Group) ->
@@ -111,7 +138,7 @@ user_list(ContentType,Group) ->
 %%--------------------------------------------------------------------
 %% @doc Allows a client to send a private message to another client.
 %%
-%% @spec user_msg(Sender,Client,Message) -> {carrier,ResponseType,Message}
+%% @spec user_msg(ContentType,{Sender,Client,Message}) -> {carrier,ResponseType,Message}
 %% @end
 %%--------------------------------------------------------------------
 user_msg(ContentType,{Sender, Client, Message}) ->
@@ -132,7 +159,7 @@ user_msg(ContentType,{Sender, Client, Message}) ->
 %%--------------------------------------------------------------------
 %% @doc Allows a client to retrieve private messages.
 %%
-%% @spec user_poll(Client) -> {carrier,ResponseType,Message}
+%% @spec user_poll(ContentType,Client) -> {carrier,ResponseType,Message}
 %% @end
 %%--------------------------------------------------------------------
 user_poll(ContentType,Client) ->
@@ -150,6 +177,12 @@ user_poll(ContentType,Client) ->
     end,
   get_response_body(ContentType,build_carrier(Type,Result)).
 
+%%--------------------------------------------------------------------
+%% @doc Retrieves a list of groups a client is joined to
+%%
+%% @spec user_groups(ContentType,Client) -> {carrier,ResponseType,Message}
+%% @end
+%%--------------------------------------------------------------------
 user_groups(ContentType,Client) ->
   {Type,Result} =
     case gen_server:call({global,chatterl_serv},{user_exists,Client},infinity) of
@@ -169,7 +202,7 @@ user_groups(ContentType,Client) ->
 %%--------------------------------------------------------------------
 %% @doc lists the groups on Chatterl
 %%
-%% @spec group_list() -> {carrier,ResponseType,Message}
+%% @spec group_list(ContentType) -> {carrier,ResponseType,Message}
 %% @end
 %%--------------------------------------------------------------------
 group_list(ContentType) ->
@@ -185,7 +218,7 @@ group_list(ContentType) ->
 %%--------------------------------------------------------------------
 %% @doc Creates a group on Chatterl.
 %%
-%% @spec group_create(Group,Description) -> {carrier,ResponseType,Message}
+%% @spec group_create(ContentType,{Group,Description}) -> {carrier,ResponseType,Message}
 %% @end
 %%--------------------------------------------------------------------
 group_create(ContentType,{Group,Description}) ->
@@ -202,7 +235,7 @@ group_create(ContentType,{Group,Description}) ->
 %%--------------------------------------------------------------------
 %% @doc Drops a group from Chatterl.
 %%
-%% @spec group_drop(Group) -> {carrier,ResponseType,Message}
+%% @spec group_drop(ContentType,Group) -> {carrier,ResponseType,Message}
 %% @end
 %%--------------------------------------------------------------------
 group_drop(ContentType,Group) ->
@@ -218,7 +251,7 @@ group_drop(ContentType,Group) ->
 %%--------------------------------------------------------------------
 %% @doc Retrieves information on a specified Chatterl group.
 %%
-%% @spec group_info(Group) -> {carrier,ResponseType,Message}
+%% @spec group_info(ContentType,Group) -> {carrier,ResponseType,Message}
 %% @end
 %%--------------------------------------------------------------------
 group_info(ContentType,Group) ->
@@ -236,7 +269,7 @@ group_info(ContentType,Group) ->
 %%--------------------------------------------------------------------
 %% @doc Allows a client to join a Chatterl group.
 %%
-%% @spec group_join(Group,Client) -> {carrier,ResponseType,Message}
+%% @spec group_join(ContentType,{Group,Client}) -> {carrier,ResponseType,Message}
 %% @end
 %%--------------------------------------------------------------------
 group_join(ContentType,{Group,Client}) ->
@@ -257,7 +290,7 @@ group_join(ContentType,{Group,Client}) ->
 %%--------------------------------------------------------------------
 %% @doc Allows a client to leave a Chatterl group.
 %%
-%% @spec group_leave(Group,Client) -> {carrier,ResponseType,Message}
+%% @spec group_leave(ContentType,{Group,Client}) -> {carrier,ResponseType,Message}
 %% @end
 %%--------------------------------------------------------------------
 group_leave(ContentType,{Group,Client}) ->
@@ -278,7 +311,7 @@ group_leave(ContentType,{Group,Client}) ->
 %%--------------------------------------------------------------------
 %% @doc Allows a client to send a message to a Chatterl group.
 %%
-%% @spec group_send(Group,Sender,Message) -> {carrier,ResponseType,Message}
+%% @spec group_send(ContentType,{Group,Sender,Message}) -> {carrier,ResponseType,Message}
 %% @end
 %%--------------------------------------------------------------------
 group_send(ContentType,{Group,Sender,Message}) ->
@@ -299,7 +332,7 @@ group_send(ContentType,{Group,Sender,Message}) ->
 %%--------------------------------------------------------------------
 %% @doc Allows a client to retrieve messages from a Chatterl group.
 %%
-%% @spec group_poll(Group) -> {carrier,ResponseType,Message}
+%% @spec group_poll(ContentType,Group) -> {carrier,ResponseType,Message}
 %% @end
 %%--------------------------------------------------------------------
 group_poll(ContentType,Group) ->
@@ -322,24 +355,31 @@ group_poll(ContentType,Group) ->
 %%====================================================================
 
 %%--------------------------------------------------------------------
-%% Function: init(Args) -> {ok, State} |
+%% @private
+%% @doc
+%% Initialises Chatterl middle man process.
+%%
+%% @spec init(Args) -> {ok, State} |
 %%                         {ok, State, Timeout} |
 %%                         ignore               |
 %%                         {stop, Reason}
-%% Description: Initiates the server
+%% @end
 %%--------------------------------------------------------------------
 init([]) ->
     io:format("Starting Chatterl Middle Man~n"),
     {ok, dict:new()}.
 
 %%--------------------------------------------------------------------
-%% Function: %% handle_call(Request, From, State) -> {reply, Reply, State} |
+%% @doc
+%% Handles our call messages
+%%
+%% @spec handle_call(Request, From, State) -> {reply, Reply, State} |
 %%                                      {reply, Reply, State, Timeout} |
 %%                                      {noreply, State} |
 %%                                      {noreply, State, Timeout} |
 %%                                      {stop, Reason, Reply, State} |
 %%                                      {stop, Reason, State}
-%% Description: Handling call messages
+%% @end
 %%--------------------------------------------------------------------
 handle_call({connect, Nickname}, _From, State) ->
     {Reply,NewState} =
@@ -385,44 +425,63 @@ handle_call({private_msg, Sender, Client, Message}, _From, State) ->
 		{ok,"Sending msg"}
 	end,
     {reply, Reply, State}.
+
 %%--------------------------------------------------------------------
-%% Function: handle_cast(Msg, State) -> {noreply, State} |
+%% @doc
+%% Handling cast messages
+%%
+%% @spec handle_cast(Msg, State) -> {noreply, State} |
 %%                                      {noreply, State, Timeout} |
 %%                                      {stop, Reason, State}
-%% Description: Handling cast messages
+%% @end
 %%--------------------------------------------------------------------
 handle_cast(_Msg, State) ->
     {noreply, State}.
 
 %%--------------------------------------------------------------------
-%% Function: handle_info(Info, State) -> {noreply, State} |
+%% @doc
+%% Handling all non call/cast messages
+%%
+%% @spec handle_info(Info, State) -> {noreply, State} |
 %%                                       {noreply, State, Timeout} |
 %%                                       {stop, Reason, State}
-%% Description: Handling all non call/cast messages
+%% @end
 %%--------------------------------------------------------------------
 handle_info(_Info, State) ->
     {noreply, State}.
 
+
 %%--------------------------------------------------------------------
-%% Function: terminate(Reason, State) -> void()
-%% Description: This function is called by a gen_server when it is about to
-%% terminate. It should be the opposite of Module:init/1 and do any necessary
-%% cleaning up. When it returns, the gen_server terminates with Reason.
-%% The return value is ignored.
+%% @doc
+%% Terminates the process.
+%%
+%% @spec terminate(Reason, State) -> {shutdown,GroupName}
+%% @end
 %%--------------------------------------------------------------------
 terminate(_Reason, _State) ->
     io:format("Terminating Chatterl Middle Man..."),
     ok.
 
 %%--------------------------------------------------------------------
-%% Func: code_change(OldVsn, State, Extra) -> {ok, NewState}
-%% Description: Convert process state when code is changed
+%% @doc
+%% Convert process state when code is changed
+%%
+%% @spec code_change(OldVsn, State, Extra) -> {ok, NewState}
+%% @end
 %%--------------------------------------------------------------------
 code_change(_OldVsn, State, _Extra) ->
     {ok, State}.
 
 %%--------------------------------------------------------------------
 %%% Internal functions
+%%--------------------------------------------------------------------
+
+%%--------------------------------------------------------------------
+%% @doc
+%% Send our client messages to Chatterl
+%%
+%% @spec proxy_client(Messages) -> {ok, NewState}
+%% @end
 %%--------------------------------------------------------------------
 proxy_client(Messages) ->
     receive
