@@ -161,7 +161,7 @@ handle_call(groups, _From, State) ->
 handle_call({join_group, Group}, _From, State) ->
   {NewTree,Result} =
     case gen_server:call({global, chatterl_serv}, {get_group, Group}, infinity) of
-      {Group, GroupPid} ->
+      {Group, _Description, GroupPid} ->
         case gen_server:call(GroupPid, {join, State#client.name}, infinity) of
           {ok, _Msg} ->
             {gb_trees:insert(Group, {Group, erlang:localtime(), GroupPid}, State#client.groups),
