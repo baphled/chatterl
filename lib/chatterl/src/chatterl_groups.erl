@@ -266,11 +266,8 @@ determine_user_action(GroupName,{Action,PayLoad},UsersList) ->
 send_msg_to_users(PayLoad,UsersList,GroupMsg) ->
     lists:foreach(
       fun(User) ->
-	      {Client,_PidInfo} = User,
-	      case gen_server:call({global, chatterl_serv}, {user_lookup, Client}, infinity) of
-		  {error, Error} -> io:format("Error: ~s~n",[Error]);
-		  {ok, ClientName, _ClientPid} -> io:format(GroupMsg, [ClientName]),
-                                                  gen_server:call({global,ClientName},PayLoad)
-	      end
+          {Client,_PidInfo} = User,
+          io:format(GroupMsg, [Client]),
+          gen_server:call({global,Client},PayLoad)
       end,
       UsersList).
