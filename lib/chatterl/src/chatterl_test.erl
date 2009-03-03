@@ -10,11 +10,11 @@ chatterl_serv_test_() ->
 %% Test that our groups function as expected.
 %% Instead of testing that the group can be created we'll create and group drops on setup.
 chatterl_group_info_test_() ->
-  chatterl_groups:start("nu","a new room"),
-  [?_assertEqual({name,"nu"}, gen_server:call({global,"nu"},name)),
-   ?_assertEqual({description,"a new room"}, gen_server:call({global,"nu"},description)),
-   ?_assert(erlang:is_tuple(gen_server:call({global,"nu"},created))),
-   ?_assertEqual([], gen_server:call({global,"nu"},poll_messages))].
+  chatterl_groups:start("test","a room"),
+  [?_assertEqual({name,"test"}, gen_server:call({global,"test"},name)),
+   ?_assertEqual({description,"a room"}, gen_server:call({global,"test"},description)),
+   ?_assert(erlang:is_tuple(gen_server:call({global,"test"},created))),
+   ?_assertEqual([], gen_server:call({global,"test"},poll_messages))].
 
 %% Test that a client can connect to a group.
 chatterl_client_can_join_groups_test_() ->
