@@ -283,13 +283,13 @@ clean_xml([Data]) ->
 %% @end
 %%--------------------------------------------------------------------
 xml_tuple(Type,Message) when is_list(Message) ->
-    case Message of
+  NewData = case Message of
 	[Data] ->
 	    Data;
 	Data ->
 	    Data
     end,
-    {chatterl,[],[{response,[],[{list_to_atom(Type),[],Data}]}]}.
+    {chatterl,[],[{response,[],[{list_to_atom(Type),[],NewData}]}]}.
 
 %%--------------------------------------------------------------------
 %% @private
