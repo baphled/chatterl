@@ -117,26 +117,26 @@ handle_call(list_users, _From, State) ->
     Reply = gb_trees:values(State#group.users),
     {reply, Reply, State};
 handle_call({join, User}, From, State) ->
-    {Reply, NewTree} =
-	case gb_trees:is_defined(User, State#group.users) of
-	    true ->
-		{{error, "Already joined"}, State#group.users};
-	    false ->
-		case is_list(User) of
-		    true ->
-			case gen_server:call({global,chatterl_serv},{user_exists,User}) of
-			    true ->
-				io:format("~s joined ~s~n", [User,State#group.name]),
-				{{ok, "User added"},
-				 gb_trees:insert(User, {User,From}, State#group.users)};
-			    false ->
-				{{error, "not connected"}, State#group.users}
-			end;
-		    false ->io:format("~s not a valid user",[undefined]),
-			    	{{error, "Invalid user name"}, State#group.users}
-		end
-	end,
-    {reply, Reply, State#group{users=NewTree}};
+  {Reply, NewTree} =
+    case gb_trees:is_defined(User, State#group.users) of
+      true ->
+        {{error, "Already joined"}, State#group.users};
+      false ->
+        case is_list(User) of
+          true ->
+            case gen_server:call({global,chatterl_serv},{user_exists,User}) of
+              true ->
+                io:format("~s joined ~s~n", [User,State#group.name]),
+                {{ok, "User added"},
+                 gb_trees:insert(User, {User,From}, State#group.users)};
+              false ->
+                {{error, "not connected"}, State#group.users}
+            end;
+          false ->io:format("~s not a valid user",[undefined]),
+                  {{error, "Invalid user name"}, State#group.users}
+        end
+    end,
+  {reply, Reply, State#group{users=NewTree}};
 handle_call({leave, User}, _From, State) ->
     {Reply, NewTree} =
 	case gb_trees:is_defined(User, State#group.users) of
