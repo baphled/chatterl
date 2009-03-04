@@ -108,18 +108,18 @@ private_msg(Sender,Client,Message) ->
 %% @end
 %%--------------------------------------------------------------------
 init([Client]) ->
-    process_flag(trap_exit, true),
-    case gen_server:call({global, chatterl_serv}, {connect, Client}, infinity) of
-	{error, Error} ->
-	    io:format("~p~n", [Error]),
-	    {stop, Error};
-	{ok, Message} ->
-	    io:format("~p is ~p.~n", [Client, Message]),
-	    {ok, #client{
-	       name = Client,
-	       messages = gb_trees:empty(),
-	      groups = gb_trees:empty()}}
-    end.
+  process_flag(trap_exit, true),
+  case gen_server:call({global, chatterl_serv}, {connect, Client}, infinity) of
+    {error, Error} ->
+      io:format("~p~n", [Error]),
+      {stop, Error};
+    {ok, Message} ->
+      io:format("~p is ~p.~n", [Client, Message]),
+      {ok, #client{
+         name = Client,
+         messages = gb_trees:empty(),
+         groups = gb_trees:empty()}}
+  end.
 
 %%--------------------------------------------------------------------
 %% @doc
@@ -200,7 +200,6 @@ handle_call({private_msg,Client,Message},_From,State) ->
 	     end,
     {reply,Result,State};
 handle_call({receive_msg, CreatedOn, Client, Msg}, _From, State) ->
-    io:format("~p:~p - ~p~n", [httpd_util:rfc1123_date(CreatedOn),Client,Msg]),
     {Reply, NewTree} =
 	case gb_trees:is_defined({Client,CreatedOn},State#client.messages) of
 	    true ->
