@@ -14,6 +14,7 @@
 -module(chatterl_serv).
 -behaviour(gen_server).
 
+
 %% API
 -export([start/0,stop/0,connect/1,disconnect/1,create/2,drop/1]).
 %% User specific
