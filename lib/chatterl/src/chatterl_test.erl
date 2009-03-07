@@ -24,17 +24,33 @@ chatterl_group_info_test_() ->
          ?assertEqual({name,"nu"},gen_server:call({global,Group},name)),
          ?assertEqual({description,"a nu room"}, gen_server:call({global,Group},description)),
          ?assert(erlang:is_tuple(gen_server:call({global,Group},created))),
-         ?assertEqual([],gen_server:call({global,Group},poll_messages)) end]}].
+         ?assertEqual([],gen_server:call({global,Group},poll_messages)),
+         ?assertEqual(stopped,chatterl_groups:stop(Group))
+     end]}].
+
+chatterl_client_api_test_() ->
+  [{setup, fun() ->
+               {Client,Group,Description} = {"noob","nu","a nu room"},
+               {ok, Pid} = start_client(Client,Group,Description),
+               register(chatterl_client_api_tests, Pid),
+               Pid end,
+    fun(_) ->
+        chatterl_serv:stop() end,
+   [fun() ->
+        {Client,Group} = {"noob","nu"},
+        ?assertEqual(stopped,chatterl_client:stop(Client))
+    end ]}].
 
 %% Test that a client can connect to a group.
-chatterl_client_can_join_groups_test_() ->
+chatterl_client_handle_test_() ->
   [{setup, fun() ->
                {Client,Group,Description} = {"noob","nu","a nu room"},
                {ok, Pid} = start_client(Client,Group,Description),
                register(chatterl_client_join_tests, Pid),
                Pid end,
     fun(_) ->
-        chatterl_serv:stop() end,
+        chatterl_serv:stop(),
+        chatterl_groups:stop("nu") end,
    [fun() ->
         {Client,Group} = {"noob","nu"},
         ?assertEqual([],gen_server:call({global,Group},list_users)),
@@ -50,7 +66,8 @@ chatterl_client_can_join_groups_test_() ->
         ?assertEqual({ok, "User added"},gen_server:call({global,Group},{join,Client})),
         ?assertMatch({error, user_not_joined},gen_server:call({global,Group},{send_msg,"blah","hey"})),
         ?assertEqual({ok, msg_sent},gen_server:call({global,Group},{send_msg,Client,"hey"})),
-        ?assert(erlang:is_list(gen_server:call({global,Group},poll_messages)))
+        ?assert(erlang:is_list(gen_server:call({global,Group},poll_messages))),
+        ?assertEqual(stopped,chatterl_client:stop(Client))
         end]}].
 
 
@@ -61,6 +78,9 @@ start_client(Client,Group,Description) ->
   {ok,Pid}.
 
 start_group(Group,Description) ->
-  {ok, Pid} = chatterl_serv:start(),
+  Pid = case chatterl_serv:start() of
+    {ok, P} -> P;
+    {error,{already_started,P}} -> P
+    end,
   chatterl_groups:start(Group,Description),
   {ok,Pid}.
