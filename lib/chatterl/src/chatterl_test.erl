@@ -2,8 +2,7 @@
 -include_lib("eunit/include/eunit.hrl").
 
 start_client(Client,Group,Description) ->
-  {ok,Pid} = chatterl_serv:start(),
-  chatterl_groups:start(Group,Description),
+  {ok,Pid} = start_group(Group,Description),
   chatterl_client:start(Client),
   {ok,Pid}.
 
@@ -44,13 +43,16 @@ chatterl_client_can_join_groups_test_() ->
                {ok, Pid} = start_client(Client,Group,Description),
                register(chatterl_client_tests, Pid),
                Pid end,
-    fun(P) ->
-        exit(P, shutdown) end,
+    fun(_) ->
+        chatterl_serv:stop() end,
    [fun() ->
         {Client,Group} = {"noob","nu"},
         ?assertEqual([],gen_server:call({global,Group},list_users)),
         ?assertEqual({ok, "User added"},gen_server:call({global,Group},{join,Client})),
         ?assert(erlang:is_list(gen_server:call({global,Group},list_users))),
-        ?assertEqual({error, "Already joined"},gen_server:call({global,Group},{join,"noob"})),
+        ?assertEqual({error, "Already joined"},gen_server:call({global,Group},{join,Client})),
         ?assertEqual({error, "not connected"},gen_server:call({global,Group},{join,"nonUsers"})),
-        ?assertEqual({error, "Invalid user name"},gen_server:call({global,Group},{join,{"nonUsers"}})) end]}].
+        ?assertEqual({error, "Invalid user name"},gen_server:call({global,Group},{join,{"nonUsers"}})),
+        ?assertEqual({ok, dropped}, gen_server:call({global,Group},{leave,Client})),
+        ?assertEqual({error, "Not connected"}, gen_server:call({global,Group},{leave,Client}))
+        end]}].
