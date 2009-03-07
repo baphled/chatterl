@@ -21,6 +21,7 @@ chatterl_group_info_test_() ->
         chatterl_serv:stop() end,
     [fun() ->
          Group = "nu",
+         ?assert(erlang:is_tuple(gen_server:call({global, chatterl_serv}, {get_group, Group}, infinity))),
          ?assertEqual({name,"nu"},gen_server:call({global,Group},name)),
          ?assertEqual({description,"a nu room"}, gen_server:call({global,Group},description)),
          ?assert(erlang:is_tuple(gen_server:call({global,Group},created))),
@@ -49,8 +50,7 @@ chatterl_client_handle_test_() ->
                register(chatterl_client_join_tests, Pid),
                Pid end,
     fun(_) ->
-        chatterl_serv:stop(),
-        chatterl_groups:stop("nu") end,
+        chatterl_serv:stop() end,
    [fun() ->
         {Client,Group} = {"noob","nu"},
         ?assertEqual([],gen_server:call({global,Group},list_users)),
@@ -66,6 +66,7 @@ chatterl_client_handle_test_() ->
         ?assertEqual({ok, "User added"},gen_server:call({global,Group},{join,Client})),
         ?assertMatch({error, user_not_joined},gen_server:call({global,Group},{send_msg,"blah","hey"})),
         ?assertEqual({ok, msg_sent},gen_server:call({global,Group},{send_msg,Client,"hey"})),
+        ?assertEqual({error,already_sent},gen_server:call({global,Client},{group_msg,Group,"hey"})),
         ?assert(erlang:is_list(gen_server:call({global,Group},poll_messages))),
         ?assertEqual(stopped,chatterl_client:stop(Client))
         end]}].
@@ -82,5 +83,5 @@ start_group(Group,Description) ->
     {ok, P} -> P;
     {error,{already_started,P}} -> P
     end,
-  chatterl_groups:start(Group,Description),
+  chatterl_serv:create(Group,Description),
   {ok,Pid}.
