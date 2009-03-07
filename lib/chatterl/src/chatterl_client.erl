@@ -142,7 +142,7 @@ handle_call({group_msg,Group,Msg},_From,State) ->
 	case gen_server:call({global, chatterl_serv}, {get_group, Group}, infinity) of
 	    false ->
 		{error, "Unable to send message"};
-	    {GroupName, GroupPid} ->
+	    {GroupName, _Description,GroupPid} ->
 		case gen_server:call(GroupPid, {send_msg, State#client.name, Msg}, infinity) of
 		    {ok, msg_sent} ->
 			io:format("Sent message to: ~p~n",[GroupName]),
