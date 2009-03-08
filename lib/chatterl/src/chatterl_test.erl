@@ -3,8 +3,19 @@
 
 %% Test that our groups function as expected.
 %% Instead of testing that the group can be created we'll create and group drops on setup.
-
 chatterl_serv_stop_test_() ->
+  [{setup, fun() ->
+               {ok,Pid} = chatterl_serv:start(),
+               register(chatterl_serv_stop_tests, Pid),
+               Pid end,
+    fun(_) ->
+        [] end,
+    [fun() ->
+         ?assertEqual(stopped,chatterl_serv:stop())
+         end ]}].
+
+%% Test chatterl_serv functionality
+chatterl_serv_test_() ->
   [{setup, fun() ->
                {ok,Pid} = chatterl_serv:start(),
                register(chatterl_serv_tests, Pid),
@@ -17,6 +28,7 @@ chatterl_serv_stop_test_() ->
          ?assertEqual([],chatterl_serv:list_users()),
          ?assertEqual({error,"Group doesn't exist!"},chatterl_serv:list_users(Group1)),
          ?assert(erlang:is_tuple(chatterl_serv:create(Group1,Description))),
+         ?assertEqual({error,already_created},chatterl_serv:create(Group1,Description)),
          ?assertEqual([],chatterl_serv:list_users(Group1)),
          ?assertEqual(["room"],chatterl_serv:list_groups()),
          chatterl_serv:create(Group2,"anuva room"),
@@ -59,7 +71,6 @@ chatterl_client_handle_test_() ->
                {Client1,Client2,Group,Description} = {"noobie","blah","anuva1","a nu room"},
                {ok, Pid} = start_client(Client1,Group,Description),
                chatterl_client:start(Client2),
-               gen_server:call({global,Client1},{join_group,Group}),
                register(chatterl_client_handle_tests, Pid),
                Pid end,
     fun(_) ->
@@ -71,7 +82,7 @@ chatterl_client_handle_test_() ->
         ?assertEqual([], gen_server:call({global,Client2},groups)),
         ?assertEqual([], gen_server:call({global,Client2},poll_messages)),
         ?assertEqual({error,"Unknown error!"}, gen_server:call({global,Client2},{join_group,"none"})),
-        ?assertEqual({error,"Unable to connect!"}, gen_server:call({global,Client1},{join_group,Group})),
+        ?assertEqual({ok,joined_group}, gen_server:call({global,Client1},{join_group,Group})),
         %?assertEqual({ok,joined_group}, gen_server:call({global,Client2},{join_group,Group})),
         ?assertEqual(["anuva1"],gen_server:call({global,Client1},groups)),
         ?assertEqual({error, user_not_joined}, gen_server:call({global,Client2},{group_msg,Group,"sup"})),
