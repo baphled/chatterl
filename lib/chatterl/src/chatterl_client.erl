@@ -139,11 +139,11 @@ handle_call({stop,Reason},_From,State) ->
     {stop,Reason,stopped,State};
 handle_call({group_msg,Group,Msg},_From,State) ->
     Reply =
-	case gen_server:call({global, chatterl_serv}, {get_group, Group}, infinity) of
+	case gen_server:call({global, chatterl_serv}, {get_group, Group}) of
 	    false ->
 		{error, "Unable to send message"};
 	    {GroupName, _Description,GroupPid} ->
-		case gen_server:call(GroupPid, {send_msg, State#client.name, Msg}, infinity) of
+		case gen_server:call(GroupPid, {send_msg, State#client.name, Msg}) of
 		    {ok, msg_sent} ->
 			io:format("Sent message to: ~p~n",[GroupName]),
 			{ok,group_msg_sent};
@@ -176,26 +176,25 @@ handle_call({leave_group,Group},_From,State) ->
   {NewTree,Result} =
     case gen_server:call({global, chatterl_serv}, {get_group, Group}, infinity) of
       {Group, GroupPid} ->
-        case gen_server:call(GroupPid, {leave, State#client.name}, infinity) of
+        case gen_server:call(GroupPid, {leave, State#client.name}) of
           {ok, _Msg} ->
             {gb_trees:delete(Group, State#client.groups),
              {ok, drop_group}};
-          _ -> {State#client.groups,{error, "Unable to disconnect!"}}
+          {error,Error} -> {State#client.groups,{error, Error}}
         end;
       _ ->
         {State#client.groups,{error, "Unknown error!"}}
     end,
   {reply, Result, State#client{groups = NewTree}};
 handle_call({private_msg,Client,Message},_From,State) ->
-    Result = case gen_server:call({global, chatterl_serv}, {user_lookup, Client}, infinity) of
-	{error, Error} -> {error, Error};
-	{ok, ClientName, _ClientPid} ->
-		     case Client =:= {client,State#client.name} of
-			 false ->
+    Result = case Client =:= {client,State#client.name} of
+	false ->{error, "Can not send to self!"};
+	true ->
+		     case gen_server:call({global, chatterl_serv}, {user_lookup, Client}) of
+                       {ok, ClientName, _ClientPid} ->
 			     gen_server:call({global,Client},{receive_msg,erlang:localtime(),{client,ClientName},Message}),
-			     {ok,msg_send};
-			 true ->
-			     {error, "Can not send to self!"}
+			     {ok,msg_sent};
+			 {error, Error} -> {error, Error}
 		     end
 	     end,
     {reply,Result,State};
