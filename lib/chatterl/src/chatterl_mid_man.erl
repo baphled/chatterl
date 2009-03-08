@@ -79,9 +79,9 @@ connect(ContentType,Client) ->
   {Type,Reply} =
     case gen_server:call({global, ?SERVER}, {connect, Client},infinity) of
       {ok,_Msg} ->
-        {"success",Client++" now connected"};
+        {"success",lists:append(Client," now connected")};
       {error,_Error} ->
-        {"failure","Unable to connect"}
+        {"failure",lists:append("Unable to connect ",Client)}
     end,
   get_response_body(ContentType,build_carrier(Type,Reply)).
 
@@ -381,6 +381,8 @@ init([]) ->
 %%                                      {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
+handle_call(stop, _From, State) ->
+    {stop, normal, stopped, State};
 handle_call({connect, Nickname}, _From, State) ->
     {Reply,NewState} =
 	case dict:find(Nickname, State) of
