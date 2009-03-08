@@ -151,13 +151,13 @@ handle_call(client_name, _From, State) ->
     Reply = {name, State#client.name},
     {reply, Reply, State};
 handle_call(groups, _From, State) ->
-    Reply = gb_trees:values(State#client.groups),
+    Reply = gb_trees:keys(State#client.groups),
     {reply, Reply, State};
 handle_call({join_group, Group}, _From, State) ->
   {NewTree,Result} =
     case gen_server:call({global, chatterl_serv}, {get_group, Group}, infinity) of
       {Group, _Description, GroupPid} ->
-        case gen_server:call(GroupPid, {join, State#client.name}, infinity) of
+        case gen_server:call({global,Group}, {join, State#client.name}) of
           {ok, _Msg} ->
             {gb_trees:insert(Group, {Group, erlang:localtime(), GroupPid}, State#client.groups),
              {ok, joined_group}};
@@ -169,17 +169,16 @@ handle_call({join_group, Group}, _From, State) ->
   {reply, Result, State#client{groups = NewTree}};
 handle_call({leave_group,Group},_From,State) ->
   {NewTree,Result} =
-    case gen_server:call({global, chatterl_serv}, {get_group, Group}, infinity) of
-      {Group, _Description,GroupPid} ->
-        case gen_server:call(GroupPid, {leave, State#client.name}) of
-          {ok, _Msg} ->
-            {gb_trees:delete(Group, State#client.groups),
-             {ok, drop_group}};
-          {error,Error} -> {State#client.groups,{error, Error}}
-        end;
-      _ ->
-        {State#client.groups,{error, "Unknown error!"}}
+    case gen_server:call({global,Group}, {leave, State#client.name}) of
+      {ok, _Msg} ->
+        {gb_trees:delete(Group, State#client.groups),
+         {ok, drop_group}};
+      {error,Error} -> {State#client.groups,{error, Error}}
     end,
+  {reply, Result, State#client{groups = NewTree}};
+handle_call({left_group,Group},_From,State) ->
+  {NewTree,Result} = {gb_trees:delete(Group, State#client.groups),
+                      {ok, drop_group}},
   {reply, Result, State#client{groups = NewTree}};
 handle_call({private_msg,Client,Message},_From,State) ->
     Result = case Client =:= State#client.name of
@@ -232,7 +231,7 @@ handle_info(Info, State) ->
 	{'EXIT', Pid, Why} ->
 	    handle_call({stop,Why}, Pid, State);
 	Unknown ->
-	    io:format("Caught unhandled message: ~w\n", [Unknown])
+	    io:format("Caught unhandled message: ~s\n", [Unknown])
     end,
     {noreply, State}.
 
@@ -247,9 +246,9 @@ handle_info(Info, State) ->
 %% @end
 %%--------------------------------------------------------------------
 terminate(Reason, State) ->
-    GroupsList = gb_trees:values(State#client.groups),
-    gen_server:call({global, chatterl_serv},
-		    {disconnect,State#client.name,GroupsList}, infinity),
+    %GroupsList = gb_trees:keys(State#client.groups),
+    %gen_server:call({global, chatterl_serv},
+  %{disconnect,State#client.name,GroupsList}, infinity),
     io:format("~p is disconnected...~p~n", [State#client.name,Reason]),
     ok.
 
