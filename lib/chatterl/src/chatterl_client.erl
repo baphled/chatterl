@@ -187,9 +187,9 @@ handle_call({leave_group,Group},_From,State) ->
     end,
   {reply, Result, State#client{groups = NewTree}};
 handle_call({private_msg,Client,Message},_From,State) ->
-    Result = case Client =:= {client,State#client.name} of
-	false ->{error, "Can not send to self!"};
-	true ->
+    Result = case Client =:= State#client.name of
+	true -> {error, "Can not send to self!"};
+	false ->
 		     case gen_server:call({global, chatterl_serv}, {user_lookup, Client}) of
                        {ok, ClientName, _ClientPid} ->
 			     gen_server:call({global,Client},{receive_msg,erlang:localtime(),{client,ClientName},Message}),
