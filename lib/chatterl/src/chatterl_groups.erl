@@ -210,7 +210,7 @@ terminate(Reason, State) ->
 	true ->
 	    io:format("No users to inform of shutdown~n")
     end,
-    io:format("Shutdown ~s:~nReason:~s~n",[State#group.name,io_lib:format("~s",[Reason])]),
+    io:format("Shutdown ~s:~nReason:~s~n",[State#group.name,Reason]),
     {shutdown, State#group.name}.
 
 %%--------------------------------------------------------------------
@@ -241,7 +241,7 @@ determine_user_action(GroupName,{Action,PayLoad},UsersList) ->
     case Action of
 	drop_group ->
 	    GroupMsg = "Sending disconnect message to ~s~n",
-	    send_msg_to_users({leave_group,GroupName},UsersList,GroupMsg);
+	    send_msg_to_users({left_group,GroupName},UsersList,GroupMsg);
 	receive_msg ->
 	    case PayLoad of
 		{CreatedOn,Sender,Message} ->
