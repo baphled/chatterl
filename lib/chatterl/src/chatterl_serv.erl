@@ -258,7 +258,7 @@ handle_call({drop, Group}, _From, State) ->
 	case gb_trees:is_defined(Group, State#chatterl.groups) of
 	    true ->
 		io:format("Dropping group: ~s~n",[Group]),
-		{value,{_Desc,Pid}} = gb_trees:lookup(Group, State#chatterl.groups),
+		{value,{_Group,_Desc,Pid}} = gb_trees:lookup(Group, State#chatterl.groups),
 		gen_server:call(Pid, stop),
 		unlink(Pid),
 		{{ok, "Group Dropped"},
