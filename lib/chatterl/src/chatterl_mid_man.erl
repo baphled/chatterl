@@ -131,7 +131,7 @@ user_list(ContentType,Group) ->
                                   <- gen_server:call({global,Group},list_users)],
               {"success",build_carrier("clients",ClientsList)};
       false ->
-        {"error","Group: "++ Group ++ " doesn't exist"}
+        {"error",lists:append(lists:append("Group: ",Group)," doesn't exist")}
     end,
   get_response_body(ContentType,build_carrier(Type,Record)).
 
@@ -146,10 +146,10 @@ user_msg(ContentType,{Sender, Client, Message}) ->
     case gen_server:call({global,chatterl_serv},{user_exists,Sender},infinity) of
       true ->
         case gen_server:call({global, ?MODULE}, {private_msg, Sender, Client, Message},infinity) of
-          {ok,_Msg} ->
-            {"success","Sending msg..."};
+          {ok,Msg} ->
+            {"success",Msg};
           {error,Error} ->
-            {"failure",Error}
+            {"error",Error}
         end;
       false ->
         {"failure","Client doesn't exist!"}
@@ -173,7 +173,7 @@ user_poll(ContentType,Client) ->
             {"success",build_carrier("messages",MessagesList)}
         end;
       false ->
-        {"error","Client: "++ Client ++ " doesn't exist"}
+        {"failure","Client: "++ Client ++ " doesn't exist"}
     end,
   get_response_body(ContentType,build_carrier(Type,Result)).
 
@@ -421,10 +421,10 @@ handle_call({private_msg, Sender, Client, Message}, _From, State) ->
 	case dict:find(Client, State) of
 	    error ->
 		io:format("user not connected"),
-		{error,"Unable to connect!"};
+		{error,lists:append(Client," is not connected!")};
 	    {ok, Pid} ->
 		Pid ! {private_msg, Sender, Client, Message},
-		{ok,"Sending msg"}
+		{ok,lists:append(lists:append("Sending message to ",Client),"...")}
 	end,
     {reply, Reply, State}.
 
