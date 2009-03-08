@@ -230,9 +230,8 @@ handle_call({disconnect, User, Groups}, _From, State) ->
 			  io:format("~s disconnecting from ~s...~n", [User,Name]),
 			  gen_server:call(Pid, {leave, User}) end,
 		  Groups),
-		{{ok, "User dropped"}, gb_trees:delete(User, State#chatterl.users)};
-	    false ->
-		{{error, "Unable to drop user."},State#chatterl.users}
+		{{ok, "User disconnected"}, gb_trees:delete(User, State#chatterl.users)};
+	    false -> {{error, lists:append("Unable to disconnect ",User)},State#chatterl.users}
 	end,
     {reply, Reply, State#chatterl{ users = NewTree }};
 handle_call({create, Group, Description}, _From, State) ->
