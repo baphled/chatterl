@@ -112,9 +112,10 @@ chatterl_group_handle_test_() ->
         ?assertEqual(stopped,chatterl_client:stop(Client))
         end]}].
 
-chatterl_mid_man_test_() ->
+%% Test all our middle man json response
+chatterl_mid_man_json_test_() ->
   [{setup, fun() ->
-               {ok,Pid} = chatterl_serv:start(),
+               {ok,Pid} = start_group("nu","nu room"),
                chatterl_mid_man:start(),
                register(chatterl_client_join_tests, Pid),
                Pid end,
@@ -122,15 +123,34 @@ chatterl_mid_man_test_() ->
         gen_server:call({global,chatterl_mid_man},stop),
         chatterl_serv:stop() end,
    [fun() ->
-        {Client1,Client2} = {"baft","boodah"},
+        {Client1,Client2,Group} = {"baft","boodah","nu"},
+        ?assertEqual({struct,[{<<"chatterl">>,
+          {struct,[{<<"response">>,{struct,[{<<"success">>,{struct,[{<<"clients">>,[]}]}}]}}]}}]},
+                     mochijson2:decode(chatterl_mid_man:user_list(["text/json"]))),
+        ?assertEqual({struct,[{<<"chatterl">>,
+          {struct,[{<<"response">>,{struct,[{<<"error">>,<<"Illegal content type!">>}]}}]}}]},
+                     mochijson2:decode(chatterl_mid_man:user_list("text/json"))),
         ?assertEqual({struct,[{<<"chatterl">>,{struct,[{<<"response">>,{struct,[{<<"success">>,<<"baft now connected">>}]}}]}}]},
                      mochijson2:decode(chatterl_mid_man:connect(["text/json"],Client1))),
         ?assertEqual({struct,[{<<"chatterl">>,{struct,[{<<"response">>,{struct,[{<<"failure">>,<<"Unable to connect baft">>}]}}]}}]},
                      mochijson2:decode(chatterl_mid_man:connect(["text/json"],Client1))),
-        ?assertEqual({struct,[{<<"chatterl">>,{struct,[{<<"response">>,
-                    {struct,[{<<"failure">>,<<"Not connected">>}]}}]}}]},
-                     mochijson2:decode(chatterl_mid_man:disconnect(["text/json"],Client2)))
-
+        ?assertEqual({struct,
+                      [{<<"chatterl">>,{struct,
+                                        [{<<"response">>,{struct,
+                                                          [{<<"success">>,{struct,
+                                                                           [{<<"clients">>,
+                                                                             [{struct,[{<<"client">>,<<"baft">>}]}]}]}}]}}]}}]},
+                     mochijson2:decode(chatterl_mid_man:user_list(["text/json"]))),
+        ?assertEqual({struct,[{<<"chatterl">>,{struct,[{<<"response">>,{struct,[{<<"failure">>,<<"Not connected">>}]}}]}}]},
+                     mochijson2:decode(chatterl_mid_man:disconnect(["text/json"],Client2))),
+        ?assertEqual({struct,[{<<"chatterl">>,{struct,[{<<"response">>,{struct,[{<<"success">>,<<"Disconnected">>}]}}]}}]},
+                     mochijson2:decode(chatterl_mid_man:disconnect(["text/json"],Client1))),
+        ?assertEqual({struct,[{<<"chatterl">>,
+          {struct,[{<<"response">>,{struct,[{<<"success">>,{struct,[{<<"clients">>,[]}]}}]}}]}}]},
+                     mochijson2:decode(chatterl_mid_man:user_list(["text/json"],Group))),
+        ?assertEqual({struct,[{<<"chatterl">>,
+          {struct,[{<<"response">>,{struct,[{<<"error">>,<<"Group: nonexistent doesn't exist">>}]}}]}}]},
+                     mochijson2:decode(chatterl_mid_man:user_list(["text/json"],"nonexistent")))
         end]}].
 
 %% Helper functions.
