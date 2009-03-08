@@ -87,7 +87,7 @@ group_description(Group) ->
 	{_Name, _Description,GroupPid} ->
 	    case is_pid(GroupPid) of
 		true -> gen_server:call(GroupPid, description);
-		_ -> {error, {"Unable to find find " ++ Group}}
+		_ -> {error, lists:append("Unable to find find ",Group)}
 	    end;
 	_ -> {error, "Can not find group."}
     end.
@@ -230,7 +230,7 @@ handle_call({disconnect, User, Groups}, _From, State) ->
 			  io:format("~s disconnecting from ~s...~n", [User,Name]),
 			  gen_server:call(Pid, {leave, User}) end,
 		  Groups),
-		{{ok, "User disconnected"}, gb_trees:delete(User, State#chatterl.users)};
+		{{ok, lists:append("User disconnected: ",User)}, gb_trees:delete(User, State#chatterl.users)};
 	    false -> {{error, lists:append("Unable to disconnect ",User)},State#chatterl.users}
 	end,
     {reply, Reply, State#chatterl{ users = NewTree }};
@@ -261,10 +261,10 @@ handle_call({drop, Group}, _From, State) ->
 		{value,{_Group,_Desc,Pid}} = gb_trees:lookup(Group, State#chatterl.groups),
 		gen_server:call(Pid, stop),
 		unlink(Pid),
-		{{ok, "Group Dropped"},
+		{{ok, lists:append("Group dropped ",Group)},
 		 gb_trees:delete(Group, State#chatterl.groups)};
 	    false ->
-		{{error, {"can not find",Group}},
+		{{error, lists:append("Can not find ",Group)},
 		 State#chatterl.groups}
 	end,
     {reply, Reply, State#chatterl{ groups = NewTree }};
