@@ -217,7 +217,7 @@ handle_call({disconnect, User}, _From, State) ->
 		{{ok, "User dropped"},
 		 gb_trees:delete(User, State#chatterl.users)};
 	    false ->
-		{{error, "Unable to drop group."},
+		{{error, "Unable to drop user."},
 		 State#chatterl.users}
 	end,
     {reply, Reply, State#chatterl{ users = NewTree }};
@@ -320,13 +320,17 @@ handle_info(_Info, State) ->
 %% @end
 %%--------------------------------------------------------------------
 terminate(_Reason,State) ->
-    case gb_trees:is_empty(State#chatterl.groups) of
-	true ->
-	    io:format("No groups to inform of shutdown~n");
-	false ->
-	    shutdown_groups(gb_trees:keys(State#chatterl.groups))
-    end,
-    ok.
+  case gb_trees:is_empty(State#chatterl.groups) of
+      true ->
+        io:format("No groups to inform of shutdown~n");
+      false ->
+        shutdown_groups(gb_trees:keys(State#chatterl.groups))
+  end,
+  case gb_trees:is_empty(State#chatterl.users) of
+    true -> io:format("No users to inform of shutdown~n");
+    false -> shutdown_groups(gb_trees:keys(State#chatterl.users))
+  end,
+  ok.
 %%--------------------------------------------------------------------
 %% @doc
 %% Convert process state when code is changed
@@ -371,10 +375,9 @@ group_exists(Group) ->
 %% @end
 %%--------------------------------------------------------------------
 shutdown_groups(GroupNames) ->
-    io:format("Shutting down groups~n"),
     lists:foreach(
       fun(GroupName) ->
-	      io:format("Dropping group ~s...~n",[GroupName]),
+	      io:format("Dropping ~s...~n",[GroupName]),
 	      gen_server:call({global,GroupName},stop)
       end,
       GroupNames).
