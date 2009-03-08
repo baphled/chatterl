@@ -139,19 +139,14 @@ handle_call({stop,Reason},_From,State) ->
     {stop,Reason,stopped,State};
 handle_call({group_msg,Group,Msg},_From,State) ->
     Reply =
-	case gen_server:call({global, chatterl_serv}, {get_group, Group}) of
-	    false ->
-		{error, "Unable to send message"};
-	    {GroupName, _Description,GroupPid} ->
-		case gen_server:call(GroupPid, {send_msg, State#client.name, Msg}) of
-		    {ok, msg_sent} ->
-			io:format("Sent message to: ~p~n",[GroupName]),
-			{ok,group_msg_sent};
-		    {error, Error} ->
-			{error, Error}
-		end
-	end,
-    {reply,Reply,State};
+    case gen_server:call({global,Group}, {send_msg, State#client.name, Msg}) of
+      {ok, msg_sent} ->
+        io:format("Sent message to: ~p~n",[Group]),
+        {ok,group_msg_sent};
+      {error, Error} ->
+        {error, Error}
+    end,
+  {reply,Reply,State};
 handle_call(client_name, _From, State) ->
     Reply = {name, State#client.name},
     {reply, Reply, State};
