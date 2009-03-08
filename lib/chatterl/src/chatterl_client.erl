@@ -175,7 +175,7 @@ handle_call({join_group, Group}, _From, State) ->
 handle_call({leave_group,Group},_From,State) ->
   {NewTree,Result} =
     case gen_server:call({global, chatterl_serv}, {get_group, Group}, infinity) of
-      {Group, GroupPid} ->
+      {Group, _Description,GroupPid} ->
         case gen_server:call(GroupPid, {leave, State#client.name}) of
           {ok, _Msg} ->
             {gb_trees:delete(Group, State#client.groups),
