@@ -73,7 +73,8 @@ connect(User) ->
 %% @end
 %%--------------------------------------------------------------------
 disconnect(User) ->
-    gen_server:call({global, ?MODULE}, {disconnect,User,[]}, infinity).
+  Groups = gen_server:call({global,?MODULE},list_groups),
+    gen_server:call({global, ?MODULE}, {disconnect,User,Groups}, infinity).
 
 %%--------------------------------------------------------------------
 %% @doc
@@ -226,9 +227,9 @@ handle_call({disconnect, User, Groups}, _From, State) ->
 	    true ->
 		lists:foreach(
 		  fun(Group) ->
-			  {Name,_JoinedOn,Pid} = Group,
-			  io:format("~s disconnecting from ~s...~n", [User,Name]),
-			  gen_server:call(Pid, {leave, User}) end,
+                      io:format("~s disconnecting from ~s...~n", [User,Group]),
+                      gen_server:call({global,Group}, {leave, User})
+                  end,
 		  Groups),
 		{{ok, lists:append("User disconnected: ",User)}, gb_trees:delete(User, State#chatterl.users)};
 	    false -> {{error, lists:append("Unable to disconnect ",User)},State#chatterl.users}
@@ -374,6 +375,6 @@ shutdown_groups(GroupNames) ->
     lists:foreach(
       fun(GroupName) ->
 	      io:format("Dropping group ~s...~n",[GroupName]),
-	      gen_server:call({global,GroupName},stop,infinity)
+	      gen_server:call({global,GroupName},stop)
       end,
       GroupNames).
