@@ -12,9 +12,28 @@ chatterl_serv_stop_test_() ->
     fun(_) ->
         chatterl_serv:stop() end,
     [fun() ->
-         Group = "room",
-         ?assert(erlang:is_tuple(chatterl_serv:create(Group,"nu room"))),
-         ?assert(erlang:is_tuple(gen_server:call({global, chatterl_serv}, {get_group, Group})))
+         {Client1,Client2,Group1,Group2,Description} = {"blah","noob","room","anuva","nu room"},
+         ?assertEqual([],chatterl_serv:list_groups()),
+         ?assertEqual([],chatterl_serv:list_users()),
+         ?assertEqual({error,"Group doesn't exist!"},chatterl_serv:list_users(Group1)),
+         ?assert(erlang:is_tuple(chatterl_serv:create(Group1,Description))),
+         ?assertEqual([],chatterl_serv:list_users(Group1)),
+         ?assertEqual(["room"],chatterl_serv:list_groups()),
+         chatterl_serv:create(Group2,"anuva room"),
+         ?assertEqual([Group2,"room"],chatterl_serv:list_groups()),
+         chatterl_serv:create("room1","room1"),
+         ?assertEqual([Group2,"room","room1"],chatterl_serv:list_groups()),
+         ?assertEqual({ok,"connected"},chatterl_serv:connect(Client1)),
+         ?assertEqual([Client1],chatterl_serv:list_users()),
+         ?assertEqual({error,"Unable to connect."},chatterl_serv:connect(Client1)),
+         ?assertEqual({error,"Unable to disconnect noone"},chatterl_serv:disconnect("noone")),
+         ?assertEqual({ok,"User disconnected: blah"},chatterl_serv:disconnect(Client1)),
+         ?assertEqual({error,"Can not find group."},chatterl_serv:group_description("anuva1")),
+         ?assertEqual({description,Description},chatterl_serv:group_description(Group1)),
+         ?assert(erlang:is_tuple(gen_server:call({global, chatterl_serv}, {get_group, Group1}))),
+         ?assertEqual({error,"Can not find blah"},chatterl_serv:drop("blah")),
+         ?assertEqual({ok,"Group dropped anuva"},chatterl_serv:drop(Group2)),
+         ?assert(erlang:is_list(gen_server:call({global,chatterl_serv},{group_info,Group1})))
      end]}].
 
 chatterl_group_info_test_() ->
@@ -52,19 +71,22 @@ chatterl_client_handle_test_() ->
         ?assertEqual([], gen_server:call({global,Client2},groups)),
         ?assertEqual([], gen_server:call({global,Client2},poll_messages)),
         ?assertEqual({error,"Unknown error!"}, gen_server:call({global,Client2},{join_group,"none"})),
+        ?assertEqual({error,"Unable to connect!"}, gen_server:call({global,Client1},{join_group,Group})),
+        %?assertEqual({ok,joined_group}, gen_server:call({global,Client2},{join_group,Group})),
+        ?assertEqual(["anuva1"],gen_server:call({global,Client1},groups)),
         ?assertEqual({error, user_not_joined}, gen_server:call({global,Client2},{group_msg,Group,"sup"})),
         ?assertEqual({ok,msg_sent}, gen_server:call({global,Client1},{private_msg,Client2,"sup"})),
         ?assertEqual({error,"Cannot find user!"}, gen_server:call({global,Client1},{private_msg,"noob","sup"})),
         ?assertEqual({ok,msg_sent}, gen_server:call({global,Client2},{private_msg,Client1,"sup"})),
         ?assertEqual({ok,msg_sent}, chatterl_client:private_msg(Client2,Client1,"sup")),
         ?assertEqual({error,"Can not send to self!"}, gen_server:call({global,Client1},{private_msg,Client1,"sup"})),
-        ?assertEqual({error,"Unknown error!"}, gen_server:call({global,Client2},{leave_group,"none"})),
+        ?assertEqual({error,"Not connected"}, gen_server:call({global,Client2},{leave_group,Group})),
         ?assertEqual({ok, drop_group}, gen_server:call({global,Client1},{leave_group,Group})),
         ?assert(erlang:is_list(gen_server:call({global,Client1},poll_messages))),
         ?assertEqual(stopped,gen_server:call({global,Client2},{stop,"because"}))
     end ]}].
 
-%% Test that a client can connect to a group.
+%% Test our groups functionality
 chatterl_group_handle_test_() ->
   [{setup, fun() ->
                {Client,Group,Description} = {"baft","anuva","a nu room"},
