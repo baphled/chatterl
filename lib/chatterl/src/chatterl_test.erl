@@ -48,24 +48,6 @@ chatterl_serv_test_() ->
          ?assert(erlang:is_list(gen_server:call({global,chatterl_serv},{group_info,Group1})))
      end]}].
 
-chatterl_group_info_test_() ->
-  [{setup, fun() ->
-               {Group,Description} = {"nu1","a nu room"},
-               {ok, Pid} = start_group(Group,Description),
-               register(chatterl_groups_tests, Pid),
-               Pid end,
-    fun(_) ->
-        chatterl_serv:stop() end,
-    [fun() ->
-         Group = "nu1",
-         ?assert(erlang:is_tuple(gen_server:call({global, chatterl_serv}, {get_group, Group}, infinity))),
-         ?assertEqual({name,"nu1"},gen_server:call({global,Group},name)),
-         ?assertEqual({description,"a nu room"}, gen_server:call({global,Group},description)),
-         ?assert(erlang:is_tuple(gen_server:call({global,Group},created))),
-         ?assertEqual([],gen_server:call({global,Group},poll_messages)),
-         ?assertEqual(stopped,chatterl_groups:stop(Group))
-     end]}].
-
 chatterl_client_handle_test_() ->
   [{setup, fun() ->
                {Client1,Client2,Group,Description} = {"noobie","blah","anuva1","a nu room"},
@@ -100,14 +82,18 @@ chatterl_client_handle_test_() ->
 %% Test our groups functionality
 chatterl_group_handle_test_() ->
   [{setup, fun() ->
-               {Client,Group,Description} = {"baft","anuva","a nu room"},
+               {Client,Group,Description} = {"baphled","anuva","a nu room"},
                {ok, Pid} = start_client(Client,Group,Description),
                register(chatterl_client_join_tests, Pid),
                Pid end,
     fun(_) ->
         chatterl_serv:stop() end,
    [fun() ->
-        {Client,Group} = {"baft","anuva"},
+        {Client,Group} = {"baphled","anuva"},
+        ?assert(erlang:is_tuple(gen_server:call({global, chatterl_serv}, {get_group, Group}, infinity))),
+        ?assertEqual({name,Group},gen_server:call({global,Group},name)),
+        ?assertEqual({description,"a nu room"}, gen_server:call({global,Group},description)),
+        ?assert(erlang:is_tuple(gen_server:call({global,Group},created))),
         ?assertEqual([],gen_server:call({global,Group},list_users)),
         ?assertEqual([],gen_server:call({global,Group},poll_messages)),
         ?assertEqual({ok, "User added"},gen_server:call({global,Group},{join,Client})),
@@ -126,6 +112,26 @@ chatterl_group_handle_test_() ->
         ?assertEqual(stopped,chatterl_client:stop(Client))
         end]}].
 
+chatterl_mid_man_test_() ->
+  [{setup, fun() ->
+               {ok,Pid} = chatterl_serv:start(),
+               chatterl_mid_man:start(),
+               register(chatterl_client_join_tests, Pid),
+               Pid end,
+    fun(_) ->
+        gen_server:call({global,chatterl_mid_man},stop),
+        chatterl_serv:stop() end,
+   [fun() ->
+        {Client1,Client2} = {"baft","boodah"},
+        ?assertEqual({struct,[{<<"chatterl">>,{struct,[{<<"response">>,{struct,[{<<"success">>,<<"baft now connected">>}]}}]}}]},
+                     mochijson2:decode(chatterl_mid_man:connect(["text/json"],Client1))),
+        ?assertEqual({struct,[{<<"chatterl">>,{struct,[{<<"response">>,{struct,[{<<"failure">>,<<"Unable to connect baft">>}]}}]}}]},
+                     mochijson2:decode(chatterl_mid_man:connect(["text/json"],Client1))),
+        ?assertEqual({struct,[{<<"chatterl">>,{struct,[{<<"response">>,
+                    {struct,[{<<"failure">>,<<"Not connected">>}]}}]}}]},
+                     mochijson2:decode(chatterl_mid_man:disconnect(["text/json"],Client2)))
+
+        end]}].
 
 %% Helper functions.
 start_client(Client,Group,Description) ->
