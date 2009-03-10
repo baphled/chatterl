@@ -162,9 +162,9 @@ inner_loop_json_carrier(CarrierRecord) ->
 %% @end
 %%--------------------------------------------------------------------
 clean_message(Data) when is_tuple(Data) ->
-    list_to_binary([httpd_util:rfc1123_date(Data)]);
+  list_to_binary([httpd_util:rfc1123_date(Data)]);
 clean_message(Data) ->
-    list_to_binary(Data).
+  list_to_binary(Data).
 
 %%--------------------------------------------------------------------
 %% @private
