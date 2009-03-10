@@ -112,7 +112,7 @@ chatterl_group_handle_test_() ->
 %% Test all our middle man json response
 chatterl_mid_man_json_test_() ->
   [{setup, fun() ->
-               chatterl_mid_man:start(),
+               chatterl:start(),
                start_group("sum room","nu room") end,
     fun(_) ->
         chatterl:stop() end,
@@ -120,8 +120,7 @@ chatterl_mid_man_json_test_() ->
         {Client1,Client2,Client3,Group} = {"baft","boodah","baphled","sum room"},
         ?assertEqual({struct,[{<<"chatterl">>,{struct,[{<<"response">>,{struct,[{<<"success">>,{struct,[{<<"clients">>,[]}]}}]}}]}}]},
                      mochijson2:decode(chatterl_mid_man:user_list(["text/json"]))),
-        ?assertEqual({struct,[{<<"chatterl">>,
-          {struct,[{<<"response">>,{struct,[{<<"error">>,<<"Illegal content type!">>}]}}]}}]},
+        ?assertEqual({struct,[{<<"chatterl">>,{struct,[{<<"response">>,{struct,[{<<"error">>,<<"Illegal content type!">>}]}}]}}]},
                      mochijson2:decode(chatterl_mid_man:user_list("text/json"))),
         ?assertEqual({struct,[{<<"chatterl">>,{struct,[{<<"response">>,{struct,[{<<"success">>,<<"baft now connected">>}]}}]}}]},
                      mochijson2:decode(chatterl_mid_man:connect(["text/json"],Client1))),
@@ -154,9 +153,11 @@ chatterl_mid_man_json_test_() ->
 
 chatterl_mid_man_message_json_test_() ->
   [{setup, fun() ->
-               chatterl_client:start("baft"),
+               chatterl:start(),
+               %chatterl_client:start("baft"),
                chatterl_serv:create("sum room","nu room"),
-               chatterl_mid_man:connect(["text/json"],"boodah") end,
+               chatterl_mid_man:connect(["text/json"],"boodah"),
+               chatterl_serv:connect("baft")end,
     fun(_) ->
         chatterl:stop() end,
    [fun() ->
