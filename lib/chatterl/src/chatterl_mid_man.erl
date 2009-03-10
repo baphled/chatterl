@@ -13,6 +13,7 @@
 -module(chatterl_mid_man).
 -behaviour(gen_server).
 
+-include_lib("eunit/include/eunit.hrl").
 %% API
 %% Client based calls
 -export([
@@ -81,8 +82,10 @@ connect(ContentType,Client) ->
     case gen_server:call({global, ?SERVER}, {connect, Client},infinity) of
       {ok,_Msg} ->
         {"success",lists:append(Client," now connected")};
-      {error,_Error} ->
-        {"failure",lists:append("Unable to connect ",Client)}
+      {error,{already_started,_Pid}} ->
+        {"failure","Already connected via another system!"};
+      {error,Error} ->
+        {"failure",Error}
     end,
   get_response_body(ContentType,build_carrier(Type,Reply)).
 
@@ -153,7 +156,7 @@ user_msg(ContentType,{Sender, Client, Message}) ->
             {"error",Error}
         end;
       false ->
-        {"failure","Client doesn't exist!"}
+        {"failure",lists:append(Sender," is not connected!")}
     end,
   get_response_body(ContentType,build_carrier(Type,Reply)).
 
@@ -394,7 +397,7 @@ handle_call({connect, Nickname}, _From, State) ->
 		erlang:monitor(process, Pid),
 		{chatterl_client:start(Nickname), dict:store(Nickname, Pid, State)};
 	    {ok, _} ->
-		{{error, "Already connected"}, State}
+		{{error, lists:append(Nickname," is already connected")}, State}
     end,
     {reply,Reply,NewState};
 handle_call({disconnect, Client}, _From,State) ->
@@ -498,7 +501,7 @@ proxy_client(Messages) ->
         io:format("Sent message from ~s to group: ~s~n", [Sender,Group]),
         proxy_client(Messages);
       {stop,Client} ->
-        chatterl_client:stop(Client),
+        chatterl_serv:disconnect(Client),
         io:format("Stopped proxy for ~s~n",[Client]);
       Other ->
         io:format("unknown proxy request ~s~n",[Other]),
