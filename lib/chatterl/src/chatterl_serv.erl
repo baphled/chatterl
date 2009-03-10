@@ -14,7 +14,6 @@
 -module(chatterl_serv).
 -behaviour(gen_server).
 
-
 %% API
 -export([start/0,stop/0,connect/1,disconnect/1,create/2,drop/1]).
 %% User specific
@@ -205,7 +204,7 @@ handle_call({connect,User}, From, State) ->
 		io:format("~s connected to ~s~n", [User,?MODULE]),
 		{{ok, "connected"},
 		 gb_trees:insert(User, {User,From}, State#chatterl.users)};
-	    true -> {{error, "Unable to connect."},
+	    true -> {{error, lists:append(User," is unable to connect.")},
 		     State#chatterl.users}
 	end,
     {reply, Reply, State#chatterl{ users = NewTree }};
