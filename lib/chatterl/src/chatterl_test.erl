@@ -4,9 +4,7 @@
 %% Test chatterl_serv functionality
 chatterl_serv_test_() ->
   [{setup, fun() ->
-               {ok,Pid} = chatterl:start(),
-               register(chatterl_serv_tests, Pid),
-               Pid end,
+               chatterl:start() end,
     fun(_) ->
         chatterl:stop() end,
     [fun() ->
@@ -18,8 +16,10 @@ chatterl_serv_test_() ->
          ?assertEqual({error,already_created},chatterl_serv:create(Group1,Description)),
          ?assertEqual([],chatterl_serv:list_users(Group1)),
          ?assertEqual(["room"],chatterl_serv:list_groups()),
+
          chatterl_serv:create(Group2,"anuva room"),
          ?assertEqual([Group2,"room"],chatterl_serv:list_groups()),
+
          chatterl_serv:create("room1","room1"),
          ?assertEqual([Group2,"room","room1"],chatterl_serv:list_groups()),
          ?assertEqual({ok,"connected"},chatterl_serv:connect(Client1)),
@@ -136,6 +136,7 @@ chatterl_mid_man_json_test_() ->
                chatterl_mid_man:connect(["text/json"],Client2),
                chatterl_serv:create("sum room","nu room") end,
     fun(_) ->
+        chatterl_mid_man:disconnect(["text/json"],Client2),
         chatterl:stop() end,
     [{timeout, 5000,
       fun() ->
@@ -154,11 +155,7 @@ chatterl_mid_man_json_test_() ->
                        mochijson2:decode(chatterl_mid_man:connect(["text/json"],Client3)),
           ?assertEqual(<<"baphled is already connected">>,Result2),
           ?assertEqual({struct,
-                      [{<<"chatterl">>,{struct,
-                                        [{<<"response">>,{struct,
-                                                          [{<<"success">>,{struct,
-                                                                           [{<<"clients">>,
-                                                                             [{struct,[{<<"client">>,<<"baphled">>}]}]}]}}]}}]}}]},
+                      [{<<"chatterl">>,{struct,[{<<"response">>,{struct,[{<<"success">>,{struct,[{<<"clients">>,[{struct,[{<<"client">>,<<"baphled">>}]}]}]}}]}}]}}]},
                      mochijson2:decode(chatterl_mid_man:user_list(["text/json"]))),
         ?assertEqual({struct,[{<<"chatterl">>,{struct,[{<<"response">>,{struct,[{<<"failure">>,<<"Not connected">>}]}}]}}]},
                      mochijson2:decode(chatterl_mid_man:disconnect(["text/json"],Client2))),
@@ -171,10 +168,10 @@ chatterl_mid_man_json_test_() ->
           {struct,[{<<"response">>,{struct,[{<<"error">>,<<"Group: nonexistent doesn't exist">>}]}}]}}]},
                      mochijson2:decode(chatterl_mid_man:user_list(["text/json"],"nonexistent"))),
         ?assertEqual({struct,[{<<"chatterl">>,
-          {struct,[{<<"response">>,{struct,[{<<"failure">>,<<"Client doesn't exist!">>}]}}]}}]},
+                               {struct,[{<<"response">>,{struct,[{<<"failure">>,<<"Client doesn't exist!">>}]}}]}}]},
                      mochijson2:decode(chatterl_mid_man:user_msg(["text/json"],{"blah",Client2,"hey"}))),
-      {struct,[{<<"chatterl">>,{struct,[{<<"response">>,{struct,[{<<"failure">>,Result3}]}}]}}]} =
-                     mochijson2:decode(chatterl_mid_man:user_msg(["text/json"],{Client1,"blah","hey"})),
+          {struct,[{<<"chatterl">>,{struct,[{<<"response">>,{struct,[{<<"failure">>,Result3}]}}]}}]} =
+            mochijson2:decode(chatterl_mid_man:user_msg(["text/json"],{Client1,"blah","hey"})),
           ?assertEqual(<<"blah is not connected!">>,Result3)
     end}]}].
 
