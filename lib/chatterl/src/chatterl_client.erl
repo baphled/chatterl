@@ -246,10 +246,11 @@ handle_info(Info, State) ->
 %% @end
 %%--------------------------------------------------------------------
 terminate(Reason, State) ->
-    %GroupsList = gb_trees:keys(State#client.groups),
-    %gen_server:call({global, chatterl_serv},
-  %{disconnect,State#client.name,GroupsList}, infinity),
-    io:format("~p is disconnected...~p~n", [State#client.name,Reason]),
+  GroupsList = gb_trees:keys(State#client.groups),
+  % Add clause to check whether chatterl_serv is up.
+  gen_server:call({global, chatterl_serv},
+                  {disconnect,State#client.name,GroupsList}, infinity),
+  io:format("~p is disconnected...~p~n", [State#client.name,Reason]),
     ok.
 
 %%--------------------------------------------------------------------
