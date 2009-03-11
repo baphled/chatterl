@@ -122,7 +122,7 @@ chatterl_mid_man_message_poll_test_() ->
       end}]}].
 
 %% Test all our middle man json response
-chatterl_mid_man_users_test_() ->
+chatterl_mid_man_basics_test_() ->
   [{setup, fun() ->
                chatterl:start() end,
     fun(_) ->
@@ -195,7 +195,7 @@ chatterl_private_messages_test_() ->
           ?assert(Result /= check_json(mochijson2:decode(chatterl_mid_man:user_poll(["text/json"],Client2))))
     end}]}].
 
-chatterl_group_user_test_() ->
+chatterl_user_groups_test_() ->
   {Client1,Client2,Group,ContentType} = {"baft","boodah","nu",["text/json"]},
   [{setup, fun() ->
                chatterl:start(),
@@ -211,16 +211,41 @@ chatterl_group_user_test_() ->
         chatterl:stop() end,
     [{timeout, 5000,
       fun() ->
-          Result = {struct,[{<<"groups">>,[]}]},
-          ?assertEqual(Result,
+          ?assertEqual({struct,[{<<"groups">>,[]}]},
                        check_json(mochijson2:decode(chatterl_mid_man:user_groups(["text/json"],Client1)))),
           ?assertEqual(<<"Client: blah doesn't exist">>,
                        check_json(mochijson2:decode(chatterl_mid_man:user_groups(["text/json"],"blah")))),
           ?assertEqual([Group],gen_server:call({global,Client2},groups)),
           ?assertEqual({struct,[{<<"groups">>,[{struct,[{<<"group">>,<<"nu">>}]}]}]},
-                  check_json(mochijson2:decode(chatterl_mid_man:user_groups(["text/json"],Client2))))
+                  check_json(mochijson2:decode(chatterl_mid_man:user_groups(["text/json"],Client2)))),
+          ?assertEqual({struct,[{<<"groups">>,[{struct,[{<<"group">>,<<"nu">>}]}]}]},
+                  check_json(mochijson2:decode(chatterl_mid_man:group_list(["text/json"]))))
          end}]}].
 
+chatterl_groups_test_() ->
+  [{setup, fun() ->
+               chatterl:start()
+           end,
+    fun(_) ->
+        chatterl:stop() end,
+    [{timeout, 5000,
+      fun() ->
+          ?assertEqual({struct,[{<<"groups">>,[]}]},check_json(mochijson2:decode(chatterl_mid_man:group_list(["text/json"]))))
+      end}]}].
+
+chatterl_group_create_test_() ->
+  [{setup, fun() ->
+               chatterl:start()
+           end,
+    fun(_) ->
+        chatterl:stop() end,
+    [{timeout, 5000,
+      fun() ->
+          ?assertEqual(<<"Group: nu added">>,
+                       check_json(mochijson2:decode(chatterl_mid_man:group_create(["text/json"],{"nu","nu room"})))),
+          ?assertEqual(<<"Unable to create group: nu">>,
+                       check_json(mochijson2:decode(chatterl_mid_man:group_create(["text/json"],{"nu","nu room"}))))
+      end}]}].
 
 
 %% Helper functions.
