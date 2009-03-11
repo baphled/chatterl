@@ -195,7 +195,7 @@ user_groups(ContentType,Client) ->
           [] ->
              {"success",build_carrier("groups","")};
           Groups ->
-            GroupsList = [build_carrier("group",Group) || {Group,_JoinedOn,_Pid} <- Groups],
+            GroupsList = [build_carrier("group",Group) || Group <- Groups],
             {"success",build_carrier("groups",GroupsList)}
         end;
       false ->
@@ -282,7 +282,7 @@ group_join(ContentType,{Group,Client}) ->
 	    true ->
 		 case gen_server:call({global,Client},{join_group,Group},infinity) of
 			{ok,_} ->
-			    {"success",Client ++ " joined group"};
+			    {"success",lists:append(Client," joined group")};
 			{error,Error} ->
 			    {"failure",Error}
 		    end;
