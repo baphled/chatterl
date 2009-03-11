@@ -96,7 +96,7 @@ chatterl_group_handle_test_() ->
         ?assert(erlang:is_list(gen_server:call({global,Group},poll_messages)))
      end}]}].
 
-chatterl_mid_man_message_json_test_() ->
+chatterl_mid_man_message_poll_test_() ->
   {Client1,Client2} = {"baft","boodah"},
   [{setup, fun() ->
                chatterl:start(),
@@ -122,7 +122,21 @@ chatterl_mid_man_message_json_test_() ->
       end}]}].
 
 %% Test all our middle man json response
-chatterl_mid_man_json_test_() ->
+chatterl_mid_man_users_test_() ->
+  [{setup, fun() ->
+               chatterl:start() end,
+    fun(_) ->
+        chatterl:stop() end,
+    [{timeout, 5000,
+      fun() ->
+          ?assertEqual(<<"Illegal content type!">>,
+                       check_json(mochijson2:decode(chatterl_mid_man:user_list("text/json")))),
+          ?assertEqual([],chatterl_serv:list_users()),
+          ?assertEqual({struct,[{<<"clients">>,[]}]},
+                       check_json(mochijson2:decode(chatterl_mid_man:user_list(["text/json"]))))
+      end}]}].
+
+chatterl_mid_man_user_connect_test_() ->
   {Client1,Client2,Client3,Group} = {"baft","boodah","baphled","sum room"},
   [{setup, fun() ->
                chatterl:start(),
@@ -130,22 +144,16 @@ chatterl_mid_man_json_test_() ->
                chatterl_serv:create(Group,"nu room") end,
     fun(_) ->
         chatterl_mid_man:disconnect(["text/json"],Client2),
+        chatterl_serv:drop(Group),
         chatterl:stop() end,
     [{timeout, 5000,
       fun() ->
-          ?assertEqual([],chatterl_serv:list_users()),
-          ?assertEqual({struct,[{<<"clients">>,[]}]},
+          ?assertEqual({struct,[{<<"clients">>,[{struct,[{<<"client">>,<<"boodah">>}]}]}]},
                        check_json(mochijson2:decode(chatterl_mid_man:user_list(["text/json"])))),
-          ?assertEqual({struct,[{<<"clients">>,[]}]},
-                       check_json(mochijson2:decode(chatterl_mid_man:user_list(["text/json"])))),
-          ?assertEqual(<<"Illegal content type!">>,
-                       check_json(mochijson2:decode(chatterl_mid_man:user_list("text/json")))),
           ?assertEqual(<<"baphled now connected">>,
                        check_json(mochijson2:decode(chatterl_mid_man:connect(["text/json"],Client3)))),
           ?assertEqual(<<"baphled is already connected">>,
                        check_json(mochijson2:decode(chatterl_mid_man:connect(["text/json"],Client3)))),
-          ?assertEqual({struct,[{<<"clients">>,[{struct,[{<<"client">>,<<"baphled">>}]}]}]},
-                       check_json(mochijson2:decode(chatterl_mid_man:user_list(["text/json"])))),
           ?assertEqual(<<"Not connected">>,
                        check_json(mochijson2:decode(chatterl_mid_man:disconnect(["text/json"],Client1)))),
           ?assertEqual(<<"Disconnected">>,
@@ -160,8 +168,59 @@ chatterl_mid_man_json_test_() ->
                        check_json(mochijson2:decode(chatterl_mid_man:user_msg(["text/json"],{Client1,"blah","hey"})))),
           chatterl_mid_man:connect(["text/json"],Client1),
           ?assertEqual(<<"Sending message to boodah...">>,
-                       check_json(mochijson2:decode(chatterl_mid_man:user_msg(["text/json"],{Client1,Client2,"hey"}))))
+                       check_json(mochijson2:decode(chatterl_mid_man:user_msg(["text/json"],{Client1,Client2,"hey"})))),
+          ?assertEqual({struct,[{<<"messages">>,[]}]},
+                       check_json(mochijson2:decode(chatterl_mid_man:user_poll(["text/json"],Client1))))
+      end}]}].
+
+chatterl_private_messages_test_() ->
+  {Client1,Client2,Group} = {"baft","boodah","anuva"},
+  [{setup, fun() ->
+               chatterl:start(),
+               chatterl_mid_man:connect(["text/json"],Client1),
+               chatterl_mid_man:connect(["text/json"],Client2),
+               chatterl_serv:create(Group,"nu room") end,
+    fun(_) ->
+        chatterl_mid_man:disconnect(["text/json"],Client1),
+        chatterl_mid_man:disconnect(["text/json"],Client2),
+        chatterl_serv:drop(Group),
+        chatterl:stop() end,
+    [{timeout, 5000,
+      fun() ->
+          Result = check_json(mochijson2:decode(chatterl_mid_man:user_poll(["text/json"],Client2))),
+          ?assertEqual({struct,[{<<"messages">>,[]}]},Result),
+          chatterl_mid_man:user_msg(["text/json"],{Client1,Client2,"hey u"}),
+          ?assertEqual({struct,[{<<"messages">>,[]}]},
+                       check_json(mochijson2:decode(chatterl_mid_man:user_poll(["text/json"],Client2)))),
+          ?assert(Result /= check_json(mochijson2:decode(chatterl_mid_man:user_poll(["text/json"],Client2))))
     end}]}].
+
+chatterl_group_user_test_() ->
+  {Client1,Client2,Group,ContentType} = {"baft","boodah","nu",["text/json"]},
+  [{setup, fun() ->
+               chatterl:start(),
+               chatterl_mid_man:connect(ContentType,Client1),
+               chatterl_mid_man:connect(ContentType,Client2),
+               chatterl_serv:create(Group,"nu room"),
+               chatterl_mid_man:group_join(ContentType,{Group,Client2})
+           end,
+    fun(_) ->
+        chatterl_mid_man:disconnect(ContentType,Client1),
+        chatterl_mid_man:disconnect(ContentType,Client2),
+        chatterl_serv:drop(Group),
+        chatterl:stop() end,
+    [{timeout, 5000,
+      fun() ->
+          Result = {struct,[{<<"groups">>,[]}]},
+          ?assertEqual(Result,
+                       check_json(mochijson2:decode(chatterl_mid_man:user_groups(["text/json"],Client1)))),
+          ?assertEqual(<<"Client: blah doesn't exist">>,
+                       check_json(mochijson2:decode(chatterl_mid_man:user_groups(["text/json"],"blah")))),
+          ?assertEqual([Group],gen_server:call({global,Client2},groups)),
+          ?assertEqual({struct,[{<<"groups">>,[{struct,[{<<"group">>,<<"nu">>}]}]}]},
+                  check_json(mochijson2:decode(chatterl_mid_man:user_groups(["text/json"],Client2))))
+         end}]}].
+
 
 
 %% Helper functions.
