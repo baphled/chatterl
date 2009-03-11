@@ -157,7 +157,10 @@ chatterl_mid_man_json_test_() ->
           ?assertEqual(<<"blah is not connected!">>,
                        check_json(mochijson2:decode(chatterl_mid_man:user_msg(["text/json"],{"blah",Client2,"hey"})))),
           ?assertEqual(<<"baft is not connected!">>,
-                       check_json(mochijson2:decode(chatterl_mid_man:user_msg(["text/json"],{Client1,"blah","hey"}))))
+                       check_json(mochijson2:decode(chatterl_mid_man:user_msg(["text/json"],{Client1,"blah","hey"})))),
+          chatterl_mid_man:connect(["text/json"],Client1),
+          ?assertEqual(<<"Sending message to boodah...">>,
+                       check_json(mochijson2:decode(chatterl_mid_man:user_msg(["text/json"],{Client1,Client2,"hey"}))))
     end}]}].
 
 
