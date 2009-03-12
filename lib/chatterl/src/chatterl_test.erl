@@ -244,7 +244,15 @@ chatterl_group_create_test_() ->
           ?assertEqual(<<"Group: nu added">>,
                        check_json(mochijson2:decode(chatterl_mid_man:group_create(["text/json"],{"nu","nu room"})))),
           ?assertEqual(<<"Unable to create group: nu">>,
-                       check_json(mochijson2:decode(chatterl_mid_man:group_create(["text/json"],{"nu","nu room"}))))
+                       check_json(mochijson2:decode(chatterl_mid_man:group_create(["text/json"],{"nu","nu room"})))),
+          % abit lazy but not sure how to check the creation date dynamically atm.
+          ?assert(erlang:is_tuple(check_json(mochijson2:decode(chatterl_mid_man:group_info(["text/json"],"nu"))))),
+          ?assertEqual(<<"Group dropped nu">>,
+                       check_json(mochijson2:decode(chatterl_mid_man:group_drop(["text/json"],"nu")))),
+          ?assertEqual(<<"Can not find nu">>,
+                       check_json(mochijson2:decode(chatterl_mid_man:group_drop(["text/json"],"nu")))),
+          ?assertEqual(<<"Group doesn't exist!">>,
+                       check_json(mochijson2:decode(chatterl_mid_man:group_info(["text/json"],"nu"))))
       end}]}].
 
 
