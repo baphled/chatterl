@@ -229,9 +229,9 @@ group_create(ContentType,{Group,Description}) ->
   {Type,Result} =
     case gen_server:call({global,chatterl_serv},{create,Group,Description}, infinity) of
       {error,_Error} ->
-        {"failure","Unable to create group"};
+        {"failure",lists:append("Unable to create group: ",Group)};
       {ok,_GroupPid} ->
-        {"success","Group added"};
+        {"success",lists:append(lists:append("Group: ",Group), " added")};
       _ -> {"error","Unknown response."}
     end,
   get_response_body(ContentType,build_carrier(Type,Result)).
@@ -245,7 +245,7 @@ group_create(ContentType,{Group,Description}) ->
 group_drop(ContentType,Group) ->
   {Type,Result} =
     case gen_server:call({global,chatterl_serv},{drop,Group},infinity) of
-      {error,{Error,_GroupName}} ->
+      {error,Error} ->
         {"failure",Error};
       {ok,ResponseMsg} ->
         {"success",ResponseMsg}
@@ -350,7 +350,7 @@ group_poll(ContentType,Group) ->
 			{"success",build_carrier("messages",MessagesList)}
 		end;
 	    false ->
-		{"error","Group: "++ Group ++ " doesn't exist"}
+		{"error",lists:append(lists:append("Group: ", Group), " doesn't exist!")}
 	end,
   get_response_body(ContentType,build_carrier(Type,Result)).
 
