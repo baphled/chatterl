@@ -169,11 +169,16 @@ handle_call({join_group, Group}, _From, State) ->
   {reply, Result, State#client{groups = NewTree}};
 handle_call({leave_group,Group},_From,State) ->
   {NewTree,Result} =
-    case gen_server:call({global,Group}, {leave, State#client.name}) of
-      {ok, _Msg} ->
-        {gb_trees:delete(Group, State#client.groups),
-         {ok, drop_group}};
-      {error,Error} -> {State#client.groups,{error, Error}}
+    case gen_server:call({global,chatterl_serv},{group_exists,Group}) of
+      true ->
+        case gen_server:call({global,Group}, {leave, State#client.name}) of
+          {ok, _Msg} ->
+            {gb_trees:delete(Group, State#client.groups),
+             {ok, drop_group}};
+          {error,Error} -> {State#client.groups,{error, Error}}
+        end;
+      false ->
+        {State#client.groups,{error, lists:append(lists:append("Group: ",Group)," doesn't exist")}}
     end,
   {reply, Result, State#client{groups = NewTree}};
 handle_call({left_group,Group},_From,State) ->
