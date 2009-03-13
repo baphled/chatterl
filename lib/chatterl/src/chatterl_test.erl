@@ -157,7 +157,9 @@ chatterl_mid_man_user_connect_test_() ->
           ?assertEqual(<<"Not connected">>,
                        check_json(mochijson2:decode(chatterl_mid_man:disconnect(["text/json"],Client1)))),
           ?assertEqual(<<"Disconnected">>,
-                       check_json(mochijson2:decode(chatterl_mid_man:disconnect(["text/json"],Client3)))),
+                       check_json(mochijson2:decode(chatterl_mid_man:disconnect(["text/json"],Client3))))
+      end},
+      fun() ->
           ?assertEqual({struct,[{<<"clients">>,[]}]},
                        check_json(mochijson2:decode(chatterl_mid_man:user_list(["text/json"],Group)))),
           ?assertEqual(<<"Group: nonexistent doesn't exist">>,
@@ -165,13 +167,16 @@ chatterl_mid_man_user_connect_test_() ->
           ?assertEqual(<<"blah is not connected!">>,
                        check_json(mochijson2:decode(chatterl_mid_man:user_msg(["text/json"],{"blah",Client2,"hey"})))),
           ?assertEqual(<<"baft is not connected!">>,
-                       check_json(mochijson2:decode(chatterl_mid_man:user_msg(["text/json"],{Client1,"blah","hey"})))),
-          chatterl_mid_man:connect(["text/json"],Client1),
+                       check_json(mochijson2:decode(chatterl_mid_man:user_msg(["text/json"],{Client1,"blah","hey"}))))
+      end,
+     fun() ->
+          ?assertEqual(<<"baft now connected">>,
+                       check_json(mochijson2:decode(chatterl_mid_man:connect(["text/json"],Client1)))),
           ?assertEqual(<<"Sending message to boodah...">>,
                        check_json(mochijson2:decode(chatterl_mid_man:user_msg(["text/json"],{Client1,Client2,"hey"})))),
           ?assertEqual({struct,[{<<"messages">>,[]}]},
                        check_json(mochijson2:decode(chatterl_mid_man:user_poll(["text/json"],Client1))))
-      end}]}].
+      end]}].
 
 chatterl_private_messages_test_() ->
   {Client1,Client2,Group} = {"baft","boodah","anuva"},
