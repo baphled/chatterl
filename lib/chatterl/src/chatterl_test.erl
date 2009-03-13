@@ -47,8 +47,6 @@ chatterl_client_handle_test_() ->
                start_client(Client1,Group,Description),
                chatterl_client:start(Client2) end,
     fun(_) ->
-        chatterl_serv:disconnect(Client1),
-        chatterl_serv:disconnect(Client2),
         chatterl:stop() end,
     [{timeout, 1000,
       fun() ->
@@ -268,6 +266,33 @@ chatterl_group_create_test_() ->
           ?assertEqual(<<"Group doesn't exist!">>,
                        check_json(mochijson2:decode(chatterl_mid_man:group_info(["text/json"],"nu"))))
       end}]}].
+
+chatterl_group_messages_test_() ->
+  {Client,Group,ContentType} = {"baph","nu",["text/json"]},
+  [{setup, fun() ->
+               chatterl:start(),
+               chatterl_mid_man:connect(ContentType,Client),
+               chatterl_serv:create(Group,"nu room"),
+               chatterl_mid_man:group_join(ContentType,{Group,Client})
+           end,
+    fun(_) ->
+        chatterl_serv:drop("nu"),
+        chatterl:stop() end,
+    [{timeout, 5000,
+      fun() ->
+          Result = {struct,[{<<"messages">>,[]}]},
+          ?assertEqual(Result,
+                       check_json(mochijson2:decode(chatterl_mid_man:group_poll(["text/json"],Group)))),
+          ?assertEqual(<<"Unable to send msg!">>,
+                       check_json(mochijson2:decode(chatterl_mid_man:group_send(["text/json"],{Group,"blah","hey"})))),
+          ?assertEqual(<<"User not joined">>,
+                       check_json(mochijson2:decode(chatterl_mid_man:group_send(["text/json"],{"blah",Client,"hey"})))),
+          ?assertEqual(<<"Message sent">>,
+                       check_json(mochijson2:decode(chatterl_mid_man:group_send(["text/json"],{Group,Client,"hey"})))),
+          ?assert(Result /=  check_json(mochijson2:decode(chatterl_mid_man:group_poll(["text/json"],Group)))),
+          ?assertEqual(<<"Group: blah doesn't exist!">>,
+                       check_json(mochijson2:decode(chatterl_mid_man:group_poll(["text/json"],"blah"))))
+           end}]}].
 
 
 %% Helper functions.
