@@ -221,7 +221,9 @@ chatterl_user_groups_test_() ->
           ?assertEqual({struct,[{<<"groups">>,[]}]},
                        check_json(mochijson2:decode(chatterl_mid_man:user_groups(ContentType,Client1)))),
           ?assertEqual(<<"Client: blah doesn't exist">>,
-                       check_json(mochijson2:decode(chatterl_mid_man:user_groups(ContentType,"blah")))),
+                       check_json(mochijson2:decode(chatterl_mid_man:user_groups(ContentType,"blah"))))
+      end,
+      fun() ->
           ?assertEqual([Group],gen_server:call({global,Client2},groups)),
           ?assertEqual({struct,[{<<"groups">>,[{struct,[{<<"group">>,<<"nu">>}]}]}]},
                        check_json(mochijson2:decode(chatterl_mid_man:user_groups(ContentType,Client2)))),
