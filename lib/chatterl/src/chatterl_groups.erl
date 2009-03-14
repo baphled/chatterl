@@ -149,22 +149,22 @@ handle_call({leave, User}, _From, State) ->
     {reply, Reply, State#group{users=NewTree}};
 handle_call({send_msg,User,Message},_From,State) ->
     {Reply, NewTree} =
-	case gb_trees:is_defined(User, State#group.users) of
-	    false ->
-		{{error, user_not_joined}, State#group.messages};
-	    true ->
-            CreatedOn = erlang:localtime(),
-		case gb_trees:is_defined({User,CreatedOn}, State#group.messages) of
-		    false ->
-			determine_user_action(State#group.name,{receive_msg,{CreatedOn,{group,State#group.name},User ++ ": " ++Message}},
-					      gb_trees:values(State#group.users)),
-			{{ok, msg_sent},
-			 gb_trees:insert({User,CreatedOn}, {CreatedOn,{client,User},Message}, State#group.messages)};
-		    true ->
-			{{error, already_sent}, State#group.messages}
-		end
-	end,
-    {reply, Reply, State#group{messages=NewTree}}.
+    case gb_trees:is_defined(User, State#group.users) of
+      false ->
+        {{error, user_not_joined}, State#group.messages};
+      true ->
+        CreatedOn = erlang:localtime(),
+        case gb_trees:is_defined({User,CreatedOn}, State#group.messages) of
+          false ->
+            determine_user_action(State#group.name,{receive_msg,{CreatedOn,{group,State#group.name},User ++ ": " ++Message}},
+                                  gb_trees:values(State#group.users)),
+            {{ok, msg_sent},
+             gb_trees:insert({User,CreatedOn}, {CreatedOn,{client,User},Message}, State#group.messages)};
+          true ->
+            {{error, already_sent}, State#group.messages}
+        end
+    end,
+  {reply, Reply, State#group{messages=NewTree}}.
 %%--------------------------------------------------------------------
 %% @doc
 %% Handling cast messages
@@ -245,7 +245,7 @@ determine_user_action(GroupName,{Action,PayLoad},UsersList) ->
 	receive_msg ->
 	    case PayLoad of
 		{CreatedOn,Sender,Message} ->
-		    GroupMsg = "Sending to users ~s~n",
+		    GroupMsg = "Sending to message to user: ~s~n",
 		    send_msg_to_users({receive_msg,CreatedOn,Sender,Message},UsersList,GroupMsg);
 		_ ->
 		    {error, "Illegal payload format"}
