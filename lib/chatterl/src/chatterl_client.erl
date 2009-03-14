@@ -22,9 +22,7 @@
 
 %% API
 %% Client based
--export([start/1,stop/1,private_msg/3]).
-%% Group based
--export([join/1,leave/1]).
+-export([start/1,private_msg/3]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -44,39 +42,6 @@
 %%--------------------------------------------------------------------
 start(Client) ->
     gen_server:start_link({global, Client}, ?MODULE, [Client], []).
-
-%%--------------------------------------------------------------------
-%% @doc
-%% Stops the client, disconnecting them from Chatterl all together.
-%%
-%% Tells all joined groups and the server to drop the client from the
-%% system.
-%%
-%% @spec stop(Client) -> stopped
-%% @end
-%%--------------------------------------------------------------------
-stop(Client) ->
-    gen_server:call({global,Client}, stop, infinity).
-
-%%--------------------------------------------------------------------
-%% @doc
-%% Allows a client to join a specific group
-%%
-%% @spec join(Group) -> {ok,Msg} | {error,Error}
-%% @end
-%%--------------------------------------------------------------------
-join(Group) ->
-    gen_server:call({global,self()},{join_group,Group}).
-
-%%--------------------------------------------------------------------
-%% @doc
-%% Allows the uesr to drop from a group
-%%
-%% @spec leave(Group) -> {ok,Msg} | {error,Error}
-%% @end
-%%--------------------------------------------------------------------
-leave(Group) ->
-    gen_server:call({global,self()},{leave_group,Group}).
 
 %%--------------------------------------------------------------------
 %% @doc
