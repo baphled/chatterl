@@ -102,16 +102,6 @@ handle_call(stop, _From, State) ->
     {stop, normal, stopped, State};
 handle_call({stop,Reason},_From,State) ->
     {stop,Reason,stopped,State};
-handle_call({group_msg,Group,Msg},_From,State) ->
-    Reply =
-    case gen_server:call({global,Group}, {send_msg, State#client.name, Msg}) of
-      {ok, msg_sent} ->
-        io:format("Sent message to: ~p~n",[Group]),
-        {ok,group_msg_sent};
-      {error, Error} ->
-        {error, Error}
-    end,
-  {reply,Reply,State};
 handle_call(client_name, _From, State) ->
     Reply = {name, State#client.name},
     {reply, Reply, State};
