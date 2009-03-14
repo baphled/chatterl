@@ -18,6 +18,7 @@
 %% Client based calls
 -export([
          start/0,
+         stop/0,
          connect/2,
          disconnect/2,
          user_list/1,
@@ -71,6 +72,8 @@
 start() ->
     gen_server:start_link({global, ?SERVER}, ?MODULE, [], []).
 
+stop() ->
+  gen_server:call({global,?SERVER},stop).
 %%--------------------------------------------------------------------
 %% @doc Connects a client to the Chatterl system.
 %%
