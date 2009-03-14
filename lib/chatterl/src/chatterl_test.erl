@@ -53,21 +53,26 @@ chatterl_client_handle_test_() ->
           ?assertEqual({name,Client1}, gen_server:call({global,Client1},client_name)),
           ?assert(erlang:is_list(gen_server:call({global,Client1},groups))),
           ?assertEqual([], gen_server:call({global,Client2},groups)),
-          ?assertEqual([], gen_server:call({global,Client2},poll_messages)),
+          ?assertEqual([], gen_server:call({global,Client2},poll_messages))
+      end},
+      fun() ->
           ?assertEqual({error,"Unknown error!"}, gen_server:call({global,Client2},{join_group,"none"})),
           ?assertEqual({ok,joined_group}, gen_server:call({global,Client1},{join_group,Group})),
-          ?assertEqual(["anuva1"],gen_server:call({global,Client1},groups)),
-          ?assertEqual({error, user_not_joined}, gen_server:call({global,Client2},{group_msg,Group,"sup"})),
+          ?assertEqual(["anuva1"],gen_server:call({global,Client1},groups))
+      end,
+     fun() ->
           ?assertEqual({ok,msg_sent}, gen_server:call({global,Client1},{private_msg,Client2,"sup"})),
           ?assertEqual({error,"Cannot find user!"}, gen_server:call({global,Client1},{private_msg,"noob","sup"})),
           ?assertEqual({ok,msg_sent}, gen_server:call({global,Client2},{private_msg,Client1,"sup"})),
           ?assertEqual({ok,msg_sent}, chatterl_client:private_msg(Client2,Client1,"sup")),
-          ?assertEqual({error,"Can not send to self!"}, gen_server:call({global,Client1},{private_msg,Client1,"sup"})),
+          ?assertEqual({error,"Can not send to self!"}, gen_server:call({global,Client1},{private_msg,Client1,"sup"}))
+     end,
+     fun() ->
           ?assertEqual({error,"Not connected"}, gen_server:call({global,Client2},{leave_group,Group})),
           ?assertEqual({ok, drop_group}, gen_server:call({global,Client1},{leave_group,Group})),
           ?assert(erlang:is_list(gen_server:call({global,Client1},poll_messages))),
           ?assertEqual(stopped,gen_server:call({global,Client2},{stop,"because"}))
-      end} ]}].
+      end]}].
 
 %% Test our groups functionality
 chatterl_group_handle_test_() ->
