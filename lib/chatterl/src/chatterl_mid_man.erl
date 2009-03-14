@@ -13,7 +13,6 @@
 -module(chatterl_mid_man).
 -behaviour(gen_server).
 
--include_lib("eunit/include/eunit.hrl").
 %% API
 %% Client based calls
 -export([
