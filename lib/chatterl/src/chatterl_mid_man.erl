@@ -504,7 +504,7 @@ proxy_client(Messages) ->
         io:format("Sent message from ~s to group: ~s~n", [Sender,Group]),
         proxy_client(Messages);
       {stop,Client} ->
-        chatterl_serv:disconnect(Client),
+        gen_server:call({global, Client},stop, infinity),
         io:format("Stopped proxy for ~s~n",[Client]);
       Other ->
         io:format("unknown proxy request ~s~n",[Other]),
