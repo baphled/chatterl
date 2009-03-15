@@ -79,6 +79,7 @@ json_message(CarrierRecord) ->
 	    {carrier,Type,MessagesCarrier} ->
 		case Type =:= "groups"
 		    orelse Type =:= "clients"
+                  orelse Type =:= "registered"
 		    orelse Type =:= "messages" of
 		    true ->
 			handle_messages_json(Type,MessagesCarrier,CarrierType);
@@ -104,7 +105,7 @@ json_message(CarrierRecord) ->
 %% @end
 %%--------------------------------------------------------------------
 handle_messages_json(Type,MessagesCarrier,CarrierType) ->
-    case Type =:= "messages" of
+    case Type =:= "messages" orelse Type =:= "registered" of
 	true ->
 	    case MessagesCarrier of
 		[] -> %Empty list.
