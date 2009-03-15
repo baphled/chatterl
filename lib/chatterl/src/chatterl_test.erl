@@ -389,11 +389,34 @@ chatterl_registered_user_store_group_test_() ->
           ?assertEqual({ok,"noobie is registered"},chatterl_store:register(Nick1,{Name1,Email1,Password1,Password1})),
           ?assertEqual({ok,"nerf is registered"},chatterl_store:register(Nick2,{Name2,Email2,Password2,Password2})),
           ?assertEqual([{Nick1,Name1,Email1},{Nick2,Name2,Email2}],chatterl_store:registered())
-      end},
+      end}]}].
+
+chatterl_registered_user_list_test_() ->
+  ContentType = ["text/json"],
+  {Nick1,Name1,Email1,Password1} = {"noobie","noobie 1","noobie@noobie.com","blahblah"},
+  %{Nick2,Name2,Email2,Password2} = {"nerf","nerf 1","nerf@noobie.com","asfdasdf"},
+  [{setup,
+    fun() ->
+        chatterl:start(),
+        chatterl_store:start_link(ram_copies),
+        % for some reason this test cases others to fail
+        % if we use chatterl_client directly to create client processes
+        chatterl_mid_man:connect(ContentType,Nick1),
+        chatterl_store:register(Nick1,{Name1,Email1,Password1,Password1})
+    end,
+    fun(_) ->
+        chatterl_store:stop(),
+        mnesia:clear_table(registered_user),
+        chatterl:stop()
+    end,
+    [{timeout,5000,
       fun() ->
-          ?assertEqual({struct,[{<<"clients">>,[{struct,[{<<"client">>,<<"noobie">>}]},{struct,[{<<"client">>,<<"nerf">>}]}]}]},
+          ?assertEqual({struct,[{<<"registered">>,
+                                 {struct,[{<<"client">>,[{struct,[{<<"nick">>,<<"noobie">>}]},
+                                                         {struct,[{<<"name">>,<<"noobie 1">>}]},
+                                                         {struct,[{<<"email">>,<<"noobie@noobie.com">>}]}]}]}}]},
                        check_json(mochijson2:decode(chatterl_mid_man:registered_list(["text/json"]))))
-     end]}].
+      end}]}].
 
 %% Helper functions.
 start_client(Client,Group,Description) ->
