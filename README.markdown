@@ -16,5 +16,7 @@ A multi processed chat system that can be housed over a number of nodes &amp; tr
 <h3><a name="Useage">Useage</a></h3>
 <p>At the moment of this writing there are two ways to interact with Chatterl, through a Erlang shell or via CWIGA, which gives you the ability to interact with Chatterl via a RESTful API.</p>
 
+More information can be found <a href="http://wiki.github.com/baphled/chatterl">here</a>
+
 <h3><a name="Bugs">Bugs &amp; Issues</a></h3>
 All bugs, feature request & issues can be created via <a href="http://baphled.lighthouseapp.com/projects/25454-chattterl" target="_blank">Lighthouse</a> or alternatively all patches and fixes are more than welcome.
