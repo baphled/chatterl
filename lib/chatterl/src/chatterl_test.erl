@@ -356,7 +356,8 @@ chatterl_store_register_test_() ->
      end,
      fun() ->
          ?assertEqual({ok,"noobie Authorized"},chatterl_store:auth(Nick,Password)),
-         ?assertEqual({error,"Unable to authorise blah"},chatterl_store:auth("blah","blah"))
+         ?assertEqual({error,"Unable to authorise blah"},chatterl_store:auth("blah","blah")),
+         ?assertEqual([{registered_user,Nick,Name,Email,erlang:md5(Password)}] ,chatterl_store:registered())
       end]}].
 
 %% Helper functions.
