@@ -112,7 +112,7 @@ auth(Username,Password) ->
 %% @end
 %%--------------------------------------------------------------------
 registered() ->
-  Q = qlc:q([X || X <- mnesia:table(registered_user)]),
+  Q = qlc:q([{X#registered_user.nick,X#registered_user.firstname,X#registered_user.email} || X <- mnesia:table(registered_user)]),
   F = fun() -> qlc:e(Q) end,
   {atomic,Result} = mnesia:transaction(F),
   Result.
