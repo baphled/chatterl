@@ -70,7 +70,12 @@ auth(Username,Password) ->
                                        X#registered_user.password =:= erlang:md5(Password)]),
   F = fun() -> qlc:e(Q) end,
   {atomic,Result} = mnesia:transaction(F),
-  Result.
+  case Result of
+    [Nick] ->
+      {ok,lists:append(Nick," Authorized")};
+    [] ->
+      {error, lists:append("Unable to authorise ",Username)}
+  end.
 %%--------------------------------------------------------------------
 %% @doc
 %% Stores a groups state
