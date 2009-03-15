@@ -9,7 +9,7 @@
 	<li>{@section Features}</li>
 	<li>{@section Future Features}</li>
 	<li>{@section Useage}</li>
-	
+
 </ul>
 
 == Description ==
@@ -21,13 +21,13 @@ The main focus of this project is to create a chat system that is highly reliabl
 As mentioned the system is OTP based, of which it uses Sinan to maintain its builds. At the moment of this writing Chatterl is still in alpha so their is no real release at the moment, to get it running you will need to do the following:
 <pre><code>git-clone git://github.com/baphled/chatterl.git &amp;&amp;
 cd chatterl &amp;&amp;
-sinan doc &amp;&amp; 
+sinan doc &amp;&amp;
 sinan dist &amp;&amp;
 cd _/build/development/tar &amp;&amp;
 sudo faxien install-release chatterl-0.1.1.0.tar.gz</code></pre>
 
 The above presumes that you have Sinan configured &amp; installed, if you haven't refer to erlware.
-You will need to change to cookie &amp; name values to something else, doing so should drop you into the erlang shell &amp; ready to run the Chatterl application. 
+You will need to change to cookie &amp; name values to something else, doing so should drop you into the erlang shell &amp; ready to run the Chatterl application.
 
 == Running Chatterl ==
 To run a client on a different machine you will need to do the above if  (making sure that the -sname is not the same as any other connected nodes &amp; that the cookie is the same) if connecting on the same box simply cd to the ebin directory &amp; run the following command:
@@ -95,7 +95,7 @@ For the moment node users must follow the basic OTP configurations (same cookie,
 
 This will initialise a user &amp; connect them to chatterl_serv (must be done before users can join a group or communicate with other chatterl users).
 
-<b>Disconnecting from chatterl</b> 
+<b>Disconnecting from chatterl</b>
 <pre><code>chatterl_client:stop(UserName).</code></pre>
 
 This will disconnect the user from all the groups they are currently connected to as well as the actual Chatterl server.
@@ -230,12 +230,12 @@ Primarily this format is used for storing all messages associated to a group (At
 			&lt;message&gt;
 				&lt;client&gt;baph&lt;/client&gt;
 				&lt;date&gt;ISODATE&lt;/date&gt;
-				&lt;msgbody&gt;hey&lt;/msgbody&gt;	
+				&lt;msgbody&gt;hey&lt;/msgbody&gt;
 			&lt;/message&gt;
 			&lt;message&gt;
 				&lt;client&gt;baph&lt;/client&gt;
 				&lt;date&gt;ISODATE&lt;/date&gt;
-				&lt;mgsbody&gt;welcome&lt;/msgbody&gt;	
+				&lt;mgsbody&gt;welcome&lt;/msgbody&gt;
 			&lt;/message&gt;
 		&lt;/messages&gt;
 	&lt;/response&gt;
@@ -529,12 +529,12 @@ Lists of messages are expressed in the following manner:
 			&lt;message&gt;
 				&lt;client&gt;baph&lt;/client&gt;
 				&lt;date&gt;ISODATE&lt;/date&gt;
-				&lt;msgbody&gt;hey&lt;/msgbody&gt;	
+				&lt;msgbody&gt;hey&lt;/msgbody&gt;
 			&lt;/message&gt;
 			&lt;message&gt;
 				&lt;client&gt;baph&lt;/client&gt;
 				&lt;date&gt;ISODATE&lt;/date&gt;
-				&lt;mgsbody&gt;welcome&lt;/msgbody&gt;	
+				&lt;mgsbody&gt;welcome&lt;/msgbody&gt;
 			&lt;/message&gt;
 		&lt;/messages&gt;
 	&lt;/response&gt;
