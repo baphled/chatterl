@@ -11,7 +11,8 @@
 -behaviour(gen_server).
 
 %% API
--export([start_link/1,stop/0,group/1,user/1,get_group/1,get_user/1,register/2,auth/2]).
+-export([start_link/1,stop/0,group/1,user/1,get_group/1,get_user/1]).
+-export([registered/0,register/2,auth/2]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -76,6 +77,13 @@ auth(Username,Password) ->
     [] ->
       {error, lists:append("Unable to authorise ",Username)}
   end.
+
+registered() ->
+  Q = qlc:q([X || X <- mnesia:table(registered_user)]),
+  F = fun() -> qlc:e(Q) end,
+  {atomic,Result} = mnesia:transaction(F),
+  Result.
+
 %%--------------------------------------------------------------------
 %% @doc
 %% Stores a groups state
