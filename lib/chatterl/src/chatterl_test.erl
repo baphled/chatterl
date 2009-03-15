@@ -302,11 +302,12 @@ chatterl_store_test_() ->
     fun(_) ->
         chatterl_store:stop(),
         mnesia:clear_table(group),
+        mnesia:clear_table(client),
         chatterl:stop()
     end,
     [{timeout, 5000,
       fun() ->
-          ?assertEqual([group,schema],mnesia:system_info(tables))
+          ?assertEqual([client,group,schema],mnesia:system_info(tables))
       end},
     fun() ->
         GroupState = gen_server:call({global,Group},get_state),
@@ -321,7 +322,10 @@ chatterl_store_test_() ->
     end,
     fun() ->
         ClientState = gen_server:call({global,Client},get_state),
-        ?assertEqual(Client,ClientState#client.name)
+        ?assertEqual(Client,ClientState#client.name),
+        ?assertEqual({error,"User doesn't exist"},chatterl_store:user("blah")),
+        ?assertEqual(ok,chatterl_store:user(Client)),
+        ?assertEqual([ClientState],chatterl_store:get_user(Client))
        end]}].
 
 %% Helper functions.
