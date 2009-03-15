@@ -1,6 +1,6 @@
 -module(chatterl_test).
 -include_lib("eunit/include/eunit.hrl").
-
+-include_lib("chatterl.hrl").
 %% Test chatterl_serv functionality
 chatterl_serv_test_() ->
   [{setup, fun() ->
@@ -292,15 +292,23 @@ chatterl_group_messages_test_() ->
 chatterl_store_test_() ->
   [{setup,
     fun() ->
+        chatterl:start(),
+        chatterl_serv:create("nu","nu room"),
         chatterl_store:start_link(ram_copies)
     end,
     fun(_) ->
-        chatterl_store:stop()
+        chatterl_store:stop(),
+        chatterl:stop()
     end,
     [{timeout, 5000,
       fun() ->
           ?assertEqual([groups,schema],mnesia:system_info(tables))
-      end}]}].
+      end},
+    fun() ->
+        State = gen_server:call({global,"nu"},get_state),
+        ?assertEqual("nu",State#group.name),
+        ?assertEqual({error,"Group doesn't exist"},chatterl_store:group("anuva"))
+       end]}].
 
 %% Helper functions.
 start_client(Client,Group,Description) ->
