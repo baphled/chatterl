@@ -11,7 +11,7 @@
 -behaviour(gen_server).
 
 %% API
--export([start_link/1,stop/0,group/1,user/1,get_group/1,get_user/1,register/4]).
+-export([start_link/1,stop/0,group/1,user/1,get_group/1,get_user/1,register/2,get_nick/2]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -45,18 +45,32 @@ start_link(Copies) ->
 stop() ->
   gen_server:call({global,?MODULE}, stop, infinity).
 
-register(User,_Email,Password1,Password2) ->
-  case gen_server:call({global,chatterl_serv},{user_exists,User}) of
+register(Nickname,{User,Email,Password1,Password2}) ->
+  case gen_server:call({global,chatterl_serv},{user_exists,Nickname}) of
     true ->
       case Password1 =:= Password2 of
         false ->
-          {error,lists:append(User,"'s passwords must match")};
+          {error,lists:append(Nickname,"'s passwords must match")};
         true ->
-          {ok,lists:append(User," is registered")}
+          Row = #registered_user{nick=Nickname,firstname=User,email=Email,password=erlang:md5(Password1)},
+          F = fun() -> mnesia:write(Row) end,
+          case mnesia:transaction(F) of
+            {aborted,Result} ->
+              {aborted,Result};
+            _ -> {ok,lists:append(Nickname," is registered")}
+          end
       end;
     false ->
-      {error,lists:append(User," is not connected")}
+      {error,lists:append(Nickname," is not connected")}
   end.
+
+get_nick(Username,Password) ->
+  Q = qlc:q([X#registered_user.nick || X <- mnesia:table(registered_user),
+                                       X#registered_user.nick =:= Username,
+                                       X#registered_user.password =:= erlang:md5(Password)]),
+  F = fun() -> qlc:e(Q) end,
+  {atomic,Result} = mnesia:transaction(F),
+  Result.
 %%--------------------------------------------------------------------
 %% @doc
 %% Stores a groups state
@@ -148,11 +162,11 @@ init([Copies]) ->
                      {type, bag}])
     end,
   try
-    mnesia:table_info(type, registered)
+    mnesia:table_info(type, registered_user)
     catch
       exit: _ ->
-        mnesia:create_table(registered,
-                    [{attributes, record_info(fields, registered)},
+        mnesia:create_table(registered_user,
+                    [{attributes, record_info(fields, registered_user)},
                      {Copies, [node()]},
                      {type, bag}])
     end,
