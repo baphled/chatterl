@@ -335,11 +335,11 @@ chatterl_store_test_() ->
        end]}].
 
 chatterl_store_register_test_() ->
-  {Nick,Name,Email,Password} = {"noobie","noobie 1","noobie@noobie.com","blahblah"},
+  {Nick1,Name1,Email1,Password1} = {"noobie","noobie 1","noobie@noobie.com","blahblah"},
   [{setup,
     fun() ->
         chatterl:start(),
-        chatterl_client:start(Nick),
+        chatterl_client:start(Nick1),
         chatterl_store:start_link(ram_copies)
     end,
     fun(_) ->
@@ -350,14 +350,17 @@ chatterl_store_register_test_() ->
         chatterl:stop()
     end,
     [fun() ->
-          ?assertEqual({ok,"noobie is registered"},chatterl_store:register(Nick,{Name,Email,Password,Password})),
-          ?assertEqual({error,"blah is not connected"},chatterl_store:register("blah",{Name,Email,Password,Password})),
-          ?assertEqual({error,"noobie's passwords must match"},chatterl_store:register(Nick,{Name,Email,Password,"blah"}))
+          ?assertEqual({ok,"noobie is registered"},chatterl_store:register(Nick1,{Name1,Email1,Password1,Password1})),
+          ?assertEqual({error,"blah is not connected"},chatterl_store:register("blah",{Name1,Email1,Password1,Password1})),
+          ?assertEqual({error,"noobie's passwords must match"},chatterl_store:register(Nick1,{Name1,Email1,Password1,"blah"}))
      end,
      fun() ->
-         ?assertEqual({ok,"noobie Authorized"},chatterl_store:auth(Nick,Password)),
+         ?assertEqual({ok,"noobie Authorized"},chatterl_store:auth(Nick1,Password1)),
          ?assertEqual({error,"Unable to authorise blah"},chatterl_store:auth("blah","blah")),
-         ?assertEqual([{registered_user,Nick,Name,Email,erlang:md5(Password)}] ,chatterl_store:registered())
+         ?assertEqual([{registered_user,Nick1,Name1,Email1,erlang:md5(Password1)}], chatterl_store:registered())
+     end,
+     fun() ->
+         ?assertEqual({error,"noobie is already registered"},chatterl_store:register(Nick1,{Name1,Email1,Password1,Password1}))
       end]}].
 
 %% Helper functions.
