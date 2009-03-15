@@ -1,6 +1,9 @@
 -module(chatterl_test).
+
 -include_lib("eunit/include/eunit.hrl").
+-include_lib("stdlib/include/qlc.hrl").
 -include_lib("chatterl.hrl").
+
 %% Test chatterl_serv functionality
 chatterl_serv_test_() ->
   [{setup, fun() ->
@@ -303,11 +306,12 @@ chatterl_store_test_() ->
         chatterl_store:stop(),
         mnesia:clear_table(group),
         mnesia:clear_table(client),
+        mnesia:clear_table(registered_user),
         chatterl:stop()
     end,
     [{timeout, 5000,
       fun() ->
-          ?assertEqual([registered,client,group,schema],mnesia:system_info(tables))
+          ?assertEqual([registered_user,client,group,schema],mnesia:system_info(tables))
       end},
     fun() ->
         GroupState = gen_server:call({global,Group},get_state),
@@ -331,23 +335,26 @@ chatterl_store_test_() ->
        end]}].
 
 chatterl_store_register_test_() ->
-  {Client,Email,Password} = {"noobie","noobie@noobie.com","blahblah"},
+  {Nick,Name,Email,Password} = {"noobie","noobie 1","noobie@noobie.com","blahblah"},
   [{setup,
     fun() ->
         chatterl:start(),
-        chatterl_client:start(Client),
+        chatterl_client:start(Nick),
         chatterl_store:start_link(ram_copies)
     end,
     fun(_) ->
         chatterl_store:stop(),
         mnesia:clear_table(client),
-        mnesia:clear_table(registered),
+        mnesia:clear_table(registered_user),
         chatterl:stop()
     end,
     [fun() ->
-          ?assertEqual({ok,"noobie is registered"},chatterl_store:register(Client,Email,Password,Password)),
-          ?assertEqual({error,"blah is not connected"},chatterl_store:register("blah",Email,Password,Password)),
-          ?assertEqual({error,"noobie's passwords must match"},chatterl_store:register(Client,Email,Password,"blah"))
+          ?assertEqual({ok,"noobie is registered"},chatterl_store:register(Nick,{Name,Email,Password,Password})),
+          ?assertEqual({error,"blah is not connected"},chatterl_store:register("blah",{Name,Email,Password,Password})),
+          ?assertEqual({error,"noobie's passwords must match"},chatterl_store:register(Nick,{Name,Email,Password,"blah"}))
+     end,
+     fun() ->
+         ?assertEqual(["noobie"],chatterl_store:get_nick(Nick,Password))
       end]}].
 %% Helper functions.
 start_client(Client,Group,Description) ->
