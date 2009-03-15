@@ -360,7 +360,9 @@ chatterl_store_register_test_() ->
          ?assertEqual([{registered_user,Nick1,Name1,Email1,erlang:md5(Password1)}], chatterl_store:registered())
      end,
      fun() ->
-         ?assertEqual({error,"noobie is already registered"},chatterl_store:register(Nick1,{Name1,Email1,Password1,Password1}))
+         ?assertEqual({error,"noobie is already registered"},chatterl_store:register(Nick1,{Name1,Email1,Password1,Password1})),
+         ?assert(chatterl_store:is_auth(Nick1,Password1)),
+         ?assert(false =:= chatterl_store:is_auth(Nick1,"blah"))
       end]}].
 
 %% Helper functions.
