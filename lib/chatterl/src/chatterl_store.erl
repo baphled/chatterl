@@ -11,7 +11,7 @@
 -behaviour(gen_server).
 
 %% API
--export([start_link/1,stop/0,group/1,user/1,get_group/1,get_user/1]).
+-export([start_link/1,stop/0,group/1,user/1,get_group/1,get_user/1,register/4]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -45,6 +45,18 @@ start_link(Copies) ->
 stop() ->
   gen_server:call({global,?MODULE}, stop, infinity).
 
+register(User,_Email,Password1,Password2) ->
+  case gen_server:call({global,chatterl_serv},{user_exists,User}) of
+    true ->
+      case Password1 =:= Password2 of
+        false ->
+          {error,lists:append(User,"'s passwords must match")};
+        true ->
+          {ok,lists:append(User," is registered")}
+      end;
+    false ->
+      {error,lists:append(User," is not connected")}
+  end.
 %%--------------------------------------------------------------------
 %% @doc
 %% Stores a groups state
@@ -132,6 +144,15 @@ init([Copies]) ->
       exit: _ ->
         mnesia:create_table(client,
                     [{attributes, record_info(fields, client)},
+                     {Copies, [node()]},
+                     {type, bag}])
+    end,
+  try
+    mnesia:table_info(type, registered)
+    catch
+      exit: _ ->
+        mnesia:create_table(registered,
+                    [{attributes, record_info(fields, registered)},
                      {Copies, [node()]},
                      {type, bag}])
     end,
