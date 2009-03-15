@@ -143,11 +143,6 @@ user_list(ContentType,Group) ->
     end,
   get_response_body(ContentType,build_carrier(Type,Record)).
 
-registered_list(ContentType) ->
-  ClientsList = [build_carrier("client",Nick)
-                 || {Nick,_Name,_Email}
-                      <- chatterl_store:registered()],
-  get_response_body(ContentType,build_carrier("success",build_carrier("clients",ClientsList))).
 %%--------------------------------------------------------------------
 %% @doc Allows a client to send a private message to another client.
 %%
@@ -362,6 +357,19 @@ group_poll(ContentType,Group) ->
 		{"error",lists:append(lists:append("Group: ", Group), " doesn't exist!")}
 	end,
   get_response_body(ContentType,build_carrier(Type,Result)).
+
+%%--------------------------------------------------------------------
+%% @doc Lists all clients registered to chatterl.
+%%
+%% @spec registered_list(ContentType) -> [RegisteredUsers]
+%% @end
+%%--------------------------------------------------------------------
+registered_list(ContentType) ->
+  ClientsList = [build_carrier("client",[build_carrier("nick",Nick),build_carrier("name",Name),build_carrier("email",Email)])
+                 || {Nick,Name,Email}
+                      <- chatterl_store:registered()],
+  Result = build_carrier("registered",ClientsList),
+  get_response_body(ContentType,build_carrier("success",Result)).
 
 %%====================================================================
 %% gen_server callbacks
