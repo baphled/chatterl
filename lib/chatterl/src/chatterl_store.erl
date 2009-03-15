@@ -26,15 +26,32 @@
 %% API
 %%====================================================================
 %%--------------------------------------------------------------------
-%% Function: start_link() -> {ok,Pid} | ignore | {error,Error}
-%% Description: Starts the server
+%% @doc
+%% Starts the server
+%%
+%% @spec start() -> {ok,Pid} | ignore | {error,Error}
+%% @end
 %%--------------------------------------------------------------------
 start_link(Copies) ->
   gen_server:start_link({global, ?MODULE}, ?MODULE, [Copies], []).
 
+%%--------------------------------------------------------------------
+%% @doc
+%% Stops the server
+%%
+%% @spec stop() -> stopped
+%% @end
+%%--------------------------------------------------------------------
 stop() ->
   gen_server:call({global,?MODULE}, stop, infinity).
 
+%%--------------------------------------------------------------------
+%% @doc
+%% Stores a groups state
+%%
+%% @spec group(Group) -> ok | {error,Error}
+%% @end
+%%--------------------------------------------------------------------
 group(Group) ->
   case gen_server:call({global,chatterl_serv},{group_exists,Group}) of
     true ->
@@ -45,8 +62,15 @@ group(Group) ->
     false -> {error,"Group doesn't exist"}
   end.
 
+%%--------------------------------------------------------------------
+%% @doc
+%% Retrieves a groups state.
+%%
+%% @spec group(Group) -> GroupState
+%% @end
+%%--------------------------------------------------------------------
 get_group(GroupName) ->
-  F = fun() -> qlc:e(qlc:q([X || X <- mnesia:table(group)])) end,
+  F = fun() -> qlc:e(qlc:q([X || X <- mnesia:table(group), X#group.name =:= GroupName])) end,
   {atomic,Result} = mnesia:transaction(F),
   Result.
 
