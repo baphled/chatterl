@@ -11,7 +11,7 @@
 -behaviour(gen_server).
 
 %% API
--export([start_link/1,stop/0,group/1]).
+-export([start_link/1,stop/0,group/1,get_group/1]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -37,9 +37,19 @@ stop() ->
 
 group(Group) ->
   case gen_server:call({global,chatterl_serv},{group_exists,Group}) of
-    true -> {ok,"Group saved"};
+    true ->
+      State = gen_server:call({global,Group},get_state),
+      F = fun() -> mnesia:write(State) end,
+      {atomic,Result} = mnesia:transaction(F),
+      Result;
     false -> {error,"Group doesn't exist"}
   end.
+
+get_group(GroupName) ->
+  F = fun() -> qlc:e(qlc:q([X || X <- mnesia:table(group)])) end,
+  {atomic,Result} = mnesia:transaction(F),
+  Result.
+
 %%====================================================================
 %% gen_server callbacks
 %%====================================================================
@@ -58,7 +68,7 @@ init([Copies]) ->
     mnesia:table_info(type, groups)
     catch
       exit: _ ->
-        mnesia:create_table(groups,
+        mnesia:create_table(group,
                     [{attributes, record_info(fields, group)},
                      {Copies, [node()]},
                      {type, bag}])
