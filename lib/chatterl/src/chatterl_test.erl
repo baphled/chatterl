@@ -365,7 +365,7 @@ chatterl_store_user_register_test_() ->
          ?assert(false =:= chatterl_store:is_auth(Nick1,"blah"))
       end]}].
 
-hatterl_store_register_retrieval_test_() ->
+chatterl_store_register_retrieval_test_() ->
   ContentType = ["text/json"],
   {Nick1,Name1,Email1,Password1} = {"noobie","noobie 1","noobie@noobie.com","blahblah"},
   {Nick2,Name2,Email2,Password2} = {"nerf","nerf 1","nerf@noobie.com","asfdasdf"},
@@ -386,7 +386,11 @@ hatterl_store_register_retrieval_test_() ->
     [{timeout,5000,
       fun() ->
           ?assertEqual({ok,"noobie is registered"},chatterl_store:register(Nick1,{Name1,Email1,Password1,Password1})),
-          ?assertEqual({ok,"nerf is registered"},chatterl_store:register(Nick2,{Name2,Email2,Password2,Password2}))
+          ?assertEqual({ok,"nerf is registered"},chatterl_store:register(Nick2,{Name2,Email2,Password2,Password2})),
+          ?assertEqual([
+                        {registered_user,Nick1,Name1,Email1,erlang:md5(Password1)},
+                        {registered_user,Nick2,Name2,Email2,erlang:md5(Password2)}],
+                       chatterl_store:registered())
      end}]}].
 
 %% Helper functions.
