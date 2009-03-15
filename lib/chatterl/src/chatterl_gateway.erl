@@ -263,12 +263,7 @@ is_auth(Req) ->
       Str = base64:mime_decode_to_string(Base64),
       case string:tokens(Str, ":") of
         [User, Pass] ->
-          case chatterl_store:auth(User,Pass) of
-            [Nick] ->
-              {ok,lists:append(Nick," Authorized")};
-            [] ->
-              {error, lists:append("Unable to authorise ",User)}
-          end;
+          chatterl_store:auth(User,Pass);
         _ ->
           {error,"Unauthorized authorization."}
       end;
