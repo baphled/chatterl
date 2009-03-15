@@ -301,7 +301,7 @@ chatterl_store_test_() ->
     end,
     fun(_) ->
         chatterl_store:stop(),
-        mnesia:delete_table(group),
+        mnesia:clear_table(group),
         chatterl:stop()
     end,
     [{timeout, 5000,
@@ -309,15 +309,19 @@ chatterl_store_test_() ->
           ?assertEqual([group,schema],mnesia:system_info(tables))
       end},
     fun() ->
-        State = gen_server:call({global,Group},get_state),
-        ?assertEqual(Group,State#group.name),
-        ?assertEqual(Description,State#group.description),
-        ?assert(erlang:is_tuple(State#group.created)),
-        ?assertEqual({0,nil},State#group.messages),
-        ?assert(erlang:is_tuple(State#group.users)),
+        GroupState = gen_server:call({global,Group},get_state),
+        ?assertEqual(Group,GroupState#group.name),
+        ?assertEqual(Description,GroupState#group.description),
+        ?assert(erlang:is_tuple(GroupState#group.created)),
+        ?assertEqual({0,nil},GroupState#group.messages),
+        ?assert(erlang:is_tuple(GroupState#group.users)),
         ?assertEqual({error,"Group doesn't exist"},chatterl_store:group("anuva")),
         ?assertEqual(ok,chatterl_store:group(Group)),
-        ?assertEqual([State],chatterl_store:get_group("nu"))
+        ?assertEqual([GroupState],chatterl_store:get_group(Group))
+    end,
+    fun() ->
+        ClientState = gen_server:call({global,Client},get_state),
+        ?assertEqual(Client,ClientState#client.name)
        end]}].
 
 %% Helper functions.
