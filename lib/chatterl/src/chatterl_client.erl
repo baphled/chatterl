@@ -28,7 +28,7 @@
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
 	 terminate/2, code_change/3]).
 
--record(client, {name, ip, groups, messages}).
+-include_lib("chatterl.hrl").
 
 %%====================================================================
 %% API
@@ -163,7 +163,9 @@ handle_call({receive_msg, CreatedOn, Client, Msg}, _From, State) ->
 	end,
     {reply, Reply, State#client{messages = NewTree}};
 handle_call(poll_messages, _From,State) ->
-    {reply,gb_trees:values(State#client.messages),State}.
+    {reply,gb_trees:values(State#client.messages),State};
+handle_call(get_state,_From,State) ->
+  {reply,State,State}.
 
 %%--------------------------------------------------------------------
 %% @doc
