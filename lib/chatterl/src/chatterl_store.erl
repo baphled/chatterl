@@ -48,21 +48,33 @@ stop() ->
 
 register(Nickname,{User,Email,Password1,Password2}) ->
   case gen_server:call({global,chatterl_serv},{user_exists,Nickname}) of
+    false ->
+      {error,lists:append(Nickname," is not connected")};
     true ->
       case Password1 =:= Password2 of
         false ->
           {error,lists:append(Nickname,"'s passwords must match")};
         true ->
-          Row = #registered_user{nick=Nickname,firstname=User,email=Email,password=erlang:md5(Password1)},
-          F = fun() -> mnesia:write(Row) end,
-          case mnesia:transaction(F) of
-            {aborted,Result} ->
-              {aborted,Result};
-            _ -> {ok,lists:append(Nickname," is registered")}
+          case is_auth(Nickname,Password1) of
+              true ->
+              {error,lists:append(Nickname," is already registered")};
+            false ->
+              Row = #registered_user{nick=Nickname,firstname=User,email=Email,password=erlang:md5(Password1)},
+              F = fun() -> mnesia:write(Row) end,
+              case mnesia:transaction(F) of
+                {aborted,Result} ->
+                  {aborted,Result};
+                _ -> {ok,lists:append(Nickname," is registered")}
+              end
           end
-      end;
-    false ->
-      {error,lists:append(Nickname," is not connected")}
+      end
+  end.
+
+
+is_auth(Username,Password) ->
+  case auth(Username,Password) of
+    {ok, _} -> true;
+    {error,_} -> false
   end.
 
 auth(Username,Password) ->
