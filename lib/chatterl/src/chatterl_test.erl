@@ -288,6 +288,20 @@ chatterl_group_messages_test_() ->
                        check_json(mochijson2:decode(chatterl_mid_man:group_poll(["text/json"],"blah"))))
            end}]}].
 
+
+chatterl_store_test_() ->
+  [{setup,
+    fun() ->
+        chatterl_store:start_link(ram_copies)
+    end,
+    fun(_) ->
+        chatterl_store:stop()
+    end,
+    [{timeout, 5000,
+      fun() ->
+          ?assertEqual([groups,schema],mnesia:system_info(tables))
+      end}]}].
+
 %% Helper functions.
 start_client(Client,Group,Description) ->
   start_group(Group,Description),
