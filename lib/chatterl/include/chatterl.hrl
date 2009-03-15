@@ -13,4 +13,4 @@
 %% Records associated with users
 -record(client, {name, ip, groups, messages}).
 %% Stores our registered clients credentials for login.
--record(registered,{client,email,password}).
+-record(registered_user, {nick,firstname,email,password}).
