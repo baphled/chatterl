@@ -220,16 +220,16 @@ handle(Path,ContentType,Req) ->
         case is_auth(Req) of
           {ok, _Msg} ->
             chatterl_mid_man:group_create(ContentType,{Group,Description});
-          {error,Error} -> chatterl_mid_man:build_carrier("error",Error)
+          {error,Error} -> message_handler:get_response_body(ContentType,message_handler:build_carrier("error",Error))
         end;
       "/groups/drop/" ++ Group -> case is_auth(Req) of
                                     {ok,_Msg} ->
                                       chatterl_mid_man:group_drop(ContentType,Group);
                                     {error,Error} ->
-                                      chatterl_mid_man:build_carrier("error",Error)
+                                      message_handler:get_response_body(ContentType,message_handler:build_carrier("error",Error))
                                   end;
       %% Catch all
-      Unknown -> message_handler:build_carrier("error", "Unknown command: " ++Unknown)
+      Unknown -> message_handler:get_response_body(ContentType,message_handler:build_carrier("error", "Unknown command: " ++Unknown))
     end,
   Req:respond({200, [{"Content-Type", ContentType}], list_to_binary(Response)}).
 
@@ -258,15 +258,20 @@ get_properties(Req,WantedParams) ->
 %% @end
 %%--------------------------------------------------------------------
 is_auth(Req) ->
-    case Req:get_header_value("authorization") of
-	"Basic "++Base64 ->
-	    Str = base64:mime_decode_to_string(Base64),
-	    case string:tokens(Str, ":") of
-		["admin", "pass"] ->
-		    {ok,"Authorized"};
-		_ ->
-		    {error,"Unauthorized authorization."}
-	    end;
-	_ ->
-	    {error,"Need to authorize"}
-    end.
+  case Req:get_header_value("authorization") of
+    "Basic "++Base64 ->
+      Str = base64:mime_decode_to_string(Base64),
+      case string:tokens(Str, ":") of
+        [User, Pass] ->
+          case chatterl_store:get_nick(User,Pass) of
+            [Nick] ->
+              {ok,lists:append(Nick," Authorized")};
+            [] ->
+              {error, lists:append("Unable to authorise ",User)}
+          end;
+        _ ->
+          {error,"Unauthorized authorization."}
+      end;
+    _ ->
+      {error,"Need to authorize"}
+  end.
