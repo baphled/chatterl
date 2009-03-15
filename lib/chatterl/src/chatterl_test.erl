@@ -307,7 +307,7 @@ chatterl_store_test_() ->
     end,
     [{timeout, 5000,
       fun() ->
-          ?assertEqual([client,group,schema],mnesia:system_info(tables))
+          ?assertEqual([registered,client,group,schema],mnesia:system_info(tables))
       end},
     fun() ->
         GroupState = gen_server:call({global,Group},get_state),
@@ -323,11 +323,32 @@ chatterl_store_test_() ->
     fun() ->
         ClientState = gen_server:call({global,Client},get_state),
         ?assertEqual(Client,ClientState#client.name),
-        ?assertEqual({error,"User doesn't exist"},chatterl_store:user("blah")),
         ?assertEqual(ok,chatterl_store:user(Client)),
+        ?assertEqual({0,nil},ClientState#client.messages),
+        ?assertEqual({error,"User doesn't exist"},chatterl_store:user("blah")),
+        ?assert(erlang:is_tuple(ClientState#client.groups)),
         ?assertEqual([ClientState],chatterl_store:get_user(Client))
        end]}].
 
+chatterl_store_register_test_() ->
+  {Client,Email,Password} = {"noobie","noobie@noobie.com","blahblah"},
+  [{setup,
+    fun() ->
+        chatterl:start(),
+        chatterl_client:start(Client),
+        chatterl_store:start_link(ram_copies)
+    end,
+    fun(_) ->
+        chatterl_store:stop(),
+        mnesia:clear_table(client),
+        mnesia:clear_table(registered),
+        chatterl:stop()
+    end,
+    [fun() ->
+          ?assertEqual({ok,"noobie is registered"},chatterl_store:register(Client,Email,Password,Password)),
+          ?assertEqual({error,"blah is not connected"},chatterl_store:register("blah",Email,Password,Password)),
+          ?assertEqual({error,"noobie's passwords must match"},chatterl_store:register(Client,Email,Password,"blah"))
+      end]}].
 %% Helper functions.
 start_client(Client,Group,Description) ->
   start_group(Group,Description),
