@@ -14,11 +14,7 @@ A multi processed chat system that can be housed over a number of nodes &amp; tr
 <p>The main focus of this project is to create a chat system that is highly reliable as well as scaleable. Other developers will be able to create add-on modules that are able to interact with chatterl &amp; further enhance the functionality of chatterl &amp; the chatterl clients experience.</p>
 
 <h3><a name="Useage">Useage</a></h3>
-<ul>
-	<li><a href="#Shell_Interaction">Shell Interaction</a></li>
-	<li><a href="#CWIGA">CWIGA</a></li>
-</ul><p>
-At the moment of this writing there are two ways to interact with Chatterl, through a Erlang shell or via CWIGA, which gives you the ability to interact with Chatterl via a RESTful API.</p>
+<p>At the moment of this writing there are two ways to interact with Chatterl, through a Erlang shell or via CWIGA, which gives you the ability to interact with Chatterl via a RESTful API.</p>
 
 <h3><a name="Bugs">Bugs &amp; Issues</a></h3>
 All bugs, feature request & issues can be created via <a href="http://baphled.lighthouseapp.com/projects/25454-chattterl" target="_blank">Lighthouse</a> or alternatively all patches and fixes are more than welcome.
