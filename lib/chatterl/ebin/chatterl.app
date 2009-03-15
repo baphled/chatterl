@@ -10,6 +10,7 @@
    	     chatterl_groups,
 	     chatterl_client,
 	     chatterl_serv,
+	     chatterl_store,
 	     chatterl_sup,
 	     server_sup,
 	     cwiga_sup,
