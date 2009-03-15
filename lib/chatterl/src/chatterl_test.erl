@@ -345,6 +345,7 @@ chatterl_store_register_test_() ->
     fun(_) ->
         chatterl_store:stop(),
         mnesia:clear_table(client),
+        mnesia:clear_table(group),
         mnesia:clear_table(registered_user),
         chatterl:stop()
     end,
@@ -354,8 +355,9 @@ chatterl_store_register_test_() ->
           ?assertEqual({error,"noobie's passwords must match"},chatterl_store:register(Nick,{Name,Email,Password,"blah"}))
      end,
      fun() ->
-         ?assertEqual(["noobie"],chatterl_store:get_nick(Nick,Password))
+         ?assertEqual(["noobie"],chatterl_store:auth(Nick,Password))
       end]}].
+
 %% Helper functions.
 start_client(Client,Group,Description) ->
   start_group(Group,Description),
