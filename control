@@ -1,0 +1,10 @@
+{control,"chatterl",
+         [{package_owner,"Yomi Colledge"},
+          {package_owner_email,"baphled@boodah.net"},
+          {categories,["server"]},
+          {description,"Erlang base chat system"},
+          {author,"Yomi Colledge"},
+          {authors_email,"baphled@boodah.net"},
+          {keywords,["chat system"]},
+          {project_page,"http://github.com/baphled/chatterl"}]}.
+
