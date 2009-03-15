@@ -75,7 +75,7 @@ stop(Group) ->
 %%--------------------------------------------------------------------
 init([Name,Description]) ->
     process_flag(trap_exit, true),
-    io:format("Initialising ~s...~n", [Name]),
+    %io:format("Initialising ~s...~n", [Name]),
     {ok,
      #group{
        name = Name,
@@ -164,7 +164,9 @@ handle_call({send_msg,User,Message},_From,State) ->
             {{error, already_sent}, State#group.messages}
         end
     end,
-  {reply, Reply, State#group{messages=NewTree}}.
+  {reply, Reply, State#group{messages=NewTree}};
+handle_call(get_state,_From,State) ->
+  {reply,State,State}.
 %%--------------------------------------------------------------------
 %% @doc
 %% Handling cast messages
