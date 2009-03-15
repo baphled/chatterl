@@ -30,7 +30,7 @@
 %% @doc
 %% Starts the server
 %%
-%% @spec start() -> {ok,Pid} | ignore | {error,Error}
+%% @spec start_link(Copies) -> {ok,Pid} | ignore | {error,Error}
 %% @end
 %%--------------------------------------------------------------------
 start_link(Copies) ->
@@ -155,7 +155,7 @@ user(User) ->
 %% @doc
 %% Retrieves a groups state.
 %%
-%% @spec group(Group) -> GroupState
+%% @spec get_group(GroupName) -> GroupState
 %% @end
 %%--------------------------------------------------------------------
 get_group(GroupName) ->
@@ -167,7 +167,7 @@ get_group(GroupName) ->
 %% @doc
 %% Retrieves a groups state.
 %%
-%% @spec group(Group) -> GroupState
+%% @spec get_user(ClientName) -> GroupState
 %% @end
 %%--------------------------------------------------------------------
 get_user(ClientName) ->
