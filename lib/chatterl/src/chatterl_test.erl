@@ -245,25 +245,26 @@ chatterl_user_groups_test_() ->
        end]}].
 
 chatterl_group_create_test_() ->
+  {Room,Description,ContentType} = {"nu","nu room",["text/json"]},
   [{setup, fun() ->
                chatterl:start()
            end,
     fun(_) -> chatterl:stop() end,
     [{timeout, 5000,
       fun() ->
-          ?assertEqual({struct,[{<<"groups">>,[]}]},check_json(mochijson2:decode(chatterl_mid_man:group_list(["text/json"])))),
+          ?assertEqual({struct,[{<<"groups">>,[]}]},check_json(mochijson2:decode(chatterl_mid_man:group_list(ContentType)))),
           ?assertEqual(<<"Group: nu added">>,
-                       check_json(mochijson2:decode(chatterl_mid_man:group_create(["text/json"],{"nu","nu room"})))),
+                       check_json(mochijson2:decode(chatterl_mid_man:group_create(ContentType,{Room,Description})))),
           ?assertEqual(<<"Unable to create group: nu">>,
-                       check_json(mochijson2:decode(chatterl_mid_man:group_create(["text/json"],{"nu","nu room"})))),
+                       check_json(mochijson2:decode(chatterl_mid_man:group_create(ContentType,{Room,Description})))),
           % abit lazy but not sure how to check the creation date dynamically atm.
-          ?assert(erlang:is_tuple(check_json(mochijson2:decode(chatterl_mid_man:group_info(["text/json"],"nu"))))),
+          ?assert(erlang:is_tuple(check_json(mochijson2:decode(chatterl_mid_man:group_info(ContentType,Room))))),
           ?assertEqual(<<"Group dropped nu">>,
-                       check_json(mochijson2:decode(chatterl_mid_man:group_drop(["text/json"],"nu")))),
+                       check_json(mochijson2:decode(chatterl_mid_man:group_drop(ContentType,Room)))),
           ?assertEqual(<<"Can not find nu">>,
-                       check_json(mochijson2:decode(chatterl_mid_man:group_drop(["text/json"],"nu")))),
+                       check_json(mochijson2:decode(chatterl_mid_man:group_drop(ContentType,Room)))),
           ?assertEqual(<<"Group doesn't exist!">>,
-                       check_json(mochijson2:decode(chatterl_mid_man:group_info(["text/json"],"nu"))))
+                       check_json(mochijson2:decode(chatterl_mid_man:group_info(ContentType,Room))))
       end}]}].
 
 chatterl_group_messages_test_() ->
@@ -388,7 +389,11 @@ chatterl_registered_user_store_group_test_() ->
           ?assertEqual({ok,"noobie is registered"},chatterl_store:register(Nick1,{Name1,Email1,Password1,Password1})),
           ?assertEqual({ok,"nerf is registered"},chatterl_store:register(Nick2,{Name2,Email2,Password2,Password2})),
           ?assertEqual([{Nick1,Name1,Email1},{Nick2,Name2,Email2}],chatterl_store:registered())
-     end}]}].
+      end},
+      fun() ->
+          ?assertEqual({struct,[{<<"clients">>,[{struct,[{<<"client">>,<<"noobie">>}]},{struct,[{<<"client">>,<<"nerf">>}]}]}]},
+                       check_json(mochijson2:decode(chatterl_mid_man:registered_list(["text/json"]))))
+     end]}].
 
 %% Helper functions.
 start_client(Client,Group,Description) ->
