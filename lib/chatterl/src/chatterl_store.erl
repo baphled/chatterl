@@ -46,6 +46,13 @@ start_link(Copies) ->
 stop() ->
   gen_server:call({global,?MODULE}, stop, infinity).
 
+%%--------------------------------------------------------------------
+%% @doc
+%% Registers a client to chatterl.
+%%
+%% @spec register(Nickname,{User,Email,Password1,Password2}) -> {ok,Msg} | {error,Msg}
+%% @end
+%%--------------------------------------------------------------------
 register(Nickname,{User,Email,Password1,Password2}) ->
   case gen_server:call({global,chatterl_serv},{user_exists,Nickname}) of
     false ->
@@ -64,12 +71,26 @@ register(Nickname,{User,Email,Password1,Password2}) ->
       end
   end.
 
+%%--------------------------------------------------------------------
+%% @doc
+%% Determines whether a client is authorised or not
+%%
+%% @spec is_auth(Username,Password) -> true | false
+%% @end
+%%--------------------------------------------------------------------
 is_auth(Username,Password) ->
   case auth(Username,Password) of
     {ok, _} -> true;
     {error,_} -> false
   end.
 
+%%--------------------------------------------------------------------
+%% @doc
+%% Authorises a client.
+%%
+%% @spec auth(Username,Password) -> {ok,Msg} | {error,Msg}
+%% @end
+%%--------------------------------------------------------------------
 auth(Username,Password) ->
   Q = qlc:q([X#registered_user.nick || X <- mnesia:table(registered_user),
                                        X#registered_user.nick =:= Username,
@@ -83,6 +104,13 @@ auth(Username,Password) ->
       {error, lists:append("Unable to authorise ",Username)}
   end.
 
+%%--------------------------------------------------------------------
+%% @doc
+%% Retrieves a list of registered clients.
+%%
+%% @spec registered() -> [RegisteredUsers]
+%% @end
+%%--------------------------------------------------------------------
 registered() ->
   Q = qlc:q([X || X <- mnesia:table(registered_user)]),
   F = fun() -> qlc:e(Q) end,
