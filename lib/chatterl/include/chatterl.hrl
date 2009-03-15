@@ -12,3 +12,4 @@
 -record(group, {name, description,created, messages, users}).
 %% Records associated with users
 -record(users, {name, ip}).
+-record(client, {name, ip, groups, messages}).
