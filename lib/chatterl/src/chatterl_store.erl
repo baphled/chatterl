@@ -11,7 +11,7 @@
 -behaviour(gen_server).
 
 %% API
--export([start_link/1,stop/0,group/1,get_group/1]).
+-export([start_link/1,stop/0,group/1,user/1,get_group/1,get_user/1]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -64,6 +64,23 @@ group(Group) ->
 
 %%--------------------------------------------------------------------
 %% @doc
+%% Stores a groups state
+%%
+%% @spec user(User) -> ok | {error,Error}
+%% @end
+%%--------------------------------------------------------------------
+user(User) ->
+  case gen_server:call({global,chatterl_serv},{user_exists,User}) of
+    true ->
+      State = gen_server:call({global,User},get_state),
+      F = fun() -> mnesia:write(State) end,
+      {atomic,Result} = mnesia:transaction(F),
+      Result;
+    false -> {error,"User doesn't exist"}
+  end.
+
+%%--------------------------------------------------------------------
+%% @doc
 %% Retrieves a groups state.
 %%
 %% @spec group(Group) -> GroupState
@@ -71,6 +88,18 @@ group(Group) ->
 %%--------------------------------------------------------------------
 get_group(GroupName) ->
   F = fun() -> qlc:e(qlc:q([X || X <- mnesia:table(group), X#group.name =:= GroupName])) end,
+  {atomic,Result} = mnesia:transaction(F),
+  Result.
+
+%%--------------------------------------------------------------------
+%% @doc
+%% Retrieves a groups state.
+%%
+%% @spec group(Group) -> GroupState
+%% @end
+%%--------------------------------------------------------------------
+get_user(ClientName) ->
+  F = fun() -> qlc:e(qlc:q([X || X <- mnesia:table(client), X#client.name =:= ClientName])) end,
   {atomic,Result} = mnesia:transaction(F),
   Result.
 
@@ -89,11 +118,20 @@ init([Copies]) ->
   mnesia:create_schema([node()]),
   mnesia:start(),
   try
-    mnesia:table_info(type, groups)
+    mnesia:table_info(type, group)
     catch
       exit: _ ->
         mnesia:create_table(group,
                     [{attributes, record_info(fields, group)},
+                     {Copies, [node()]},
+                     {type, bag}])
+    end,
+  try
+    mnesia:table_info(type, client)
+    catch
+      exit: _ ->
+        mnesia:create_table(client,
+                    [{attributes, record_info(fields, client)},
                      {Copies, [node()]},
                      {type, bag}])
     end,
