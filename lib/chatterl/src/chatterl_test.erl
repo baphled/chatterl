@@ -7,7 +7,8 @@ chatterl_serv_test_() ->
                chatterl:start() end,
     fun(_) ->
         chatterl:stop() end,
-    [fun() ->
+    [{timeout, 5000,
+      fun() ->
          {Group1,Description} = {"anuva","nu room"},
          ?assertEqual([],chatterl_serv:list_groups()),
          ?assertEqual([],chatterl_serv:list_users()),
@@ -15,7 +16,8 @@ chatterl_serv_test_() ->
          ?assert(erlang:is_tuple(chatterl_serv:create(Group1,Description))),
          ?assertEqual({error,already_created},chatterl_serv:create(Group1,Description)),
          ?assertEqual([],chatterl_serv:list_users(Group1)),
-         ?assertEqual([Group1],chatterl_serv:list_groups()) end]}].
+         ?assertEqual([Group1],chatterl_serv:list_groups())
+      end}]}].
 
 chatterl_serv_groups_test_() ->
   {Client1,Group1,Group2,Description} = {"blah","room","anuva","nu room"},
@@ -243,8 +245,7 @@ chatterl_group_create_test_() ->
   [{setup, fun() ->
                chatterl:start()
            end,
-    fun(_) ->
-        chatterl:stop() end,
+    fun(_) -> chatterl:stop() end,
     [{timeout, 5000,
       fun() ->
           ?assertEqual({struct,[{<<"groups">>,[]}]},check_json(mochijson2:decode(chatterl_mid_man:group_list(["text/json"])))),
@@ -270,8 +271,7 @@ chatterl_group_messages_test_() ->
                chatterl_serv:create(Group,"nu room"),
                chatterl_mid_man:group_join(ContentType,{Group,Client})
            end,
-    fun(_) ->
-        chatterl:stop() end,
+    fun(_) -> chatterl:stop() end,
     [{timeout, 5000,
       fun() ->
           Result = {struct,[{<<"messages">>,[]}]},
@@ -290,10 +290,14 @@ chatterl_group_messages_test_() ->
 
 
 chatterl_store_test_() ->
+  {Client,Group,Description} = {"noob","nu","nu room"},
   [{setup,
     fun() ->
         chatterl:start(),
-        chatterl_serv:create("nu","nu room"),
+        chatterl_serv:create(Group,Description),
+        chatterl_client:start(Client),
+        mnesia:delete_table(group),
+        gen_server:call({global,Client},{join_group,Group}),
         chatterl_store:start_link(ram_copies)
     end,
     fun(_) ->
@@ -302,12 +306,18 @@ chatterl_store_test_() ->
     end,
     [{timeout, 5000,
       fun() ->
-          ?assertEqual([groups,schema],mnesia:system_info(tables))
+          ?assertEqual([group,schema],mnesia:system_info(tables))
       end},
     fun() ->
-        State = gen_server:call({global,"nu"},get_state),
-        ?assertEqual("nu",State#group.name),
-        ?assertEqual({error,"Group doesn't exist"},chatterl_store:group("anuva"))
+        State = gen_server:call({global,Group},get_state),
+        ?assertEqual(Group,State#group.name),
+        ?assertEqual(Description,State#group.description),
+        ?assert(erlang:is_tuple(State#group.created)),
+        ?assertEqual({0,nil},State#group.messages),
+        ?assert(erlang:is_tuple(State#group.users)),
+        ?assertEqual({error,"Group doesn't exist"},chatterl_store:group("anuva")),
+        ?assertEqual(ok,chatterl_store:group(Group)),
+        ?assertEqual([State],chatterl_store:get_group("nu"))
        end]}].
 
 %% Helper functions.
