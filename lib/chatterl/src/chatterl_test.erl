@@ -296,12 +296,12 @@ chatterl_store_test_() ->
         chatterl:start(),
         chatterl_serv:create(Group,Description),
         chatterl_client:start(Client),
-        mnesia:delete_table(group),
         gen_server:call({global,Client},{join_group,Group}),
         chatterl_store:start_link(ram_copies)
     end,
     fun(_) ->
         chatterl_store:stop(),
+        mnesia:delete_table(group),
         chatterl:stop()
     end,
     [{timeout, 5000,
