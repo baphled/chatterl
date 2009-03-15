@@ -59,17 +59,10 @@ register(Nickname,{User,Email,Password1,Password2}) ->
               true ->
               {error,lists:append(Nickname," is already registered")};
             false ->
-              Row = #registered_user{nick=Nickname,firstname=User,email=Email,password=erlang:md5(Password1)},
-              F = fun() -> mnesia:write(Row) end,
-              case mnesia:transaction(F) of
-                {aborted,Result} ->
-                  {aborted,Result};
-                _ -> {ok,lists:append(Nickname," is registered")}
-              end
+              create_user(Nickname,{User,Email,Password1})
           end
       end
   end.
-
 
 is_auth(Username,Password) ->
   case auth(Username,Password) of
@@ -247,3 +240,12 @@ code_change(_OldVsn, State, _Extra) ->
 %%--------------------------------------------------------------------
 %%% Internal functions
 %%--------------------------------------------------------------------
+
+create_user(Nickname,{User,Email,Password}) ->
+  Row = #registered_user{nick=Nickname,firstname=User,email=Email,password=erlang:md5(Password)},
+  F = fun() -> mnesia:write(Row) end,
+  case mnesia:transaction(F) of
+    {aborted,Result} ->
+      {aborted,Result};
+    _ -> {ok,lists:append(Nickname," is registered")}
+  end.
