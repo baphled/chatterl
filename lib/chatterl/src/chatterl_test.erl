@@ -334,7 +334,7 @@ chatterl_store_test_() ->
         ?assertEqual([ClientState],chatterl_store:get_user(Client))
        end]}].
 
-chatterl_store_register_test_() ->
+chatterl_store_user_register_test_() ->
   {Nick1,Name1,Email1,Password1} = {"noobie","noobie 1","noobie@noobie.com","blahblah"},
   [{setup,
     fun() ->
@@ -364,6 +364,30 @@ chatterl_store_register_test_() ->
          ?assert(chatterl_store:is_auth(Nick1,Password1)),
          ?assert(false =:= chatterl_store:is_auth(Nick1,"blah"))
       end]}].
+
+hatterl_store_register_retrieval_test_() ->
+  ContentType = ["text/json"],
+  {Nick1,Name1,Email1,Password1} = {"noobie","noobie 1","noobie@noobie.com","blahblah"},
+  {Nick2,Name2,Email2,Password2} = {"nerf","nerf 1","nerf@noobie.com","asfdasdf"},
+  [{setup,
+    fun() ->
+        chatterl:start(),
+        chatterl_store:start_link(ram_copies),
+        % for some reason this test cases others to fail
+        % if we use chatterl_client directly to create client processes
+        chatterl_mid_man:connect(ContentType,Nick1),
+        chatterl_mid_man:connect(ContentType,Nick2)
+    end,
+    fun(_) ->
+        chatterl_store:stop(),
+        mnesia:clear_table(registered_user),
+        chatterl:stop()
+    end,
+    [{timeout,5000,
+      fun() ->
+          ?assertEqual({ok,"noobie is registered"},chatterl_store:register(Nick1,{Name1,Email1,Password1,Password1})),
+          ?assertEqual({ok,"nerf is registered"},chatterl_store:register(Nick2,{Name2,Email2,Password2,Password2}))
+     end}]}].
 
 %% Helper functions.
 start_client(Client,Group,Description) ->
