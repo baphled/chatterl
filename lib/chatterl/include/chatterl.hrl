@@ -11,5 +11,6 @@
 %% Records associated with groups
 -record(group, {name, description,created, messages, users}).
 %% Records associated with users
--record(users, {name, ip}).
 -record(client, {name, ip, groups, messages}).
+%% Stores our registered clients credentials for login.
+-record(registered,{client,email,password}).
