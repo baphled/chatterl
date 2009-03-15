@@ -11,7 +11,7 @@
 -behaviour(gen_server).
 
 %% API
--export([start_link/1,stop/0,group/1,user/1,get_group/1,get_user/1,register/2,get_nick/2]).
+-export([start_link/1,stop/0,group/1,user/1,get_group/1,get_user/1,register/2,auth/2]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -64,7 +64,7 @@ register(Nickname,{User,Email,Password1,Password2}) ->
       {error,lists:append(Nickname," is not connected")}
   end.
 
-get_nick(Username,Password) ->
+auth(Username,Password) ->
   Q = qlc:q([X#registered_user.nick || X <- mnesia:table(registered_user),
                                        X#registered_user.nick =:= Username,
                                        X#registered_user.password =:= erlang:md5(Password)]),
