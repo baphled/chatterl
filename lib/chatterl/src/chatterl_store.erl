@@ -11,12 +11,13 @@
 -behaviour(gen_server).
 
 %% API
--export([start_link/1,stop/0]).
+-export([start_link/1,stop/0,group/1]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
          terminate/2, code_change/3]).
 
+-include_lib("stdlib/include/qlc.hrl").
 -include("chatterl.hrl").
 
 -record(state, {}).
@@ -33,6 +34,12 @@ start_link(Copies) ->
 
 stop() ->
   gen_server:call({global,?MODULE}, stop, infinity).
+
+group(Group) ->
+  case gen_server:call({global,chatterl_serv},{group_exists,Group}) of
+    true -> {ok,"Group saved"};
+    false -> {error,"Group doesn't exist"}
+  end.
 %%====================================================================
 %% gen_server callbacks
 %%====================================================================
