@@ -16,6 +16,6 @@
 	     cwiga_sup,
 	     chatterl_test]},
    {registered,[chatterl.groups, chatterl_mid_man, chatterl,serv, chatterl_sup]},
-   {applications, [kernel, stdlib, crypto, inets, mochiweb, mnesia]},
+   {applications, [kernel, stdlib, crypto, inets, mochiweb]},
    {mod, {chatterl,9000}},
    {start_phases, []}]}.
