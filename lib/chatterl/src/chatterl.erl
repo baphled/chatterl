@@ -28,12 +28,14 @@
 %% @end
 %%--------------------------------------------------------------------
 start() ->
-    mochiweb:start(),
-    application:start(?MODULE).
+  inets:start(),
+  mochiweb:start(),
+  application:start(?MODULE).
 
 stop() ->
-    application:stop(?MODULE),
-    mochiweb:stop().
+  inets:stop(),
+  application:stop(?MODULE),
+  mochiweb:stop().
 %%--------------------------------------------------------------------
 %% @private
 %% @doc
@@ -74,5 +76,3 @@ stop(_State) ->
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
-
-
