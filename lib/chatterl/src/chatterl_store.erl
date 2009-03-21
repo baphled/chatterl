@@ -154,9 +154,7 @@ user(User) ->
 %% @end
 %%--------------------------------------------------------------------
 get_group(GroupName) ->
-  F = fun() -> qlc:e(qlc:q([X || X <- mnesia:table(group), X#group.name =:= GroupName])) end,
-  {atomic,Result} = mnesia:transaction(F),
-  Result.
+ get(group,GroupName).
 
 %%--------------------------------------------------------------------
 %% @doc
@@ -166,14 +164,17 @@ get_group(GroupName) ->
 %% @end
 %%--------------------------------------------------------------------
 get_user(ClientName) ->
-  F = fun() -> qlc:e(qlc:q([X || X <- mnesia:table(client), X#client.name =:= ClientName])) end,
-  {atomic,Result} = mnesia:transaction(F),
-  Result.
+  get(client,ClientName).
 
+%%--------------------------------------------------------------------
+%% @doc
+%% Retrieves a registered users.
+%%
+%% @spec get_registered(User) -> GroupState
+%% @end
+%%--------------------------------------------------------------------
 get_registered(User) ->
-  F = fun() -> mnesia:read({registered_user,User}) end,
-  {atomic,Result} = mnesia:transaction(F),
-  Result.
+  get(registered_user,User).
 
 %%====================================================================
 %% gen_server callbacks
@@ -277,3 +278,15 @@ create_user(Nickname,{User,Email,Password}) ->
       {aborted,Result};
     _ -> {ok,lists:append(Nickname," is registered")}
   end.
+
+%%--------------------------------------------------------------------
+%% @doc
+%% Retrieves a single record from a table
+%%
+%% @spec group(Table,Value) -> [{TableRecord}] | []
+%% @end
+%%--------------------------------------------------------------------
+get(Table,Value) ->
+  F = fun() -> mnesia:read({Table,Value}) end,
+  {atomic,Result} = mnesia:transaction(F),
+  Result.
