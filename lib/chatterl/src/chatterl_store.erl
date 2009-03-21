@@ -269,7 +269,13 @@ code_change(_OldVsn, State, _Extra) ->
 %%--------------------------------------------------------------------
 %%% Internal functions
 %%--------------------------------------------------------------------
-
+%%--------------------------------------------------------------------
+%% @doc
+%% Creates a user with our registered_user table
+%%
+%% @spec create_user(Nickname,{User,Email,Password}) -> {abort,Result} | {ok,Msg}
+%% @end
+%%--------------------------------------------------------------------
 create_user(Nickname,{User,Email,Password}) ->
   Row = #registered_user{nick=Nickname,firstname=User,email=Email,password=erlang:md5(Password),logged_in=0},
   F = fun() -> mnesia:write(Row) end,
