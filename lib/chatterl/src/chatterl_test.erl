@@ -337,6 +337,7 @@ chatterl_store_test_() ->
 
 chatterl_store_user_register_test_() ->
   {Nick1,Name1,Email1,Password1} = {"noobie","noobie 1","noobie@noobie.com","blahblah"},
+  {Nick2,Name2,Email2,Password2} = {"nerf","nerf 1","nerf@noobie.com","asfdasdf"},
   [{setup,
     fun() ->
         chatterl:start(),
@@ -352,13 +353,13 @@ chatterl_store_user_register_test_() ->
     end,
     [fun() ->
           ?assertEqual({ok,"noobie is registered"},chatterl_store:register(Nick1,{Name1,Email1,Password1,Password1})),
-          ?assertEqual({error,"blah is not connected"},chatterl_store:register("blah",{Name1,Email1,Password1,Password1})),
+          ?assertEqual({ok,"nerf is registered"},chatterl_store:register(Nick2,{Name2,Email2,Password2,Password2})),
           ?assertEqual({error,"noobie's passwords must match"},chatterl_store:register(Nick1,{Name1,Email1,Password1,"blah"}))
      end,
      fun() ->
          ?assertEqual({ok,"noobie Authorized"},chatterl_store:auth(Nick1,Password1)),
          ?assertEqual({error,"Unable to authorise blah"},chatterl_store:auth("blah","blah")),
-         ?assertEqual([{Nick1,Name1,Email1}], chatterl_store:registered())
+         ?assertEqual([{Nick1,Name1,Email1},{Nick2,Name2,Email2}], chatterl_store:registered())
      end,
      fun() ->
          ?assertEqual({error,"noobie is already registered"},chatterl_store:register(Nick1,{Name1,Email1,Password1,Password1})),
@@ -373,11 +374,7 @@ chatterl_registered_user_store_group_test_() ->
   [{setup,
     fun() ->
         chatterl:start(),
-        chatterl_store:start_link(ram_copies),
-        % for some reason this test cases others to fail
-        % if we use chatterl_client directly to create client processes
-        chatterl_mid_man:connect(ContentType,Nick1),
-        chatterl_mid_man:connect(ContentType,Nick2)
+        chatterl_store:start_link(ram_copies)
     end,
     fun(_) ->
         chatterl_store:stop(),
@@ -418,8 +415,6 @@ chatterl_registered_have_messages_archived_if_offline_test_() ->
         chatterl_store:start_link(ram_copies),
         % for some reason this test cases others to fail
         % if we use chatterl_client directly to create client processes
-        chatterl_mid_man:connect(ContentType,Nick1),
-        chatterl_mid_man:connect(ContentType,Nick2),
         chatterl_store:register(Nick1,{Name1,Email1,Password1,Password1})
     end,
     fun(_) ->
