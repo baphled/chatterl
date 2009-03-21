@@ -408,6 +408,31 @@ chatterl_registered_user_store_group_test_() ->
                                                  ]}]}, check_json(mochijson2:decode(chatterl_mid_man:registered_list(["text/json"]))))
      end]}].
 
+chatterl_registered_have_messages_archived_if_offline_test_() ->
+  ContentType = ["text/json"],
+  {Nick1,Name1,Email1,Password1} = {"noobie","noobie 1","noobie@noobie.com","blahblah"},
+  {Nick2,Name2,Email2,Password2} = {"nerf","nerf 1","nerf@noobie.com","asfdasdf"},
+  [{setup,
+    fun() ->
+        chatterl:start(),
+        chatterl_store:start_link(ram_copies),
+        % for some reason this test cases others to fail
+        % if we use chatterl_client directly to create client processes
+        chatterl_mid_man:connect(ContentType,Nick1),
+        chatterl_mid_man:connect(ContentType,Nick2),
+        chatterl_store:register(Nick1,{Name1,Email1,Password1,Password1})
+    end,
+    fun(_) ->
+        chatterl_store:stop(),
+        mnesia:clear_table(registered_user),
+        chatterl:stop()
+    end,
+    [{timeout,5000,
+      fun() ->
+          ?assertEqual([],chatterl_store:get_registered(Nick2)),
+          ?assertEqual([{registered_user,Nick1,Name1,Email1,erlang:md5(Password1),0}],chatterl_store:get_registered(Nick1))
+      end}]}].
+
 %% Helper functions.
 start_client(Client,Group,Description) ->
   start_group(Group,Description),
