@@ -54,20 +54,15 @@ stop() ->
 %% @end
 %%--------------------------------------------------------------------
 register(Nickname,{User,Email,Password1,Password2}) ->
-  case gen_server:call({global,chatterl_serv},{user_exists,Nickname}) of
+  case Password1 =:= Password2 of
     false ->
-      {error,lists:append(Nickname," is not connected")};
+      {error,lists:append(Nickname,"'s passwords must match")};
     true ->
-      case Password1 =:= Password2 of
-        false ->
-          {error,lists:append(Nickname,"'s passwords must match")};
+      case is_auth(Nickname,Password1) of
         true ->
-          case is_auth(Nickname,Password1) of
-              true ->
-              {error,lists:append(Nickname," is already registered")};
-            false ->
-              create_user(Nickname,{User,Email,Password1})
-          end
+          {error,lists:append(Nickname," is already registered")};
+        false ->
+          create_user(Nickname,{User,Email,Password1})
       end
   end.
 
