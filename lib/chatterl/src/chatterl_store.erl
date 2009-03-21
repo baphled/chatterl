@@ -11,7 +11,7 @@
 -behaviour(gen_server).
 
 %% API
--export([start_link/1,stop/0,group/1,user/1,get_group/1,get_user/1]).
+-export([start_link/1,stop/0,group/1,user/1,get_group/1,get_user/1,get_registered/1]).
 -export([registered/0,register/2,is_auth/2,auth/2]).
 
 %% gen_server callbacks
@@ -175,6 +175,11 @@ get_user(ClientName) ->
   {atomic,Result} = mnesia:transaction(F),
   Result.
 
+get_registered(User) ->
+  F = fun() -> mnesia:read({registered_user,User}) end,
+  {atomic,Result} = mnesia:transaction(F),
+  Result.
+
 %%====================================================================
 %% gen_server callbacks
 %%====================================================================
@@ -270,7 +275,7 @@ code_change(_OldVsn, State, _Extra) ->
 %%--------------------------------------------------------------------
 
 create_user(Nickname,{User,Email,Password}) ->
-  Row = #registered_user{nick=Nickname,firstname=User,email=Email,password=erlang:md5(Password)},
+  Row = #registered_user{nick=Nickname,firstname=User,email=Email,password=erlang:md5(Password),logged_in=0},
   F = fun() -> mnesia:write(Row) end,
   case mnesia:transaction(F) of
     {aborted,Result} ->
