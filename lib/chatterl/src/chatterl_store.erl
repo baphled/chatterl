@@ -188,35 +188,7 @@ get_registered(User) ->
 %% Description: Initiates the server
 %%--------------------------------------------------------------------
 init([Copies]) ->
-  mnesia:create_schema([node()]),
-  mnesia:start(),
-  try
-    mnesia:table_info(type, group)
-    catch
-      exit: _ ->
-        mnesia:create_table(group,
-                    [{attributes, record_info(fields, group)},
-                     {Copies, [node()]},
-                     {type, bag}])
-    end,
-  try
-    mnesia:table_info(type, client)
-    catch
-      exit: _ ->
-        mnesia:create_table(client,
-                    [{attributes, record_info(fields, client)},
-                     {Copies, [node()]},
-                     {type, bag}])
-    end,
-  try
-    mnesia:table_info(type, registered_user)
-    catch
-      exit: _ ->
-        mnesia:create_table(registered_user,
-                    [{attributes, record_info(fields, registered_user)},
-                     {Copies, [node()]},
-                     {type, bag}])
-    end,
+  create_tables(Copies),
   {ok,#state{}}.
 
 %%--------------------------------------------------------------------
@@ -269,6 +241,36 @@ code_change(_OldVsn, State, _Extra) ->
 %%--------------------------------------------------------------------
 %%% Internal functions
 %%--------------------------------------------------------------------
+create_tables(Copies) ->
+  mnesia:create_schema([node()]),
+  mnesia:start(),
+  try
+    mnesia:table_info(type, group)
+  catch
+    exit: _ ->
+      mnesia:create_table(group,
+                          [{attributes, record_info(fields, group)},
+                           {Copies, [node()]},
+                           {type, bag}])
+  end,
+  try
+    mnesia:table_info(type, client)
+  catch
+    exit: _ ->
+      mnesia:create_table(client,
+                          [{attributes, record_info(fields, client)},
+                           {Copies, [node()]},
+                           {type, bag}])
+  end,
+  try
+    mnesia:table_info(type, registered_user)
+  catch
+    exit: _ ->
+      mnesia:create_table(registered_user,
+                          [{attributes, record_info(fields, registered_user)},
+                           {Copies, [node()]},
+                           {type, bag}])
+  end.
 %%--------------------------------------------------------------------
 %% @doc
 %% Creates a user with our registered_user table
