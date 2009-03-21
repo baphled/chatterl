@@ -160,7 +160,7 @@ get_group(GroupName) ->
 %% @doc
 %% Retrieves a groups state.
 %%
-%% @spec get_user(ClientName) -> GroupState
+%% @spec get_user(ClientName) -> ClientState
 %% @end
 %%--------------------------------------------------------------------
 get_user(ClientName) ->
@@ -170,7 +170,7 @@ get_user(ClientName) ->
 %% @doc
 %% Retrieves a registered users.
 %%
-%% @spec get_registered(User) -> GroupState
+%% @spec get_registered(User) -> RegisteredUser
 %% @end
 %%--------------------------------------------------------------------
 get_registered(User) ->
