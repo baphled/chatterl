@@ -465,11 +465,11 @@ chatterl_registered_users_can_login_and_out_test_() ->
     [{"Do registered client login successfully & unregistered fail",
       fun() ->
           ?assertEqual([],chatterl_store:get_registered(Nick2)),
-          ?assertEqual([{registered_user,Nick1,Name1,Email1,erlang:md5(Password1),0}],chatterl_store:get_registered(Nick1)),
+          ?assertEqual([{registered_user,Nick1,Name1,Email1,erlang:md5(Password1),0,{0,nil}}],chatterl_store:get_registered(Nick1)),
           ?assertEqual({error,"Unable to login"},chatterl_store:login(Nick1,"blah")),
           ?assertEqual({error,"Not Registered"},chatterl_store:login(Nick2,Password2)),
           ?assertEqual({ok,"Logged in"},chatterl_store:login(Nick1,Password1)),
-          ?assertEqual([{registered_user,Nick1,Name1,Email1,erlang:md5(Password1),1}],chatterl_store:get_registered(Nick1)),
+          ?assertEqual([{registered_user,Nick1,Name1,Email1,erlang:md5(Password1),1,{0,nil}}],chatterl_store:get_registered(Nick1)),
           ?assertEqual([Nick1],chatterl_store:get_logged_in())
       end},
      {"What happens when a registered client & an unregistered client try to log out",
@@ -523,11 +523,11 @@ chatterl_registered_users_can_logout_properly_test_() ->
           ?assertEqual({error,"nerf not logged in"},chatterl_store:edit_profile(Nick2,{firstname,"some name"})),
           ?assertEqual({ok,"Updated profile"},chatterl_store:edit_profile(Nick1,{firstname,NewName})),
           ?assertEqual({error,"Unable to update profile"},chatterl_store:edit_profile(Nick1,{blah,NewName})),
-          ?assertEqual([{registered_user,Nick1,NewName,Email1,erlang:md5(Password1),1}],chatterl_store:get_registered(Nick1)),
+          ?assertEqual([{registered_user,Nick1,NewName,Email1,erlang:md5(Password1),1,{0,nil}}],chatterl_store:get_registered(Nick1)),
           ?assertEqual({ok,"Updated profile"},chatterl_store:edit_profile(Nick1,{email,NewEmail})),
-          ?assertEqual([{registered_user,Nick1,NewName,NewEmail,erlang:md5(Password1),1}],chatterl_store:get_registered(Nick1)),
+          ?assertEqual([{registered_user,Nick1,NewName,NewEmail,erlang:md5(Password1),1,{0,nil}}],chatterl_store:get_registered(Nick1)),
           ?assertEqual({ok,"Updated profile"},chatterl_store:edit_profile(Nick1,{password,NewPassword})),
-          ?assertEqual([{registered_user,Nick1,NewName,NewEmail,erlang:md5(NewPassword),1}],chatterl_store:get_registered(Nick1))
+          ?assertEqual([{registered_user,Nick1,NewName,NewEmail,erlang:md5(NewPassword),1,{0,nil}}],chatterl_store:get_registered(Nick1))
       end},
      {"Client processes log their selves out on termination",
       fun() ->
