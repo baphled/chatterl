@@ -55,7 +55,7 @@ login(Nickname,Password) ->
         false ->
           {error,"Unable to login"};
         true ->
-          set_login(Nickname),
+          set_status(Nickname,login),
           {ok,"Logged in"}
       end
   end.
@@ -65,14 +65,7 @@ logout(Nickname) ->
     false ->
       {error,"Not logged in"};
     true ->
-      Fun = fun() ->
-                [U] = mnesia:read(registered_user,Nickname,write),
-                New = U#registered_user{logged_in=0},
-                mnesia:write(New) end,
-      case mnesia:transaction(Fun) of
-        {atomic,ok} -> {ok,"Logged out"};
-        {_,Error} -> {error,Error}
-      end
+      set_status(Nickname,logout)
   end.
 
 logged_in(Nickname) ->
@@ -295,7 +288,7 @@ create_tables(Copies) ->
       mnesia:create_table(group,
                           [{attributes, record_info(fields, group)},
                            {Copies, [node()]},
-                           {type, bag}])
+                           {type, ordered_set}])
   end,
   try
     mnesia:table_info(type, client)
@@ -304,7 +297,7 @@ create_tables(Copies) ->
       mnesia:create_table(client,
                           [{attributes, record_info(fields, client)},
                            {Copies, [node()]},
-                           {type, bag}])
+                           {type, ordered_set}])
   end,
   try
     mnesia:table_info(type, registered_user)
@@ -345,12 +338,22 @@ get(Table,Value) ->
 
 %%--------------------------------------------------------------------
 %% @doc
-%% Sets a clients login.
+%% Sets a clients login status.
 %%
-%% @spec set_login(Nickname) -> [{TableRecord}] | []
+%% @spec set_status(Nickname,Status) -> {ok,Msg} | {error,ErrorMsg}
 %% @end
 %%--------------------------------------------------------------------
-set_login(Nickname) ->
-  [User] = get_registered(Nickname),
-  LoggedInUser = User#registered_user{logged_in=1},
-  mnesia:transaction(fun() -> mnesia:write(LoggedInUser) end).
+set_status(Nickname,Status) ->
+  Fun = fun() ->
+            Set =
+              case Status of
+                logout -> 0;
+                login -> 1
+              end,
+            [U] = mnesia:read(registered_user,Nickname,write),
+            New = U#registered_user{logged_in=Set},
+            mnesia:write(New) end,
+  case mnesia:transaction(Fun) of
+    {atomic,ok} -> {ok,"Logged out"};
+    {_,Error} -> {error,Error}
+  end.
