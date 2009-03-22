@@ -444,13 +444,15 @@ chatterl_registered_have_messages_archived_if_offline_test_() ->
          ?assertEqual([Nick1],chatterl_store:get_logged_in())
      end,
      fun() ->
-         ?assertEqual(true,gen_server:call({global,chatterl_serv},{user_exists,Nick1}))
+         ?assertEqual(true,gen_server:call({global,chatterl_serv},{user_exists,Nick1})),
+         ?assertEqual(false,gen_server:call({global,chatterl_serv},{user_exists,Nick2})),
+         ?assertEqual(true,chatterl_store:logged_in(Nick1)),
+         ?assertEqual({ok,"noobie is logged out."},chatterl_serv:logout(Nick1)),
+         ?assertEqual(false,gen_server:call({global,chatterl_serv},{user_exists,Nick1}))
      end,
      fun() ->
          ?assertEqual(false,chatterl_store:logged_in(Nick2)),
-         ?assertEqual(true,chatterl_store:logged_in(Nick1)),
          ?assertEqual({error,"Not logged in"},chatterl_serv:logout(Nick2)),
-         ?assertEqual({ok,"Logged out"},chatterl_serv:logout(Nick1)),
          ?assertEqual(false,chatterl_store:logged_in(Nick1))
       end]}].
 
