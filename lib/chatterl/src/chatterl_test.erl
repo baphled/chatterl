@@ -430,7 +430,13 @@ chatterl_registered_have_messages_archived_if_offline_test_() ->
           ?assertEqual({error,"Not Registered"},chatterl_store:login(Nick2,Password2)),
           ?assertEqual({ok,"Logged in"},chatterl_store:login(Nick1,Password1)),
           ?assertEqual([Nick1],chatterl_store:get_logged_in())
-      end}]}].
+      end},
+     fun() ->
+         ?assertEqual([Nick1],chatterl_store:get_logged_in()),
+         ?assertEqual(false,chatterl_store:logged_in(Nick2)),
+         ?assertEqual({error,"Not logged in"},chatterl_store:logout(Nick2)),
+         ?assertEqual(true,chatterl_store:logged_in(Nick1))
+      end]}].
 
 %% Helper functions.
 start_client(Client,Group,Description) ->
