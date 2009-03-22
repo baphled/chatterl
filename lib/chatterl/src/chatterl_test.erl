@@ -225,17 +225,20 @@ chatterl_mid_man_user_connect_test_() ->
 
 chatterl_private_messages_test_() ->
   {Client1,Client2,Group} = {"baft","boodah","anuva"},
-  [{setup, fun() ->
-               chatterl:start(),
-               chatterl_mid_man:connect(["text/json"],Client1),
-               chatterl_mid_man:connect(["text/json"],Client2),
-               chatterl_serv:create(Group,"nu room") end,
+  [{setup,
+    fun() ->
+        chatterl:start(),
+        chatterl_mid_man:connect(["text/json"],Client1),
+        chatterl_mid_man:connect(["text/json"],Client2),
+        chatterl_serv:create(Group,"nu room")
+    end,
     fun(_) ->
         chatterl_mid_man:disconnect(["text/json"],Client1),
         chatterl_mid_man:disconnect(["text/json"],Client2),
         chatterl_serv:drop(Group),
-        chatterl:stop() end,
-    [{timeout, 5000,
+        chatterl:stop()
+    end,
+    [{"CWIGA can send private messages & poll them",
       fun() ->
           Result = check_json(mochijson2:decode(chatterl_mid_man:user_poll(["text/json"],Client2))),
           ?assertEqual({struct,[{<<"messages">>,[]}]},Result),
@@ -247,16 +250,18 @@ chatterl_private_messages_test_() ->
 
 chatterl_user_groups_test_() ->
   {Client1,Client2,Group,ContentType} = {"baph","boodah","nu",["text/json"]},
-  [{setup, fun() ->
-               chatterl:start(),
-               chatterl_mid_man:connect(ContentType,Client1),
-               chatterl_mid_man:connect(ContentType,Client2),
-               chatterl_serv:create(Group,"nu room"),
-               chatterl_mid_man:group_join(ContentType,{Group,Client2})
-           end,
+  [{setup,
+    fun() ->
+        chatterl:start(),
+        chatterl_mid_man:connect(ContentType,Client1),
+        chatterl_mid_man:connect(ContentType,Client2),
+        chatterl_serv:create(Group,"nu room"),
+        chatterl_mid_man:group_join(ContentType,{Group,Client2})
+    end,
     fun(_) ->
-        chatterl:stop() end,
-    [{timeout, 5000,
+        chatterl:stop()
+    end,
+    [{"CWIGA allows clients to join groups",
       fun() ->
           ?assertEqual(<<"Group: blah doesn't exist">>,
                        check_json(mochijson2:decode(chatterl_mid_man:group_join(ContentType,{"blah",Client2})))),
@@ -265,21 +270,23 @@ chatterl_user_groups_test_() ->
           ?assertEqual(<<"Client: blah doesn't exist">>,
                        check_json(mochijson2:decode(chatterl_mid_man:user_groups(ContentType,"blah"))))
       end},
-      fun() ->
+      {"CWIGA can list clients joined to groups",
+       fun() ->
           ?assertEqual([Group],gen_server:call({global,Client2},groups)),
           ?assertEqual({struct,[{<<"groups">>,[{struct,[{<<"group">>,<<"nu">>}]}]}]},
                        check_json(mochijson2:decode(chatterl_mid_man:user_groups(ContentType,Client2)))),
           ?assertEqual({struct,[{<<"groups">>,[{struct,[{<<"group">>,<<"nu">>}]}]}]},
                        check_json(mochijson2:decode(chatterl_mid_man:group_list(ContentType))))
-      end,
-     fun() ->
+      end},
+     {"CWIGA allows clients to leave groups",
+      fun() ->
           ?assertEqual(<<"Group: blah doesn't exist">>,
                        check_json(mochijson2:decode(chatterl_mid_man:group_leave(ContentType,{"blah",Client2})))),
           ?assertEqual(<<"User not joined">>,
                       check_json(mochijson2:decode(chatterl_mid_man:group_leave(ContentType,{"blah","blah"})))),
           ?assertEqual(<<"boodah has disconnected from nu">>,
                       check_json(mochijson2:decode(chatterl_mid_man:group_leave(ContentType,{Group,Client2}))))
-       end]}].
+       end}]}].
 
 chatterl_group_create_test_() ->
   {Room,Description,ContentType} = {"nu","nu room",["text/json"]},
@@ -494,6 +501,27 @@ chatterl_registered_users_can_login_and_out_test_() ->
          ?assertEqual(false,chatterl_store:logged_in(Nick2)),
          ?assertEqual({error,"Not logged in"},chatterl_serv:logout(Nick2)),
          ?assertEqual(false,chatterl_store:logged_in(Nick1))
+      end}]}].
+
+chatterl_registered_users_can_logout_properly_test_() ->
+  {Nick1,Name1,Email1,Password1,Nick2,Password2} = {"noobie","noobie 1","noobie@noobie.com","blahblah","nerf","asdasd"},
+  [{setup,
+    fun() ->
+        chatterl:start(),
+        chatterl_store:start_link(ram_copies),
+        chatterl_store:register(Nick1,{Name1,Email1,Password1,Password1}),
+        chatterl_serv:login(Nick1,Password1)
+    end,
+    fun(_) ->
+        chatterl_store:stop(),
+        mnesia:delete_table(registered_user),
+        chatterl:stop()
+    end,
+    [{"Client processes log their selves out on termination",
+      fun() ->
+          ?assertEqual(true,chatterl_store:logged_in(Nick1)),
+          ?assertEqual({ok,"Logged out"},chatterl_client:stop(Nick1)),
+          ?assertEqual(false,chatterl_store:logged_in(Nick1))
       end}]}].
 
 %% Helper functions.
