@@ -425,7 +425,11 @@ chatterl_registered_have_messages_archived_if_offline_test_() ->
     [{timeout,5000,
       fun() ->
           ?assertEqual([],chatterl_store:get_registered(Nick2)),
-          ?assertEqual([{registered_user,Nick1,Name1,Email1,erlang:md5(Password1),0}],chatterl_store:get_registered(Nick1))
+          ?assertEqual([{registered_user,Nick1,Name1,Email1,erlang:md5(Password1),0}],chatterl_store:get_registered(Nick1)),
+          ?assertEqual({error,"Unable to login"},chatterl_store:login(Nick1,"blah")),
+          ?assertEqual({error,"Not Registered"},chatterl_store:login(Nick2,Password2)),
+          ?assertEqual({ok,"Logged in"},chatterl_store:login(Nick1,Password1)),
+          ?assertEqual([Nick1],chatterl_store:get_logged_in())
       end}]}].
 
 %% Helper functions.
