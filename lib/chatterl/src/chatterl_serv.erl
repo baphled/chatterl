@@ -15,7 +15,7 @@
 -behaviour(gen_server).
 
 %% API
--export([start/0,stop/0,connect/1,disconnect/1,create/2,drop/1]).
+-export([start/0,stop/0,login/2,logout/1,connect/1,disconnect/1,create/2,drop/1]).
 %% User specific
 -export([list_users/0]).
 %% Group specific
@@ -53,6 +53,11 @@ start() ->
 stop() ->
     gen_server:call({global, ?SERVER}, stop, infinity).
 
+login(User,Password) ->
+  chatterl_store:login(User,Password).
+
+logout(User) ->
+  chatterl_store:logout(User).
 %%--------------------------------------------------------------------
 %% @doc
 %% Connects client to server, must be done before a user can interact with chatterl.
