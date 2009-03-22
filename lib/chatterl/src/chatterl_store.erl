@@ -252,7 +252,8 @@ edit_profile(Nickname,{Key,Value}) ->
             New =
               case Key of
                 firstname -> U#registered_user{firstname=Value};
-                email -> U#registered_user{email=Value}
+                email -> U#registered_user{email=Value};
+                password -> U#registered_user{password=erlang:md5(Value)}
                 end,
             mnesia:write(New)
         end,
