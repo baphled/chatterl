@@ -61,7 +61,19 @@ login(Nickname,Password) ->
   end.
 
 logout(Nickname) ->
-  {error,"Not logged in"}.
+  case logged_in(Nickname) of
+    false ->
+      {error,"Not logged in"};
+    true ->
+      Fun = fun() ->
+                [U] = mnesia:read(registered_user,Nickname,write),
+                New = U#registered_user{logged_in=0},
+                mnesia:write(New) end,
+      case mnesia:transaction(Fun) of
+        {atomic,ok} -> {ok,"Logged out"};
+        {_,Error} -> {error,Error}
+      end
+  end.
 
 logged_in(Nickname) ->
   Q = qlc:q([X#registered_user.nick || X <- mnesia:table(registered_user),
@@ -71,7 +83,7 @@ logged_in(Nickname) ->
   {atomic,Result} = mnesia:transaction(F),
   case Result of
     [] -> false;
-    Result -> true
+    [Nickname] -> true
   end.
 %%--------------------------------------------------------------------
 %% @doc
