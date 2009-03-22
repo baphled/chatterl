@@ -44,7 +44,14 @@ start(Client) ->
   gen_server:start_link({global, Client}, ?MODULE, [Client], []).
 
 stop(Client) ->
-  gen_server:call({global,Client},stop).
+  case gen_server:call({global,Client},stop) of
+    stopped ->
+      case chatterl_store:logout(Client) of
+        {ok,Msg} -> {ok,Msg};
+        {error,Error} -> stopped
+      end;
+    _ -> {error,"Unable to stop"}
+  end.
 
 %%--------------------------------------------------------------------
 %% @doc
