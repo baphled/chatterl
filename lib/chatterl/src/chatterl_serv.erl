@@ -54,10 +54,24 @@ stop() ->
     gen_server:call({global, ?SERVER}, stop, infinity).
 
 login(User,Password) ->
-  chatterl_store:login(User,Password).
+  case chatterl_store:login(User,Password) of
+    {ok,_Msg} ->
+      case chatterl_client:start(User) of
+        {ok,_Pid} -> {ok,lists:append(User," is logged in.")};
+        {error,Error} -> {error,Error}
+      end;
+    {error,Msg} -> {error,Msg}
+  end.
 
 logout(User) ->
-  chatterl_store:logout(User).
+  case chatterl_store:logout(User) of
+    {ok,Msg} ->
+      case chatterl_client:stop(User) of
+        stopped -> {ok,lists:append(User," is logged out.")};
+        _ -> {error,lists:append("Unable to logout ",User)}
+      end;
+    {error,Error} -> {error,Error}
+  end.
 %%--------------------------------------------------------------------
 %% @doc
 %% Connects client to server, must be done before a user can interact with chatterl.
