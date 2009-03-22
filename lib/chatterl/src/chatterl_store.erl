@@ -252,19 +252,6 @@ edit_profile(Nickname,{Key,Value}) ->
       end
   end.
 
-edit_profile_query(Nickname,{Key,Value}) ->
-  Fun =
-    fun() ->
-        [U] = mnesia:read(registered_user,Nickname,write),
-        New =
-          case Key of
-            firstname -> U#registered_user{firstname=Value};
-            email -> U#registered_user{email=Value};
-            password -> U#registered_user{password=erlang:md5(Value)}
-          end,
-        mnesia:write(New)
-    end,
-  mnesia:transaction(Fun).
 %%====================================================================
 %% gen_server callbacks
 %%====================================================================
@@ -425,3 +412,24 @@ determine_status(Status) ->
     logout -> 0;
     login -> 1
   end.
+
+%%--------------------------------------------------------------------
+%% @doc
+%% Query to edit a clients profile
+%%
+%% @spec edit_profile_query(Nickname,{Key,Value}) -> MnesiaResult
+%% @end
+%%--------------------------------------------------------------------
+edit_profile_query(Nickname,{Key,Value}) ->
+  Fun =
+    fun() ->
+        [U] = mnesia:read(registered_user,Nickname,write),
+        New =
+          case Key of
+            firstname -> U#registered_user{firstname=Value};
+            email -> U#registered_user{email=Value};
+            password -> U#registered_user{password=erlang:md5(Value)}
+          end,
+        mnesia:write(New)
+    end,
+  mnesia:transaction(Fun).
