@@ -92,7 +92,7 @@ connect(User) ->
 %%--------------------------------------------------------------------
 disconnect(User) ->
   Groups = gen_server:call({global,?MODULE},list_groups),
-    gen_server:call({global, ?MODULE}, {disconnect,User,Groups}, infinity).
+  gen_server:call({global, ?MODULE}, {disconnect,User,Groups}, infinity).
 
 %%--------------------------------------------------------------------
 %% @doc
@@ -228,19 +228,19 @@ handle_call({connect,User}, From, State) ->
 	end,
     {reply, Reply, State#chatterl{ users = NewTree }};
 handle_call({disconnect, User, Groups}, _From, State) ->
-    {Reply,NewTree} =
-	case gb_trees:is_defined(User, State#chatterl.users) of
-	    true ->
-		lists:foreach(
-		  fun(Group) ->
-                      io:format("~s disconnecting from ~s...~n", [User,Group]),
-                      gen_server:call({global,Group}, {leave, User})
-                  end,
-		  Groups),
-		{{ok, lists:append("User disconnected: ",User)}, gb_trees:delete(User, State#chatterl.users)};
-	    false -> {{error, lists:append("Unable to disconnect ",User)},State#chatterl.users}
-	end,
-    {reply, Reply, State#chatterl{ users = NewTree }};
+  {Reply,NewTree} =
+    case gb_trees:is_defined(User, State#chatterl.users) of
+      true ->
+        lists:foreach(
+          fun(Group) ->
+              io:format("~s disconnecting from ~s...~n", [User,Group]),
+              gen_server:call({global,Group}, {leave, User})
+          end,
+          Groups),
+        {{ok, lists:append("User disconnected: ",User)}, gb_trees:delete(User, State#chatterl.users)};
+      false -> {{error, lists:append("Unable to disconnect ",User)},State#chatterl.users}
+    end,
+  {reply, Reply, State#chatterl{ users = NewTree }};
 handle_call({create, Group, Description}, _From, State) ->
     {Reply, NewTree} =
 	case gb_trees:is_defined(Group, State#chatterl.groups) of
