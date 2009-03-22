@@ -440,8 +440,11 @@ chatterl_registered_have_messages_archived_if_offline_test_() ->
      fun() ->
          ?assertEqual({error,"Unable to login"},chatterl_serv:login(Nick1,"blah")),
          ?assertEqual({error,"Not Registered"},chatterl_serv:login(Nick2,Password2)),
-         ?assertEqual({ok,"Logged in"},chatterl_serv:login(Nick1,Password1)),
+         ?assertEqual({ok,"noobie is logged in."},chatterl_serv:login(Nick1,Password1)),
          ?assertEqual([Nick1],chatterl_store:get_logged_in())
+     end,
+     fun() ->
+         ?assertEqual(true,gen_server:call({global,chatterl_serv},{user_exists,Nick1}))
      end,
      fun() ->
          ?assertEqual(false,chatterl_store:logged_in(Nick2)),
