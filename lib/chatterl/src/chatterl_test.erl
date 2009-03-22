@@ -292,7 +292,7 @@ chatterl_group_messages_test_() ->
                        check_json(mochijson2:decode(chatterl_mid_man:group_poll(["text/json"],"blah"))))
            end}]}].
 
-
+% Basic units to implement the storage client and group processe states
 chatterl_store_test_() ->
   {Client,Group,Description} = {"noob","nu","nu room"},
   [{setup,
@@ -405,7 +405,7 @@ chatterl_registered_user_store_group_test_() ->
                                                  ]}]}, check_json(mochijson2:decode(chatterl_mid_man:registered_list(["text/json"]))))
      end]}].
 
-chatterl_registered_have_messages_archived_if_offline_test_() ->
+chatterl_registered_users_can_login_and_out_test_() ->
   ContentType = ["text/json"],
   {Nick1,Name1,Email1,Password1} = {"noobie","noobie 1","noobie@noobie.com","blahblah"},
   {Nick2,Name2,Email2,Password2} = {"nerf","nerf 1","nerf@noobie.com","asfdasdf"},
