@@ -363,7 +363,7 @@ create_tables(Copies) ->
 %% @end
 %%--------------------------------------------------------------------
 create_user(Nickname,{User,Email,Password}) ->
-  Row = #registered_user{nick=Nickname,firstname=User,email=Email,password=erlang:md5(Password),logged_in=0},
+  Row = #registered_user{nick=Nickname,firstname=User,email=Email,password=erlang:md5(Password),logged_in=0,messages=gb_trees:empty()},
   F = fun() -> mnesia:write(Row) end,
   case mnesia:transaction(F) of
     {aborted,Result} ->
