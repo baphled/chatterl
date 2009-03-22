@@ -46,11 +46,18 @@ start_link(Copies) ->
 stop() ->
   gen_server:call({global,?MODULE}, stop, infinity).
 
+%%--------------------------------------------------------------------
+%% @doc
+%% Allows a client to login to chatterl
+%%
+%% @spec login(Nickname,Password) -> {ok,Msg} | {error,ErrorMsg}
+%% @end
+%%--------------------------------------------------------------------
 login(Nickname,Password) ->
   case get_registered(Nickname) of
     [] ->
       {error,"Not Registered"};
-    [Result] ->
+    [_Result] ->
       case is_auth(Nickname,Password) of
         false ->
           {error,"Unable to login"};
@@ -60,6 +67,13 @@ login(Nickname,Password) ->
       end
   end.
 
+%%--------------------------------------------------------------------
+%% @doc
+%% Allows a client to logout to chatterl
+%%
+%% @spec logout(Nickname) -> {ok,Msg} | {error,ErrorMsg}
+%% @end
+%%--------------------------------------------------------------------
 logout(Nickname) ->
   case logged_in(Nickname) of
     false ->
@@ -68,6 +82,13 @@ logout(Nickname) ->
       set_status(Nickname,logout)
   end.
 
+%%--------------------------------------------------------------------
+%% @doc
+%% Determines whether a client is logged in or not
+%%
+%% @spec logged_in(Nickname) -> true | false
+%% @end
+%%--------------------------------------------------------------------
 logged_in(Nickname) ->
   Q = qlc:q([X#registered_user.nick || X <- mnesia:table(registered_user),
                                        X#registered_user.logged_in =:= 1,
@@ -208,6 +229,13 @@ get_user(ClientName) ->
 get_registered(User) ->
   get(registered_user,User).
 
+%%--------------------------------------------------------------------
+%% @doc
+%% Retrieves a logged in users.
+%%
+%% @spec get_logged_in() -> RegisteredUser
+%% @end
+%%--------------------------------------------------------------------
 get_logged_in() ->
   Q = qlc:q([X#registered_user.nick || X <- mnesia:table(registered_user),X#registered_user.logged_in =:= 1]),
   F = fun() -> qlc:e(Q) end,
@@ -278,6 +306,13 @@ code_change(_OldVsn, State, _Extra) ->
 %%--------------------------------------------------------------------
 %%% Internal functions
 %%--------------------------------------------------------------------
+%%--------------------------------------------------------------------
+%% @doc
+%% Create our tables
+%%
+%% @spec create_tables(Copies) -> {atomic,ok} | {abort,ErrorMsg}
+%% @end
+%%--------------------------------------------------------------------
 create_tables(Copies) ->
   mnesia:create_schema([node()]),
   mnesia:start(),
@@ -308,6 +343,7 @@ create_tables(Copies) ->
                            {Copies, [node()]},
                            {type, ordered_set}])
   end.
+
 %%--------------------------------------------------------------------
 %% @doc
 %% Creates a user with our registered_user table
@@ -328,7 +364,7 @@ create_user(Nickname,{User,Email,Password}) ->
 %% @doc
 %% Retrieves a single record from a table
 %%
-%% @spec group(Table,Value) -> [{TableRecord}] | []
+%% @spec get(Table,Value) -> [{TableRecord}] | []
 %% @end
 %%--------------------------------------------------------------------
 get(Table,Value) ->
@@ -345,15 +381,23 @@ get(Table,Value) ->
 %%--------------------------------------------------------------------
 set_status(Nickname,Status) ->
   Fun = fun() ->
-            Set =
-              case Status of
-                logout -> 0;
-                login -> 1
-              end,
             [U] = mnesia:read(registered_user,Nickname,write),
-            New = U#registered_user{logged_in=Set},
+            New = U#registered_user{logged_in=determine_status(Status)},
             mnesia:write(New) end,
   case mnesia:transaction(Fun) of
     {atomic,ok} -> {ok,"Logged out"};
     {_,Error} -> {error,Error}
+  end.
+
+%%--------------------------------------------------------------------
+%% @doc
+%% Determines the login status we want to set
+%%
+%% @spec determine_status(Status) -> 0 | 1
+%% @end
+%%--------------------------------------------------------------------
+determine_status(Status) ->
+  case Status of
+    logout -> 0;
+    login -> 1
   end.

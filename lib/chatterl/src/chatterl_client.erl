@@ -22,7 +22,7 @@
 
 %% API
 %% Client based
--export([start/1,private_msg/3]).
+-export([start/1,stop/1,private_msg/3]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -41,7 +41,10 @@
 %% @end
 %%--------------------------------------------------------------------
 start(Client) ->
-    gen_server:start_link({global, Client}, ?MODULE, [Client], []).
+  gen_server:start_link({global, Client}, ?MODULE, [Client], []).
+
+stop(Client) ->
+  gen_server:call({global,Client},stop).
 
 %%--------------------------------------------------------------------
 %% @doc
