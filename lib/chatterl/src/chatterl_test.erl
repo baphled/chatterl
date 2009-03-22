@@ -346,8 +346,8 @@ chatterl_store_user_register_test_() ->
     end,
     fun(_) ->
         chatterl_store:stop(),
-        mnesia:clear_table(client),
-        mnesia:clear_table(group),
+        mnesia:delete_table(client),
+        mnesia:delete_table(group),
         mnesia:clear_table(registered_user),
         chatterl:stop()
     end,
@@ -413,14 +413,11 @@ chatterl_registered_have_messages_archived_if_offline_test_() ->
     fun() ->
         chatterl:start(),
         chatterl_store:start_link(ram_copies),
-        % for some reason this test cases others to fail
-        % if we use chatterl_client directly to create client processes
         chatterl_store:register(Nick1,{Name1,Email1,Password1,Password1})
     end,
     fun(_) ->
         chatterl_store:stop(),
         mnesia:delete_table(registered_user),
-        %mnesia:clear_table(registered_user),
         chatterl:stop()
     end,
     [{timeout,5000,
@@ -438,6 +435,19 @@ chatterl_registered_have_messages_archived_if_offline_test_() ->
          ?assertEqual(true,chatterl_store:logged_in(Nick1)),
          ?assertEqual([{Nick1,Name1,Email1}],chatterl_store:registered()),
          ?assertEqual({ok,"Logged out"},chatterl_store:logout(Nick1)),
+         ?assertEqual(false,chatterl_store:logged_in(Nick1))
+     end,
+     fun() ->
+         ?assertEqual({error,"Unable to login"},chatterl_serv:login(Nick1,"blah")),
+         ?assertEqual({error,"Not Registered"},chatterl_serv:login(Nick2,Password2)),
+         ?assertEqual({ok,"Logged in"},chatterl_serv:login(Nick1,Password1)),
+         ?assertEqual([Nick1],chatterl_store:get_logged_in())
+     end,
+     fun() ->
+         ?assertEqual(false,chatterl_store:logged_in(Nick2)),
+         ?assertEqual(true,chatterl_store:logged_in(Nick1)),
+         ?assertEqual({error,"Not logged in"},chatterl_serv:logout(Nick2)),
+         ?assertEqual({ok,"Logged out"},chatterl_serv:logout(Nick1)),
          ?assertEqual(false,chatterl_store:logged_in(Nick1))
       end]}].
 
