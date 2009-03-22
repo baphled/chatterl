@@ -55,10 +55,7 @@ login(Nickname,Password) ->
         false ->
           {error,"Unable to login"};
         true ->
-          [User] = get_registered(Nickname),
-          LoggedInUser = User#registered_user{logged_in=1},
-          F = fun() -> mnesia:write(LoggedInUser) end,
-          mnesia:transaction(F),
+          set_login(Nickname),
           {ok,"Logged in"}
       end
   end.
@@ -320,3 +317,15 @@ get(Table,Value) ->
   F = fun() -> mnesia:read({Table,Value}) end,
   {atomic,Result} = mnesia:transaction(F),
   Result.
+
+%%--------------------------------------------------------------------
+%% @doc
+%% Sets a clients login.
+%%
+%% @spec set_login(Nickname) -> [{TableRecord}] | []
+%% @end
+%%--------------------------------------------------------------------
+set_login(Nickname) ->
+  [User] = get_registered(Nickname),
+  LoggedInUser = User#registered_user{logged_in=1},
+  mnesia:transaction(fun() -> mnesia:write(LoggedInUser) end).
