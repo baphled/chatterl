@@ -6,8 +6,10 @@
 
 %% Test chatterl_serv functionality
 chatterl_serv_test_() ->
-  [{setup, fun() ->
-               chatterl:start() end,
+  [{setup,
+    fun() ->
+        ?assertEqual(ok,chatterl:start())
+    end,
     fun(_) ->
         chatterl:stop() end,
     [{timeout, 5000,
@@ -24,11 +26,12 @@ chatterl_serv_test_() ->
 
 chatterl_serv_groups_test_() ->
   {Client1,Group1,Group2,Description} = {"blah","room","anuva","nu room"},
-  [{setup, fun() ->
-               chatterl:start(),
-               chatterl_serv:create(Group1,Description),
-               chatterl_serv:create(Group2,"anuva room")
-           end,
+  [{setup,
+    fun() ->
+        chatterl:start(),
+        chatterl_serv:create(Group1,Description),
+        chatterl_serv:create(Group2,"anuva room")
+    end,
     fun(_) ->
         chatterl:stop() end,
     [fun() ->
@@ -48,65 +51,81 @@ chatterl_serv_groups_test_() ->
 
 chatterl_client_handle_test_() ->
   {Client1,Client2,Group,Description} = {"noobie","blah","anuva1","a nu room"},
-  [{setup, fun() ->
-               start_client(Client1,Group,Description),
-               chatterl_client:start(Client2) end,
+  [{setup,
+    fun() ->
+        start_client(Client1,Group,Description),
+        chatterl_client:start(Client2)
+    end,
     fun(_) ->
         chatterl:stop() end,
-    [{timeout, 1000,
+    [{"Can we retrieve client information from a client process",
       fun() ->
           ?assertEqual({name,Client1}, gen_server:call({global,Client1},client_name)),
           ?assert(erlang:is_list(gen_server:call({global,Client1},groups))),
           ?assertEqual([], gen_server:call({global,Client2},groups)),
           ?assertEqual([], gen_server:call({global,Client2},poll_messages))
       end},
-      fun() ->
+      {"Can a client join a group",
+       fun() ->
           ?assertEqual({error,"Unknown error!"}, gen_server:call({global,Client2},{join_group,"none"})),
           ?assertEqual({ok,joined_group}, gen_server:call({global,Client1},{join_group,Group})),
           ?assertEqual(["anuva1"],gen_server:call({global,Client1},groups))
-      end,
-     fun() ->
+      end},
+     {"Can a client send private messages",
+      fun() ->
           ?assertEqual({ok,msg_sent}, gen_server:call({global,Client1},{private_msg,Client2,"sup"})),
           ?assertEqual({error,"Cannot find user!"}, gen_server:call({global,Client1},{private_msg,"noob","sup"})),
           ?assertEqual({ok,msg_sent}, gen_server:call({global,Client2},{private_msg,Client1,"sup"})),
           ?assertEqual({ok,msg_sent}, chatterl_client:private_msg(Client2,Client1,"sup")),
+          ?assert(erlang:is_list(gen_server:call({global,Client1},poll_messages))),
           ?assertEqual({error,"Can not send to self!"}, gen_server:call({global,Client1},{private_msg,Client1,"sup"}))
-     end,
-     fun() ->
+     end},
+     {"Can a client leave a group",
+      fun() ->
           ?assertEqual({error,"Not connected"}, gen_server:call({global,Client2},{leave_group,Group})),
           ?assertEqual({ok, drop_group}, gen_server:call({global,Client1},{leave_group,Group})),
-          ?assert(erlang:is_list(gen_server:call({global,Client1},poll_messages))),
           ?assertEqual(stopped,gen_server:call({global,Client2},{stop,"because"}))
-      end]}].
+      end}]}].
 
 %% Test our groups functionality
 chatterl_group_handle_test_() ->
   {Client,Group,Description} = {"boodah","anuva","a nu room"},
-  [{setup, fun() ->
-               start_client(Client,Group,Description) end,
+  [{setup,
+    fun() ->
+        start_client(Client,Group,Description)
+    end,
     fun(_) ->
         chatterl:stop() end,
-   [{timeout, 5000,
+   [{"Can retrieve group information",
      fun() ->
-        ?assert(erlang:is_tuple(gen_server:call({global, chatterl_serv}, {get_group, Group}, infinity))),
-        ?assertEqual({name,Group},gen_server:call({global,Group},name)),
-        ?assertEqual({description,"a nu room"}, gen_server:call({global,Group},description)),
-        ?assert(erlang:is_tuple(gen_server:call({global,Group},created))),
-        ?assertEqual([],gen_server:call({global,Group},list_users)),
-        ?assertEqual([],gen_server:call({global,Group},poll_messages)),
-        ?assertEqual({ok, "User added"},gen_server:call({global,Group},{join,Client})),
-        ?assert(erlang:is_list(gen_server:call({global,Group},list_users))),
-        ?assertEqual({error, "Already joined"},gen_server:call({global,Group},{join,Client})),
-        ?assertEqual({error, "not connected"},gen_server:call({global,Group},{join,"nonUsers"})),
-        ?assertEqual({error, "Invalid user name"},gen_server:call({global,Group},{join,{"nonUsers"}})),
-        ?assertEqual({ok, dropped}, gen_server:call({global,Group},{leave,Client})),
-        ?assertEqual({error, "Not connected"}, gen_server:call({global,Group},{leave,Client})),
-        ?assertEqual([],gen_server:call({global,Group},list_users)),
-        ?assertEqual({ok, "User added"},gen_server:call({global,Group},{join,Client})),
-        ?assertMatch({error, user_not_joined},gen_server:call({global,Group},{send_msg,"blah","hey"})),
-        ?assertEqual({ok, msg_sent},gen_server:call({global,Group},{send_msg,Client,"hey"})),
-        ?assertEqual({error,already_sent},gen_server:call({global,Group},{send_msg,Client,"heya"})),
-        ?assert(erlang:is_list(gen_server:call({global,Group},poll_messages)))
+         ?assert(erlang:is_tuple(gen_server:call({global, chatterl_serv}, {get_group, Group}, infinity))),
+         ?assertEqual({name,Group},gen_server:call({global,Group},name)),
+         ?assertEqual({description,"a nu room"}, gen_server:call({global,Group},description)),
+         ?assert(erlang:is_tuple(gen_server:call({global,Group},created))),
+         ?assertEqual([],gen_server:call({global,Group},list_users)),
+         ?assertEqual([],gen_server:call({global,Group},poll_messages))
+     end},
+    {"Client can join a group",
+     fun() ->
+         ?assertEqual({ok, "User added"},gen_server:call({global,Group},{join,Client})),
+         ?assert(erlang:is_list(gen_server:call({global,Group},list_users))),
+         ?assertEqual({error, "Already joined"},gen_server:call({global,Group},{join,Client})),
+         ?assertEqual({error, "not connected"},gen_server:call({global,Group},{join,"nonUsers"})),
+         ?assertEqual({error, "Invalid user name"},gen_server:call({global,Group},{join,{"nonUsers"}}))
+     end},
+    {"Client can leave a group",
+     fun() ->
+         ?assertEqual({ok, dropped}, gen_server:call({global,Group},{leave,Client})),
+         ?assertEqual({error, "Not connected"}, gen_server:call({global,Group},{leave,Client})),
+         ?assertEqual([],gen_server:call({global,Group},list_users))
+     end},
+    {"Client can send messages to a group",
+     fun() ->
+         ?assertEqual({ok, "User added"},gen_server:call({global,Group},{join,Client})),
+         ?assertMatch({error, user_not_joined},gen_server:call({global,Group},{send_msg,"blah","hey"})),
+         ?assertEqual({ok, msg_sent},gen_server:call({global,Group},{send_msg,Client,"hey"})),
+         ?assertEqual({error,already_sent},gen_server:call({global,Group},{send_msg,Client,"heya"})),
+         ?assert(erlang:is_list(gen_server:call({global,Group},poll_messages)))
      end}]}].
 
 chatterl_mid_man_message_poll_test_() ->
@@ -390,7 +409,7 @@ chatterl_registered_user_store_group_test_() ->
                                                          {struct,[{<<"name">>,<<"noobie 1">>}]},
                                                          {struct,[{<<"email">>,<<"noobie@noobie.com">>}]}]}]}
                                 }]},
-                       check_json(mochijson2:decode(chatterl_mid_man:registered_list(["text/json"]))))
+                       check_json(mochijson2:decode(chatterl_mid_man:registered_list(ContentType))))
       end},
      fun() ->
          ?assertEqual({ok,"nerf is registered"},chatterl_store:register(Nick2,{Name2,Email2,Password2,Password2})),
@@ -402,13 +421,11 @@ chatterl_registered_user_store_group_test_() ->
                                                   {struct,[{<<"client">>,[{struct,[{<<"nick">>,<<"noobie">>}]},
                                                                           {struct,[{<<"name">>,<<"noobie 1">>}]},
                                                                           {struct,[{<<"email">>,<<"noobie@noobie.com">>}]}]}]}
-                                                 ]}]}, check_json(mochijson2:decode(chatterl_mid_man:registered_list(["text/json"]))))
+                                                 ]}]}, check_json(mochijson2:decode(chatterl_mid_man:registered_list(ContentType))))
      end]}].
 
 chatterl_registered_users_can_login_and_out_test_() ->
-  ContentType = ["text/json"],
-  {Nick1,Name1,Email1,Password1} = {"noobie","noobie 1","noobie@noobie.com","blahblah"},
-  {Nick2,Name2,Email2,Password2} = {"nerf","nerf 1","nerf@noobie.com","asfdasdf"},
+  {Nick1,Name1,Email1,Password1,Nick2,Password2} = {"noobie","noobie 1","noobie@noobie.com","blahblah","nerf","asdasd"},
   [{setup,
     fun() ->
         chatterl:start(),
@@ -420,41 +437,46 @@ chatterl_registered_users_can_login_and_out_test_() ->
         mnesia:delete_table(registered_user),
         chatterl:stop()
     end,
-    [{timeout,5000,
+    [{"Do registered client login successfully & unregistered fail",
       fun() ->
           ?assertEqual([],chatterl_store:get_registered(Nick2)),
           ?assertEqual([{registered_user,Nick1,Name1,Email1,erlang:md5(Password1),0}],chatterl_store:get_registered(Nick1)),
           ?assertEqual({error,"Unable to login"},chatterl_store:login(Nick1,"blah")),
           ?assertEqual({error,"Not Registered"},chatterl_store:login(Nick2,Password2)),
           ?assertEqual({ok,"Logged in"},chatterl_store:login(Nick1,Password1)),
+          ?assertEqual([{registered_user,Nick1,Name1,Email1,erlang:md5(Password1),1}],chatterl_store:get_registered(Nick1)),
           ?assertEqual([Nick1],chatterl_store:get_logged_in())
       end},
-     fun() ->
+     {"What happens when a registered client & an unregistered client try to log out",
+       fun() ->
          ?assertEqual(false,chatterl_store:logged_in(Nick2)),
          ?assertEqual({error,"Not logged in"},chatterl_store:logout(Nick2)),
          ?assertEqual(true,chatterl_store:logged_in(Nick1)),
          ?assertEqual([{Nick1,Name1,Email1}],chatterl_store:registered()),
          ?assertEqual({ok,"Logged out"},chatterl_store:logout(Nick1)),
          ?assertEqual(false,chatterl_store:logged_in(Nick1))
-     end,
-     fun() ->
+     end},
+     {"Can our client login using chatterl_serv?",
+      fun() ->
          ?assertEqual({error,"Unable to login"},chatterl_serv:login(Nick1,"blah")),
          ?assertEqual({error,"Not Registered"},chatterl_serv:login(Nick2,Password2)),
          ?assertEqual({ok,"noobie is logged in."},chatterl_serv:login(Nick1,Password1)),
          ?assertEqual([Nick1],chatterl_store:get_logged_in())
-     end,
-     fun() ->
+     end},
+     {"Does chatterl handle logins as we expect them to",
+      fun() ->
          ?assertEqual(true,gen_server:call({global,chatterl_serv},{user_exists,Nick1})),
          ?assertEqual(false,gen_server:call({global,chatterl_serv},{user_exists,Nick2})),
          ?assertEqual(true,chatterl_store:logged_in(Nick1)),
          ?assertEqual({ok,"noobie is logged out."},chatterl_serv:logout(Nick1)),
          ?assertEqual(false,gen_server:call({global,chatterl_serv},{user_exists,Nick1}))
-     end,
-     fun() ->
+     end},
+     {"Can a client successfully logout",
+      fun() ->
          ?assertEqual(false,chatterl_store:logged_in(Nick2)),
          ?assertEqual({error,"Not logged in"},chatterl_serv:logout(Nick2)),
          ?assertEqual(false,chatterl_store:logged_in(Nick1))
-      end]}].
+      end}]}].
 
 %% Helper functions.
 start_client(Client,Group,Description) ->
