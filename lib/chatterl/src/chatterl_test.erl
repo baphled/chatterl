@@ -359,7 +359,7 @@ chatterl_store_user_register_test_() ->
      fun() ->
          ?assertEqual({ok,"noobie Authorized"},chatterl_store:auth(Nick1,Password1)),
          ?assertEqual({error,"Unable to authorise blah"},chatterl_store:auth("blah","blah")),
-         ?assertEqual([{Nick1,Name1,Email1},{Nick2,Name2,Email2}], chatterl_store:registered())
+         ?assertEqual([{Nick2,Name2,Email2},{Nick1,Name1,Email1}], chatterl_store:registered())
      end,
      fun() ->
          ?assertEqual({error,"noobie is already registered"},chatterl_store:register(Nick1,{Name1,Email1,Password1,Password1})),
@@ -394,14 +394,14 @@ chatterl_registered_user_store_group_test_() ->
       end},
      fun() ->
          ?assertEqual({ok,"nerf is registered"},chatterl_store:register(Nick2,{Name2,Email2,Password2,Password2})),
-         ?assertEqual([{Nick1,Name1,Email1},{Nick2,Name2,Email2}],chatterl_store:registered()),
+         ?assertEqual([{Nick2,Name2,Email2},{Nick1,Name1,Email1}],chatterl_store:registered()),
          ?assertEqual({struct,[{<<"registered">>,[
-                                                  {struct,[{<<"client">>,[{struct,[{<<"nick">>,<<"noobie">>}]},
-                                                                          {struct,[{<<"name">>,<<"noobie 1">>}]},
-                                                                          {struct,[{<<"email">>,<<"noobie@noobie.com">>}]}]}]},
                                                   {struct,[{<<"client">>,[{struct,[{<<"nick">>,<<"nerf">>}]},
                                                                           {struct,[{<<"name">>,<<"nerf 1">>}]},
-                                                                          {struct,[{<<"email">>,<<"nerf@noobie.com">>}]}]}]}
+                                                                          {struct,[{<<"email">>,<<"nerf@noobie.com">>}]}]}]},
+                                                  {struct,[{<<"client">>,[{struct,[{<<"nick">>,<<"noobie">>}]},
+                                                                          {struct,[{<<"name">>,<<"noobie 1">>}]},
+                                                                          {struct,[{<<"email">>,<<"noobie@noobie.com">>}]}]}]}
                                                  ]}]}, check_json(mochijson2:decode(chatterl_mid_man:registered_list(["text/json"]))))
      end]}].
 
@@ -419,7 +419,8 @@ chatterl_registered_have_messages_archived_if_offline_test_() ->
     end,
     fun(_) ->
         chatterl_store:stop(),
-        mnesia:clear_table(registered_user),
+        mnesia:delete_table(registered_user),
+        %mnesia:clear_table(registered_user),
         chatterl:stop()
     end,
     [{timeout,5000,
@@ -432,10 +433,12 @@ chatterl_registered_have_messages_archived_if_offline_test_() ->
           ?assertEqual([Nick1],chatterl_store:get_logged_in())
       end},
      fun() ->
-         ?assertEqual([Nick1],chatterl_store:get_logged_in()),
          ?assertEqual(false,chatterl_store:logged_in(Nick2)),
          ?assertEqual({error,"Not logged in"},chatterl_store:logout(Nick2)),
-         ?assertEqual(true,chatterl_store:logged_in(Nick1))
+         ?assertEqual(true,chatterl_store:logged_in(Nick1)),
+         ?assertEqual([{Nick1,Name1,Email1}],chatterl_store:registered()),
+         ?assertEqual({ok,"Logged out"},chatterl_store:logout(Nick1)),
+         ?assertEqual(false,chatterl_store:logged_in(Nick1))
       end]}].
 
 %% Helper functions.
