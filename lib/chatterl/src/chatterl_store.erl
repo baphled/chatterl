@@ -12,7 +12,7 @@
 
 %% API
 -export([start_link/1,stop/0,group/1,user/1,get_group/1,get_user/1,get_registered/1,get_logged_in/0,logged_in/1]).
--export([login/2,logout/1,registered/0,register/2,is_auth/2,auth/2]).
+-export([login/2,logout/1,registered/0,register/2,is_auth/2,auth/2,edit_profile/2]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -241,6 +241,25 @@ get_logged_in() ->
   F = fun() -> qlc:e(Q) end,
   {atomic,Result} = mnesia:transaction(F),
   Result.
+
+edit_profile(Nickname,{Key,Value}) ->
+  case logged_in(Nickname) of
+    false -> {error,lists:append(Nickname," not logged in")};
+    true ->
+      Fun =
+        fun() ->
+            [U] = mnesia:read(registered_user,Nickname,write),
+            New =
+              case Key of
+                firstname -> U#registered_user{firstname=Value};
+                email -> U#registered_user{email=Value}
+                end,
+            mnesia:write(New)
+        end,
+      mnesia:transaction(Fun),
+      {ok,"Updated profile"}
+  end.
+
 %%====================================================================
 %% gen_server callbacks
 %%====================================================================
