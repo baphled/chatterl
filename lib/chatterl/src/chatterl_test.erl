@@ -505,6 +505,7 @@ chatterl_registered_users_can_login_and_out_test_() ->
 
 chatterl_registered_users_can_logout_properly_test_() ->
   {Nick1,Name1,Email1,Password1,Nick2,Password2} = {"noobie","noobie 1","noobie@noobie.com","blahblah","nerf","asdasd"},
+  {NewNick,NewName,NewEmail,NewPassword} = {"baft","new name","y@me.com","encrypt"},
   [{setup,
     fun() ->
         chatterl:start(),
@@ -517,7 +518,15 @@ chatterl_registered_users_can_logout_properly_test_() ->
         mnesia:delete_table(registered_user),
         chatterl:stop()
     end,
-    [{"Client processes log their selves out on termination",
+    [{"Client is able to edit their profiles",
+      fun() ->
+          ?assertEqual({error,"nerf not logged in"},chatterl_store:edit_profile(Nick2,{firstname,"some name"})),
+          ?assertEqual({ok,"Updated profile"},chatterl_store:edit_profile(Nick1,{firstname,NewName})),
+          ?assertEqual([{registered_user,Nick1,NewName,Email1,erlang:md5(Password1),1}],chatterl_store:get_registered(Nick1)),
+          ?assertEqual({ok,"Updated profile"},chatterl_store:edit_profile(Nick1,{email,NewEmail})),
+          ?assertEqual([{registered_user,Nick1,NewName,NewEmail,erlang:md5(Password1),1}],chatterl_store:get_registered(Nick1))
+      end},
+     {"Client processes log their selves out on termination",
       fun() ->
           ?assertEqual(true,chatterl_store:logged_in(Nick1)),
           ?assertEqual({ok,"Logged out"},chatterl_client:stop(Nick1)),
