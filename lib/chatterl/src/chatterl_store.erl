@@ -11,8 +11,8 @@
 -behaviour(gen_server).
 
 %% API
--export([start_link/1,stop/0,group/1,user/1,get_group/1,get_user/1,get_registered/1,get_logged_in/0]).
--export([login/2,registered/0,register/2,is_auth/2,auth/2]).
+-export([start_link/1,stop/0,group/1,user/1,get_group/1,get_user/1,get_registered/1,get_logged_in/0,logged_in/1]).
+-export([login/2,logout/1,registered/0,register/2,is_auth/2,auth/2]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -60,6 +60,19 @@ login(Nickname,Password) ->
       end
   end.
 
+logout(Nickname) ->
+  {error,"Not logged in"}.
+
+logged_in(Nickname) ->
+  Q = qlc:q([X#registered_user.nick || X <- mnesia:table(registered_user),
+                                       X#registered_user.logged_in =:= 1,
+                                       X#registered_user.nick =:= Nickname]),
+  F = fun() -> qlc:e(Q) end,
+  {atomic,Result} = mnesia:transaction(F),
+  case Result of
+    [] -> false;
+    Result -> true
+  end.
 %%--------------------------------------------------------------------
 %% @doc
 %% Registers a client to chatterl.
@@ -288,7 +301,7 @@ create_tables(Copies) ->
       mnesia:create_table(registered_user,
                           [{attributes, record_info(fields, registered_user)},
                            {Copies, [node()]},
-                           {type, bag}])
+                           {type, ordered_set}])
   end.
 %%--------------------------------------------------------------------
 %% @doc
