@@ -11,8 +11,8 @@
 -behaviour(gen_server).
 
 %% API
--export([start_link/1,stop/0,group/1,user/1,get_group/1,get_user/1,get_registered/1]).
--export([registered/0,register/2,is_auth/2,auth/2]).
+-export([start_link/1,stop/0,group/1,user/1,get_group/1,get_user/1,get_registered/1,get_logged_in/0]).
+-export([login/2,registered/0,register/2,is_auth/2,auth/2]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -45,6 +45,23 @@ start_link(Copies) ->
 %%--------------------------------------------------------------------
 stop() ->
   gen_server:call({global,?MODULE}, stop, infinity).
+
+login(Nickname,Password) ->
+  case get_registered(Nickname) of
+    [] ->
+      {error,"Not Registered"};
+    [Result] ->
+      case is_auth(Nickname,Password) of
+        false ->
+          {error,"Unable to login"};
+        true ->
+          [User] = get_registered(Nickname),
+          LoggedInUser = User#registered_user{logged_in=1},
+          F = fun() -> mnesia:write(LoggedInUser) end,
+          mnesia:transaction(F),
+          {ok,"Logged in"}
+      end
+  end.
 
 %%--------------------------------------------------------------------
 %% @doc
@@ -176,6 +193,11 @@ get_user(ClientName) ->
 get_registered(User) ->
   get(registered_user,User).
 
+get_logged_in() ->
+  Q = qlc:q([X#registered_user.nick || X <- mnesia:table(registered_user),X#registered_user.logged_in =:= 1]),
+  F = fun() -> qlc:e(Q) end,
+  {atomic,Result} = mnesia:transaction(F),
+  Result.
 %%====================================================================
 %% gen_server callbacks
 %%====================================================================
