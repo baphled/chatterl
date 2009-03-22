@@ -524,7 +524,9 @@ chatterl_registered_users_can_logout_properly_test_() ->
           ?assertEqual({ok,"Updated profile"},chatterl_store:edit_profile(Nick1,{firstname,NewName})),
           ?assertEqual([{registered_user,Nick1,NewName,Email1,erlang:md5(Password1),1}],chatterl_store:get_registered(Nick1)),
           ?assertEqual({ok,"Updated profile"},chatterl_store:edit_profile(Nick1,{email,NewEmail})),
-          ?assertEqual([{registered_user,Nick1,NewName,NewEmail,erlang:md5(Password1),1}],chatterl_store:get_registered(Nick1))
+          ?assertEqual([{registered_user,Nick1,NewName,NewEmail,erlang:md5(Password1),1}],chatterl_store:get_registered(Nick1)),
+          ?assertEqual({ok,"Updated profile"},chatterl_store:edit_profile(Nick1,{password,NewPassword})),
+          ?assertEqual([{registered_user,Nick1,NewName,NewEmail,erlang:md5(NewPassword),1}],chatterl_store:get_registered(Nick1))
       end},
      {"Client processes log their selves out on termination",
       fun() ->
