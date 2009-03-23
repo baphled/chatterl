@@ -11,8 +11,8 @@
 -behaviour(gen_server).
 
 %% API
--export([start_link/1,stop/0,group/1,user/1,get_group/1,get_user/1,get_registered/1,get_logged_in/0,logged_in/1]).
--export([login/2,logout/1,registered/0,register/2,is_auth/2,auth/2,edit_profile/2]).
+-export([start_link/1,stop/0,group/1,user/1,get_group/1,get_user/1,get_registered/1,get_messages/1,get_logged_in/0,logged_in/1]).
+-export([login/2,logout/1,registered/0,register/2,is_auth/2,auth/2,archive_msg/2,edit_profile/2]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -99,6 +99,24 @@ logged_in(Nickname) ->
     [] -> false;
     [Nickname] -> true
   end.
+
+archive_msg(Sender,{CreatedOn,Recipient,Msg}) ->
+  case logged_in(Sender) of
+    false -> {error,lists:append(Sender," not logged in")};
+    true ->
+      case get_registered(Recipient) of
+        [] -> {error,lists:append(Recipient," is not registered")};
+        [_] ->
+          Row = #messages{recipient=Recipient,created_on=CreatedOn,sender=Sender,msg=Msg},
+          F = fun() -> mnesia:write(Row) end,
+          case mnesia:transaction(F) of
+            {aborted,Result} ->
+              {aborted,Result};
+            {atomic,ok} -> {ok,lists:append("Sent message to ",Recipient)}
+          end
+      end
+  end.
+
 %%--------------------------------------------------------------------
 %% @doc
 %% Registers a client to chatterl.
@@ -229,6 +247,10 @@ get_user(ClientName) ->
 get_registered(User) ->
   get(registered_user,User).
 
+get_messages(User) ->
+  F = fun() -> mnesia:read({messages,User}) end,
+  {atomic,Result} = mnesia:transaction(F),
+  Result.
 %%--------------------------------------------------------------------
 %% @doc
 %% Retrieves a logged in users.
@@ -353,6 +375,15 @@ create_tables(Copies) ->
                           [{attributes, record_info(fields, registered_user)},
                            {Copies, [node()]},
                            {type, ordered_set}])
+  end,
+  try
+    mnesia:table_info(type, messages)
+  catch
+    exit: _ ->
+      mnesia:create_table(messages,
+                          [{attributes, record_info(fields, messages)},
+                           {Copies, [node()]},
+                           {type, bag}])
   end.
 
 %%--------------------------------------------------------------------
