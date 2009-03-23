@@ -100,6 +100,16 @@ logged_in(Nickname) ->
     [Nickname] -> true
   end.
 
+%%--------------------------------------------------------------------
+%% @doc
+%% Archives a registered clients message
+%%
+%% Archives a clients message when the client is not presently logged in
+%%
+%% @todo Refactor so that it is a handle method
+%% @spec archive_msg(Sender,{CreatedOn,Recipient,Msg}) -> {ok,Msg} | {error,Error}
+%% @end
+%%--------------------------------------------------------------------
 archive_msg(Sender,{CreatedOn,Recipient,Msg}) ->
   case logged_in(Sender) of
     false -> {error,lists:append(Sender," not logged in")};
@@ -247,10 +257,18 @@ get_user(ClientName) ->
 get_registered(User) ->
   get(registered_user,User).
 
+%%--------------------------------------------------------------------
+%% @doc
+%% Retrieves a registered users messages.
+%%
+%% @spec get_messages(User) -> Messages
+%% @end
+%%--------------------------------------------------------------------
 get_messages(User) ->
   F = fun() -> mnesia:read({messages,User}) end,
   {atomic,Result} = mnesia:transaction(F),
   Result.
+
 %%--------------------------------------------------------------------
 %% @doc
 %% Retrieves a logged in users.
@@ -264,6 +282,13 @@ get_logged_in() ->
   {atomic,Result} = mnesia:transaction(F),
   Result.
 
+%%--------------------------------------------------------------------
+%% @doc
+%% Edit a registerd client profile
+%%
+%% @spec edit_profile(Nickname,{Key,Value}) -> {ok,Msg} | {error,Error}
+%% @end
+%%--------------------------------------------------------------------
 edit_profile(Nickname,{Key,Value}) ->
   case logged_in(Nickname) of
     false -> {error,lists:append(Nickname," not logged in")};
@@ -277,61 +302,76 @@ edit_profile(Nickname,{Key,Value}) ->
 %%====================================================================
 %% gen_server callbacks
 %%====================================================================
-
 %%--------------------------------------------------------------------
-%% Function: init(Args) -> {ok, State} |
+%% @doc
+%% Initiates the server
+%%
+%% @spec init([]) -> {ok, State} |
 %%                         {ok, State, Timeout} |
 %%                         ignore               |
 %%                         {stop, Reason}
-%% Description: Initiates the server
+%% @end
 %%--------------------------------------------------------------------
 init([Copies]) ->
   create_tables(Copies),
   {ok,#state{}}.
 
 %%--------------------------------------------------------------------
-%% Function: %% handle_call(Request, From, State) -> {reply, Reply, State} |
+%% @doc
+%% Handling the call messages the storage process.
+%%
+%% @spec handle_call(Request, From, State) -> {reply, Reply, State} |
 %%                                      {reply, Reply, State, Timeout} |
 %%                                      {noreply, State} |
 %%                                      {noreply, State, Timeout} |
 %%                                      {stop, Reason, Reply, State} |
 %%                                      {stop, Reason, State}
-%% Description: Handling call messages
+%% @end
 %%--------------------------------------------------------------------
 handle_call(stop, _From, State) ->
   {stop, normal, stopped, State}.
 
 %%--------------------------------------------------------------------
-%% Function: handle_cast(Msg, State) -> {noreply, State} |
+%% @doc
+%% Handling cast message
+%%
+%% @spec handle_cast(Msg, State) -> {noreply, State} |
 %%                                      {noreply, State, Timeout} |
 %%                                      {stop, Reason, State}
-%% Description: Handling cast messages
+%% @end
 %%--------------------------------------------------------------------
 handle_cast(_Msg, State) ->
   {noreply, State}.
 
 %%--------------------------------------------------------------------
-%% Function: handle_info(Info, State) -> {noreply, State} |
+%% @doc
+%% Handling all non call/cast messages
+%%
+%% @spec handle_info(Info, State) -> {noreply, State} |
 %%                                       {noreply, State, Timeout} |
 %%                                       {stop, Reason, State}
-%% Description: Handling all non call/cast messages
+%% @end
 %%--------------------------------------------------------------------
 handle_info(_Info, State) ->
   {noreply, State}.
 
 %%--------------------------------------------------------------------
-%% Function: terminate(Reason, State) -> void()
-%% Description: This function is called by a gen_server when it is about to
-%% terminate. It should be the opposite of Module:init/1 and do any necessary
-%% cleaning up. When it returns, the gen_server terminates with Reason.
-%% The return value is ignored.
+%% @doc
+%% Terminates chatterl_serv
+%%
+%% @spec terminate(Reason, State) -> void()
+%% @end
 %%--------------------------------------------------------------------
 terminate(_Reason, _State) ->
   ok.
 
+
 %%--------------------------------------------------------------------
-%% Func: code_change(OldVsn, State, Extra) -> {ok, NewState}
-%% Description: Convert process state when code is changed
+%% @doc
+%% Convert process state when code is changed
+%%
+%% @spec code_change(OldVsn, State, Extra) -> {ok, NewState}
+%% @end
 %%--------------------------------------------------------------------
 code_change(_OldVsn, State, _Extra) ->
   {ok, State}.
