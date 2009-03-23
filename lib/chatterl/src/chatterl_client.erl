@@ -178,12 +178,12 @@ handle_call({private_msg,Client,Message},_From,State) ->
   {reply,Result,State};
 handle_call({receive_msg, CreatedOn, Client, Msg}, _From, State) ->
     {Reply, NewTree} =
-	case gb_trees:is_defined({Msg,CreatedOn},State#client.messages) of
+	case gb_trees:is_defined({CreatedOn,Msg},State#client.messages) of
 	    true ->
 		{{error,no_duplicates},State#client.messages};
 	    false ->
 		{{ok,sent_msg},
-		 gb_trees:insert({Msg,CreatedOn}, {CreatedOn,Client,Msg}, State#client.messages)}
+		 gb_trees:insert({CreatedOn,Msg}, {CreatedOn,Client,Msg}, State#client.messages)}
 	end,
     {reply, Reply, State#client{messages = NewTree}};
 handle_call(poll_messages, _From,State) ->
