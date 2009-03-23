@@ -53,16 +53,41 @@ start() ->
 stop() ->
     gen_server:call({global, ?SERVER}, stop, infinity).
 
+%%--------------------------------------------------------------------
+%% @doc
+%% Logs a client into chatterl
+%%
+%% On successful login, a check is made to determine whether the client
+%% has any archived messages, if this is the case, they are automatically
+%% retrieved, ready to be polled.
+%%
+%% @spec login(User,Password) -> {ok,Msg} | {error,Error}
+%% @end
+%%--------------------------------------------------------------------
 login(User,Password) ->
   case chatterl_store:login(User,Password) of
     {ok,_Msg} ->
       case chatterl_client:start(User) of
-        {ok,_Pid} -> {ok,lists:append(User," is logged in.")};
+        {ok,_Pid} ->
+                     case chatterl_client:get_messages(User) of
+                       {ok,_} ->
+                         {ok,lists:append(User," is logged in.")};
+                       Error -> Error
+                     end;
         {error,Error} -> {error,Error}
       end;
     {error,Msg} -> {error,Msg}
   end.
 
+%%--------------------------------------------------------------------
+%% @doc
+%% Logs a client into chatterl
+%%
+%% Logs the client out of chatterl.
+%%
+%% @spec login(User,Password) -> {ok,Msg} | {error,Error}
+%% @end
+%%--------------------------------------------------------------------
 logout(User) ->
   case chatterl_store:logout(User) of
     {ok,Msg} ->
@@ -72,6 +97,7 @@ logout(User) ->
       end;
     {error,Error} -> {error,Error}
   end.
+
 %%--------------------------------------------------------------------
 %% @doc
 %% Connects client to server, must be done before a user can interact with chatterl.
@@ -164,6 +190,7 @@ list_users(GroupName) ->
 %%--------------------------------------------------------------------
 list_groups() ->
     gen_server:call({global, ?MODULE}, list_groups, infinity).
+
 %%====================================================================
 %% gen_server callbacks
 %%====================================================================
