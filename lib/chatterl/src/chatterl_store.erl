@@ -279,7 +279,7 @@ get_messages(User) ->
 %%
 %% This is done once the archived messages are retrieved by the client
 %%
-%% @spec delete_messages(Messages) -> -> {ok,Msg}
+%% @spec delete_messages(Messages) -> {ok,Msg}
 %% @end
 %%--------------------------------------------------------------------
 delete_messages(Messages) ->

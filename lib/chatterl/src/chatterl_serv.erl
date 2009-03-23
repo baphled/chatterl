@@ -85,7 +85,7 @@ login(User,Password) ->
 %%
 %% Logs the client out of chatterl.
 %%
-%% @spec login(User,Password) -> {ok,Msg} | {error,Error}
+%% @spec logout(User) -> {ok,Msg} | {error,Error}
 %% @end
 %%--------------------------------------------------------------------
 logout(User) ->

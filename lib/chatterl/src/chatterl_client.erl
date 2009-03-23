@@ -58,7 +58,7 @@ start(Client) ->
 %% @doc
 %% Connects the client to Chatterl
 %%
-%% @spec start(Client) -> {ok,Pid} | ignore | {error,Error}
+%% @spec stop(Client) -> {ok,Pid} | ignore | {error,Error}
 %% @end
 %%--------------------------------------------------------------------
 stop(Client) ->
