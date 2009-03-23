@@ -572,13 +572,14 @@ chatterl_registered_users_archive_messages_test_() ->
       end},
      {timeout,50000,{"Client can retrieve messages in the expected order.",
       fun() ->
-          CreatedOn2 = erlang:localtime(),
           ?assertEqual([{messages,Nick1,CreatedOn1,Nick2,"hey"}],chatterl_store:get_messages(Nick1)),
-          ?assertEqual([{registered_user,Nick1,Name1,Email1,erlang:md5(Password1),0}],chatterl_store:get_registered(Nick1)),
-          ?assertEqual({ok,"Sent message to noobie"},chatterl_client:private_msg(Nick2,Nick1,"sup")),
+          ?assertEqual({ok,"Sent message to noobie"},chatterl_client:private_msg(Nick2,Nick1,"sup"))
+      end}},
+     {"Client can retrieve archived messages once they log on",
+      fun() ->
           chatterl_serv:login(Nick1,Password1),
-          ?assertEqual([{CreatedOn1,{client,Nick2},"hey"},{CreatedOn2,{client,Nick2},"sup"}],gen_server:call({global,Nick1},poll_messages))
-      end}}]}].
+          ?assertEqual([{CreatedOn1,{client,Nick2},"hey"},{CreatedOn1,{client,Nick2},"sup"}],gen_server:call({global,Nick1},poll_messages))
+      end}]}].
 
 %% Helper functions.
 start_client(Client,Group,Description) ->
