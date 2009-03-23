@@ -356,7 +356,7 @@ chatterl_store_test_() ->
     end,
     [{timeout, 5000,
       fun() ->
-          ?assertEqual([registered_user,client,group,schema],mnesia:system_info(tables))
+          ?assertEqual([messages,registered_user,client,group,schema],mnesia:system_info(tables))
       end},
     fun() ->
         GroupState = gen_server:call({global,Group},get_state),
@@ -535,6 +535,33 @@ chatterl_registered_users_can_logout_properly_test_() ->
           ?assertEqual({ok,"Logged out"},chatterl_client:stop(Nick1)),
           ?assertEqual(false,chatterl_store:logged_in(Nick1)),
           ?assertEqual({ok,"noobie is logged in."},chatterl_serv:login(Nick1,NewPassword))
+      end}]}].
+
+chatterl_registered_users_archive_messages_test_() ->
+  {Nick1,Name1,Email1,Password1} = {"noobie","noobie 1","noobie@noobie.com","blahblah"},
+  {Nick2,Name2,Email2,Password2} = {"nerf","nerf 1","nerf@noobie.com","asfdasdf"},
+  CreatedOn =erlang:localtime(),
+  [{setup,
+    fun() ->
+        chatterl:start(),
+        chatterl_store:start_link(ram_copies),
+        chatterl_store:register(Nick1,{Name1,Email1,Password1,Password1}),
+        chatterl_store:register(Nick2,{Name2,Email2,Password2,Password2}),
+        chatterl_serv:login(Nick2,Password2)
+    end,
+    fun(_) ->
+        chatterl_store:stop(),
+        mnesia:delete_table(registered_user),
+        mnesia:delete_table(messages),
+        chatterl:stop()
+    end,
+    [{"Client is able to edit their profiles",
+      fun() ->
+          ?assertEqual({error,lists:append(Nick1," not logged in")},chatterl_store:archive_msg(Nick1,{erlang:localtime(),Nick2,"hey"})),
+          ?assertEqual({error,"blah is not registered"},chatterl_store:archive_msg(Nick2,{erlang:localtime(),"blah","hey"})),
+          ?assertEqual({ok,"Sent message to noobie"},chatterl_store:archive_msg(Nick2,{CreatedOn,Nick1,"hey"})),
+          ?assertEqual([],chatterl_store:get_messages(Nick2)),
+          ?assertEqual([{messages,Nick1,CreatedOn,Nick2,"hey"}],chatterl_store:get_messages(Nick1))
       end}]}].
 
 %% Helper functions.
