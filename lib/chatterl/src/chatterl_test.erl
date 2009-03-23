@@ -54,9 +54,12 @@ chatterl_client_handle_test_() ->
   [{setup,
     fun() ->
         start_client(Client1,Group,Description),
+        chatterl_store:start_link(ram_copies),
         chatterl_client:start(Client2)
     end,
     fun(_) ->
+        chatterl_store:stop(),
+        mnesia:delete_table(registered_user),
         chatterl:stop() end,
     [{"Can we retrieve client information from a client process",
       fun() ->
@@ -356,7 +359,7 @@ chatterl_store_test_() ->
     end,
     [{timeout, 5000,
       fun() ->
-          ?assertEqual([messages,registered_user,client,group,schema],mnesia:system_info(tables))
+          ?assertEqual([registered_user,messages,client,group,schema],mnesia:system_info(tables))
       end},
     fun() ->
         GroupState = gen_server:call({global,Group},get_state),
@@ -538,19 +541,16 @@ chatterl_registered_users_can_logout_properly_test_() ->
       end}]}].
 
 chatterl_registered_users_archive_messages_test_() ->
+  CreatedOn1 = erlang:localtime(),
   {Nick1,Name1,Email1,Password1} = {"noobie","noobie 1","noobie@noobie.com","blahblah"},
   {Nick2,Name2,Email2,Password2} = {"nerf","nerf 1","nerf@noobie.com","asfdasdf"},
-  {Nick3,Name3,Email3,Password3} = {"foo","foo 1","foo@noobie.com","asdadasd"},
-  CreatedOn =erlang:localtime(),
   [{setup,
     fun() ->
         chatterl:start(),
         chatterl_store:start_link(ram_copies),
         chatterl_store:register(Nick1,{Name1,Email1,Password1,Password1}),
         chatterl_store:register(Nick2,{Name2,Email2,Password2,Password2}),
-        chatterl_serv:login(Nick2,Password2),
-        chatterl_store:register(Nick3,{Name3,Email3,Password3,Password3}),
-        chatterl_serv:login(Nick2,Password3)
+        chatterl_serv:login(Nick2,Password2)
     end,
     fun(_) ->
         chatterl_store:stop(),
@@ -558,28 +558,27 @@ chatterl_registered_users_archive_messages_test_() ->
         mnesia:delete_table(messages),
         chatterl:stop()
     end,
-    [{"Client is able to edit their profiles",
+    [{timeout,50000,{"Client send archived messages as expected",
       fun() ->
           ?assertEqual({error,lists:append(Nick1," not logged in")},chatterl_store:archive_msg(Nick1,{erlang:localtime(),Nick2,"hey"})),
           ?assertEqual({error,"blah is not registered"},chatterl_store:archive_msg(Nick2,{erlang:localtime(),"blah","hey"})),
-          ?assertEqual({ok,"Sent message to noobie"},chatterl_store:archive_msg(Nick2,{CreatedOn,Nick1,"hey"})),
-          ?assertEqual([],chatterl_store:get_messages(Nick2)),
-          ?assertEqual([{messages,Nick1,CreatedOn,Nick2,"hey"}],chatterl_store:get_messages(Nick1))
-      end},
+          ?assertEqual({ok,"Sent message to noobie"},chatterl_store:archive_msg(Nick2,{CreatedOn1,Nick1,"hey"})),
+          ?assertEqual([],chatterl_store:get_messages(Nick2))
+      end}},
      {"Client has access to archived messages",
       fun() ->
-          chatterl_serv:login(Nick1,Password1),
           ?assertEqual([],gen_server:call({global,Nick2},poll_messages)),
-          ?assertEqual({ok,no_messages},chatterl_client:get_messages(Nick3)),
-          ?assertEqual({ok,no_messages},chatterl_client:get_messages(Nick2)),
-          ?assertEqual({ok,sent_msg},chatterl_client:get_messages(Nick1)),
-          ?assertEqual([{CreatedOn,{client,Nick2},"hey"}],gen_server:call({global,Nick1},poll_messages))
+          ?assertEqual({ok,no_messages},chatterl_client:get_messages(Nick2))
       end},
-     {"Client can retrieve multiple messages in the expected order.",
+     {timeout,50000,{"Client can retrieve messages in the expected order.",
       fun() ->
-          ?assertEqual({ok,"Sent message to noobie"},chatterl_store:archive_msg(Nick2,{CreatedOn,Nick1,"sup"})),
-          ?assertEqual({ok,sent_msg},chatterl_client:get_messages(Nick1))
-      end}]}].
+          CreatedOn2 = erlang:localtime(),
+          ?assertEqual([{messages,Nick1,CreatedOn1,Nick2,"hey"}],chatterl_store:get_messages(Nick1)),
+          ?assertEqual([{registered_user,Nick1,Name1,Email1,erlang:md5(Password1),0}],chatterl_store:get_registered(Nick1)),
+          ?assertEqual({ok,"Sent message to noobie"},chatterl_client:private_msg(Nick2,Nick1,"sup")),
+          chatterl_serv:login(Nick1,Password1),
+          ?assertEqual([{CreatedOn1,{client,Nick2},"hey"},{CreatedOn2,{client,Nick2},"sup"}],gen_server:call({global,Nick1},poll_messages))
+      end}}]}].
 
 %% Helper functions.
 start_client(Client,Group,Description) ->
