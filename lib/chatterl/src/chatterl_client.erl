@@ -38,9 +38,8 @@ get_messages(Nick) ->
     true ->
       case chatterl_store:get_messages(Nick) of
         [] -> {ok,no_messages};
-        Messages -> [gen_server:call({global,Recipient},{receive_msg,CreatedOn,{client,Sender},Message})|| 
-                      {messages,Recipient,CreatedOn,Sender,Message} <- Messages],
-                    {ok,sent_msg}
+        Messages -> [gen_server:call({global,Recipient},{receive_msg,CreatedOn,{client,Sender},Message})||
+                      {messages,Recipient,CreatedOn,Sender,Message} <- Messages]
           end;
     false -> {ok,no_messages}
   end.
@@ -162,25 +161,29 @@ handle_call({left_group,Group},_From,State) ->
                       {ok, drop_group}},
   {reply, Result, State#client{groups = NewTree}};
 handle_call({private_msg,Client,Message},_From,State) ->
-    Result = case Client =:= State#client.name of
-	true -> {error, "Can not send to self!"};
-	false ->
-		     case gen_server:call({global, chatterl_serv}, {user_lookup, Client}) of
-                       {ok, ClientName, _ClientPid} ->
-			     gen_server:call({global,Client},{receive_msg,erlang:localtime(),{client,ClientName},Message}),
-			     {ok,msg_sent};
-			 {error, Error} -> {error, Error}
-		     end
-	     end,
-    {reply,Result,State};
+  Result = case Client =:= State#client.name of
+             true -> {error, "Can not send to self!"};
+             false ->
+               case gen_server:call({global, chatterl_serv}, {user_lookup, Client}) of
+                 {ok, ClientName, _ClientPid} ->
+                   gen_server:call({global,Client},{receive_msg,erlang:localtime(),{client,ClientName},Message}),
+                   {ok,msg_sent};
+                 {error, Error} ->
+                   case chatterl_store:get_registered(Client) of
+                     [] -> {error, Error};
+                     [Registered] -> chatterl_store:archive_msg(State#client.name,{erlang:localtime(),Client,Message})
+                   end
+               end
+           end,
+  {reply,Result,State};
 handle_call({receive_msg, CreatedOn, Client, Msg}, _From, State) ->
     {Reply, NewTree} =
-	case gb_trees:is_defined({Client,CreatedOn},State#client.messages) of
+	case gb_trees:is_defined({Msg,CreatedOn},State#client.messages) of
 	    true ->
 		{{error,no_duplicates},State#client.messages};
 	    false ->
 		{{ok,sent_msg},
-		 gb_trees:insert({Client,CreatedOn}, {CreatedOn,Client,Msg}, State#client.messages)}
+		 gb_trees:insert({Msg,CreatedOn}, {CreatedOn,Client,Msg}, State#client.messages)}
 	end,
     {reply, Reply, State#client{messages = NewTree}};
 handle_call(poll_messages, _From,State) ->
