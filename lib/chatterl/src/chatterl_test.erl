@@ -540,6 +540,7 @@ chatterl_registered_users_can_logout_properly_test_() ->
 chatterl_registered_users_archive_messages_test_() ->
   {Nick1,Name1,Email1,Password1} = {"noobie","noobie 1","noobie@noobie.com","blahblah"},
   {Nick2,Name2,Email2,Password2} = {"nerf","nerf 1","nerf@noobie.com","asfdasdf"},
+  {Nick3,Name3,Email3,Password3} = {"foo","foo 1","foo@noobie.com","asdadasd"},
   CreatedOn =erlang:localtime(),
   [{setup,
     fun() ->
@@ -547,7 +548,9 @@ chatterl_registered_users_archive_messages_test_() ->
         chatterl_store:start_link(ram_copies),
         chatterl_store:register(Nick1,{Name1,Email1,Password1,Password1}),
         chatterl_store:register(Nick2,{Name2,Email2,Password2,Password2}),
-        chatterl_serv:login(Nick2,Password2)
+        chatterl_serv:login(Nick2,Password2),
+        chatterl_store:register(Nick3,{Name3,Email3,Password3,Password3}),
+        chatterl_serv:login(Nick2,Password3)
     end,
     fun(_) ->
         chatterl_store:stop(),
@@ -562,6 +565,20 @@ chatterl_registered_users_archive_messages_test_() ->
           ?assertEqual({ok,"Sent message to noobie"},chatterl_store:archive_msg(Nick2,{CreatedOn,Nick1,"hey"})),
           ?assertEqual([],chatterl_store:get_messages(Nick2)),
           ?assertEqual([{messages,Nick1,CreatedOn,Nick2,"hey"}],chatterl_store:get_messages(Nick1))
+      end},
+     {"Client has access to archived messages",
+      fun() ->
+          chatterl_serv:login(Nick1,Password1),
+          ?assertEqual([],gen_server:call({global,Nick2},poll_messages)),
+          ?assertEqual({ok,no_messages},chatterl_client:get_messages(Nick3)),
+          ?assertEqual({ok,no_messages},chatterl_client:get_messages(Nick2)),
+          ?assertEqual({ok,sent_msg},chatterl_client:get_messages(Nick1)),
+          ?assertEqual([{CreatedOn,{client,Nick2},"hey"}],gen_server:call({global,Nick1},poll_messages))
+      end},
+     {"Client can retrieve multiple messages in the expected order.",
+      fun() ->
+          ?assertEqual({ok,"Sent message to noobie"},chatterl_store:archive_msg(Nick2,{CreatedOn,Nick1,"sup"})),
+          ?assertEqual({ok,sent_msg},chatterl_client:get_messages(Nick1))
       end}]}].
 
 %% Helper functions.
