@@ -11,7 +11,7 @@
 -behaviour(gen_server).
 
 %% API
--export([start_link/1,stop/0,group/1,user/1,get_group/1,get_user/1,get_registered/1,get_messages/1,delete_messages/1,get_logged_in/0,logged_in/1]).
+-export([start_link/1,stop/0,group/1,user/1,get_group/1,get_user/1,get_registered/1,get_messages/1,get_logged_in/0,logged_in/1]).
 -export([login/2,logout/1,registered/0,register/2,is_auth/2,auth/2,archive_msg/2,edit_profile/2]).
 
 %% gen_server callbacks
@@ -273,12 +273,22 @@ get_messages(User) ->
   delete_messages(Result),
   Result.
 
+%%--------------------------------------------------------------------
+%% @doc
+%% Deletes all archived messages
+%%
+%% This is done once the archived messages are retrieved by the client
+%%
+%% @spec delete_messages(Messages) -> -> {ok,Msg}
+%% @end
+%%--------------------------------------------------------------------
 delete_messages(Messages) ->
   F = fun() ->
           lists:foreach(fun(Msg) ->
                             mnesia:delete_object(Msg) end, Messages) end,
   mnesia:transaction(F),
   {ok,"Delete messages"}.
+
 %%--------------------------------------------------------------------
 %% @doc
 %% Retrieves a logged in users.
@@ -374,7 +384,6 @@ handle_info(_Info, State) ->
 %%--------------------------------------------------------------------
 terminate(_Reason, _State) ->
   ok.
-
 
 %%--------------------------------------------------------------------
 %% @doc
