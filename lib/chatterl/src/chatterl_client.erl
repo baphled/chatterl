@@ -22,7 +22,7 @@
 
 %% API
 %% Client based
--export([start/1,stop/1,private_msg/3]).
+-export([start/1,stop/1,private_msg/3,get_messages/1]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -33,6 +33,17 @@
 %%====================================================================
 %% API
 %%====================================================================
+get_messages(Nick) ->
+  case chatterl_store:logged_in(Nick) of
+    true ->
+      case chatterl_store:get_messages(Nick) of
+        [] -> {ok,no_messages};
+        Messages -> [gen_server:call({global,Recipient},{receive_msg,CreatedOn,{client,Sender},Message})|| 
+                      {messages,Recipient,CreatedOn,Sender,Message} <- Messages],
+                    {ok,sent_msg}
+          end;
+    false -> {ok,no_messages}
+  end.
 %%--------------------------------------------------------------------
 %% @doc
 %% Connects the client to Chatterl
