@@ -43,6 +43,7 @@ get_messages(Nick) ->
           end;
     false -> {ok,no_messages}
   end.
+
 %%--------------------------------------------------------------------
 %% @doc
 %% Connects the client to Chatterl
@@ -53,6 +54,13 @@ get_messages(Nick) ->
 start(Client) ->
   gen_server:start_link({global, Client}, ?MODULE, [Client], []).
 
+%%--------------------------------------------------------------------
+%% @doc
+%% Connects the client to Chatterl
+%%
+%% @spec start(Client) -> {ok,Pid} | ignore | {error,Error}
+%% @end
+%%--------------------------------------------------------------------
 stop(Client) ->
   case gen_server:call({global,Client},stop) of
     stopped ->
