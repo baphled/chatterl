@@ -577,11 +577,7 @@ chatterl_registered_users_archive_messages_test_() ->
      {"Client can retrieve archived messages once they log on",
       fun() ->
           chatterl_serv:login(Nick1,Password1),
-          ?assertEqual([{CreatedOn1,{client,Nick2},"hey"},{CreatedOn1,{client,Nick2},"sup"}],gen_server:call({global,Nick1},poll_messages))
-      end},
-     {"Clients archive is emptied once they have been retrieved",
-      fun() ->
-          ?assertEqual({ok,"Delete messages"},chatterl_store:delete_messages(chatterl_store:get_messages(Nick1))),
+          ?assertEqual([{CreatedOn1,{client,Nick2},"hey"},{CreatedOn1,{client,Nick2},"sup"}],gen_server:call({global,Nick1},poll_messages)),
           ?assertEqual([],chatterl_store:get_messages(Nick1))
       end}]}].
 
