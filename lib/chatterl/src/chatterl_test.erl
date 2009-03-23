@@ -572,13 +572,17 @@ chatterl_registered_users_archive_messages_test_() ->
       end},
      {timeout,50000,{"Client can retrieve messages in the expected order.",
       fun() ->
-          ?assertEqual([{messages,Nick1,CreatedOn1,Nick2,"hey"}],chatterl_store:get_messages(Nick1)),
           ?assertEqual({ok,"Sent message to noobie"},chatterl_client:private_msg(Nick2,Nick1,"sup"))
       end}},
      {"Client can retrieve archived messages once they log on",
       fun() ->
           chatterl_serv:login(Nick1,Password1),
           ?assertEqual([{CreatedOn1,{client,Nick2},"hey"},{CreatedOn1,{client,Nick2},"sup"}],gen_server:call({global,Nick1},poll_messages))
+      end},
+     {"Clients archive is emptied once they have been retrieved",
+      fun() ->
+          ?assertEqual({ok,"Delete messages"},chatterl_store:delete_messages(chatterl_store:get_messages(Nick1))),
+          ?assertEqual([],chatterl_store:get_messages(Nick1))
       end}]}].
 
 %% Helper functions.
