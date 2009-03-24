@@ -553,10 +553,10 @@ chatterl_registered_users_archive_messages_test_() ->
         chatterl_serv:login(Nick2,Password2)
     end,
     fun(_) ->
+        chatterl:stop(),
         chatterl_store:stop(),
         mnesia:delete_table(registered_user),
-        mnesia:delete_table(messages),
-        chatterl:stop()
+        mnesia:delete_table(messages)
     end,
     [{timeout,50000,{"Client send archived messages as expected",
       fun() ->
@@ -570,7 +570,7 @@ chatterl_registered_users_archive_messages_test_() ->
           ?assertEqual([],gen_server:call({global,Nick2},poll_messages)),
           ?assertEqual({ok,no_messages},chatterl_client:get_messages(Nick2))
       end},
-     {timeout,50000,{"Client can retrieve messages in the expected order.",
+     {timeout,50000,{"Client can send a private message to an logged out registered user.",
       fun() ->
           ?assertEqual({ok,"Sent message to noobie"},chatterl_client:private_msg(Nick2,Nick1,"sup"))
       end}},
