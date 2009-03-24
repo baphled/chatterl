@@ -69,11 +69,11 @@ login(User,Password) ->
     {ok,_Msg} ->
       case chatterl_client:start(User) of
         {ok,_Pid} ->
-                     case chatterl_client:get_messages(User) of
-                       {ok,_} ->
-                         {ok,lists:append(User," is logged in.")};
-                       Error -> Error
-                     end;
+          case chatterl_client:get_messages(User) of
+            {ok,_} ->
+              {ok,lists:append(User," is logged in.")};
+            Error -> Error
+          end;
         {error,Error} -> {error,Error}
       end;
     {error,Msg} -> {error,Msg}
