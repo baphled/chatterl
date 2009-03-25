@@ -11,12 +11,39 @@
 -behaviour(gen_server).
 
 %% API
--export([start_link/1,stop/0,group/1,user/1,get_group/1,get_user/1,get_registered/1,get_messages/1,get_logged_in/0,logged_in/1]).
--export([login/2,logout/1,registered/0,register/2,is_auth/2,auth/2,archive_msg/2,edit_profile/2]).
+-export([
+         start_link/1,
+         stop/0,
+         group/1,
+         user/1,
+         get_group/1,
+         get_user/1,
+         get_registered/1,
+         get_messages/1,
+         get_logged_in/0,
+         logged_in/1
+        ]).
+
+-export([
+         login/2,
+         logout/1,
+         registered/0,
+         register/2,
+         is_auth/2,
+         auth/2,
+         archive_msg/2,
+         edit_profile/2
+        ]).
 
 %% gen_server callbacks
--export([init/1, handle_call/3, handle_cast/2, handle_info/2,
-         terminate/2, code_change/3]).
+-export([
+         init/1,
+         handle_call/3,
+         handle_cast/2,
+         handle_info/2,
+         terminate/2,
+         code_change/3
+        ]).
 
 -include_lib("stdlib/include/qlc.hrl").
 -include("chatterl.hrl").
@@ -114,17 +141,7 @@ archive_msg(Sender,{CreatedOn,Recipient,Msg}) ->
   case logged_in(Sender) of
     false -> {error,lists:append(Sender," not logged in")};
     true ->
-      case get_registered(Recipient) of
-        [] -> {error,lists:append(Recipient," is not registered")};
-        [_] ->
-          Row = #messages{recipient=Recipient,created_on=CreatedOn,sender=Sender,msg=Msg},
-          F = fun() -> mnesia:write(Row) end,
-          case mnesia:transaction(F) of
-            {aborted,Result} ->
-              {aborted,Result};
-            {atomic,ok} -> {ok,lists:append("Sent message to ",Recipient)}
-          end
-      end
+      gen_server:call({global,?MODULE},{archive,{Sender,Recipient,CreatedOn,Msg}})
   end.
 
 %%--------------------------------------------------------------------
@@ -188,7 +205,9 @@ auth(Username,Password) ->
 %% @end
 %%--------------------------------------------------------------------
 registered() ->
-  Q = qlc:q([{X#registered_user.nick,X#registered_user.firstname,X#registered_user.email} || X <- mnesia:table(registered_user)]),
+  Q = qlc:q([{X#registered_user.nick,
+              X#registered_user.firstname,
+              X#registered_user.email} || X <- mnesia:table(registered_user)]),
   F = fun() -> qlc:e(Q) end,
   {atomic,Result} = mnesia:transaction(F),
   Result.
@@ -203,10 +222,7 @@ registered() ->
 group(Group) ->
   case gen_server:call({global,chatterl_serv},{group_exists,Group}) of
     true ->
-      State = gen_server:call({global,Group},get_state),
-      F = fun() -> mnesia:write(State) end,
-      {atomic,Result} = mnesia:transaction(F),
-      Result;
+      write_state(Group);
     false -> {error,"Group doesn't exist"}
   end.
 
@@ -220,10 +236,7 @@ group(Group) ->
 user(User) ->
   case gen_server:call({global,chatterl_serv},{user_exists,User}) of
     true ->
-      State = gen_server:call({global,User},get_state),
-      F = fun() -> mnesia:write(State) end,
-      {atomic,Result} = mnesia:transaction(F),
-      Result;
+      write_state(User);
     false -> {error,"User doesn't exist"}
   end.
 
@@ -297,7 +310,8 @@ delete_messages(Messages) ->
 %% @end
 %%--------------------------------------------------------------------
 get_logged_in() ->
-  Q = qlc:q([X#registered_user.nick || X <- mnesia:table(registered_user),X#registered_user.logged_in =:= 1]),
+  Q = qlc:q([X#registered_user.nick || X <- mnesia:table(registered_user),
+                                       X#registered_user.logged_in =:= 1]),
   F = fun() -> qlc:e(Q) end,
   {atomic,Result} = mnesia:transaction(F),
   Result.
@@ -349,7 +363,21 @@ init([Copies]) ->
 %% @end
 %%--------------------------------------------------------------------
 handle_call(stop, _From, State) ->
-  {stop, normal, stopped, State}.
+  {stop, normal, stopped, State};
+handle_call({archive,{Sender,Recipient,CreatedOn,Msg}}, _From, State) ->
+  Reply =
+    case get_registered(Recipient) of
+      [] -> {error,lists:append(Recipient," is not registered")};
+      [_] ->
+        Row = #messages{recipient=Recipient,created_on=CreatedOn,sender=Sender,msg=Msg},
+        F = fun() -> mnesia:write(Row) end,
+        case mnesia:transaction(F) of
+          {aborted,Result} ->
+            {aborted,Result};
+          {atomic,ok} -> {ok,lists:append("Sent message to ",Recipient)}
+        end
+    end,
+  {reply,Reply,State}.
 
 %%--------------------------------------------------------------------
 %% @doc
@@ -444,6 +472,19 @@ create_tables(Copies) ->
                            {Copies, [node()]},
                            {type, bag}])
   end.
+
+%%--------------------------------------------------------------------
+%% @doc
+%% Writes the given state.
+%%
+%% @spec write_state(StateType) -> any()
+%% @end
+%%--------------------------------------------------------------------
+write_state(StateType) ->
+  NewState = gen_server:call({global,StateType},get_state),
+  F = fun() -> mnesia:write(NewState) end,
+  {atomic,Result} = mnesia:transaction(F),
+  Result.
 
 %%--------------------------------------------------------------------
 %% @doc
