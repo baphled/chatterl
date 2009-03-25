@@ -75,11 +75,11 @@ stop(Client) ->
 %% @doc
 %% Allows the uesr to drop from a group
 %%
-%% @spec private_msg(Sender,Client,Message) -> {ok,Msg} | {error,Error}
+%% @spec private_msg(Sender,Recipient,Message) -> {ok,Msg} | {error,Error}
 %% @end
 %%--------------------------------------------------------------------
-private_msg(Sender,Client,Message) ->
-    gen_server:call({global,Sender},{private_msg,Client,Message}).
+private_msg(Sender,Recipient,Message) ->
+    gen_server:call({global,Sender},{private_msg,Recipient,Message}).
 
 %%====================================================================
 %% gen_server callbacks
