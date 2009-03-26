@@ -182,15 +182,6 @@ user_poll(ContentType,Client) ->
     end,
   user_check(Client,ContentType,Fun).
 
-user_check(Client,ContentType,Fun) ->
-  {Type,Result} =
-    case gen_server:call({global,chatterl_serv},{user_exists,Client}) of
-      true ->
-        Fun(Client);
-      false ->
-        {"failure","Client: "++ Client ++ " doesn't exist"}
-    end,
-  get_response_body(ContentType,build_carrier(Type,Result)).
 %%--------------------------------------------------------------------
 %% @doc Retrieves a list of groups a client is joined to
 %%
@@ -198,21 +189,17 @@ user_check(Client,ContentType,Fun) ->
 %% @end
 %%--------------------------------------------------------------------
 user_groups(ContentType,Client) ->
-  {Type,Result} =
-    case gen_server:call({global,chatterl_serv},{user_exists,Client},infinity) of
-      true ->
-        case gen_server:call({global,Client},groups) of
+  Fun =
+    fun(Name) ->
+        case gen_server:call({global,Name},groups) of
           [] ->
              {"success",build_carrier("groups","")};
           Groups ->
             GroupsList = [build_carrier("group",Group) || Group <- Groups],
             {"success",build_carrier("groups",GroupsList)}
-        end;
-      false ->
-        {"error","Client: " ++ Client ++ " doesn't exist"}
+        end
     end,
-  get_response_body(ContentType,build_carrier(Type,Result)).
-
+  user_check(Client,ContentType,Fun).
 %%--------------------------------------------------------------------
 %% @doc lists the groups on Chatterl
 %%
@@ -533,3 +520,22 @@ proxy_client(Messages) ->
         io:format("unknown proxy request ~s~n",[Other]),
         proxy_client(Messages)
     end.
+
+%%--------------------------------------------------------------------
+%% @doc
+%% Checks Chatterl for the given client.
+%%
+%% If the client is found the fun is executed
+%%
+%% @spec user_check(Client,ContentType,Fun) -> {ok, NewState}
+%% @end
+%%--------------------------------------------------------------------
+user_check(Client,ContentType,Fun) ->
+  {Type,Result} =
+    case gen_server:call({global,chatterl_serv},{user_exists,Client}) of
+      true ->
+        Fun(Client);
+      false ->
+        {"failure","Client: "++ Client ++ " doesn't exist"}
+    end,
+  get_response_body(ContentType,build_carrier(Type,Result)).
