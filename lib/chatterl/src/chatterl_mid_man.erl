@@ -171,20 +171,26 @@ user_msg(ContentType,{Sender, Client, Message}) ->
 %% @end
 %%--------------------------------------------------------------------
 user_poll(ContentType,Client) ->
-  {Type,Result} =
-    case gen_server:call({global,chatterl_serv},{user_exists,Client}) of
-      true ->
-        case gen_server:call({global,Client},poll_messages,infinity) of
+  Fun =
+    fun(Name) ->
+        case gen_server:call({global,Name},poll_messages,infinity) of
           [] -> {"success",build_carrier("messages","")};
           Messages ->
             MessagesList = [build_carrier("message",format_messages(Message))  || Message <- Messages],
             {"success",build_carrier("messages",MessagesList)}
-        end;
+        end
+    end,
+  user_check(Client,ContentType,Fun).
+
+user_check(Client,ContentType,Fun) ->
+  {Type,Result} =
+    case gen_server:call({global,chatterl_serv},{user_exists,Client}) of
+      true ->
+        Fun(Client);
       false ->
         {"failure","Client: "++ Client ++ " doesn't exist"}
     end,
   get_response_body(ContentType,build_carrier(Type,Result)).
-
 %%--------------------------------------------------------------------
 %% @doc Retrieves a list of groups a client is joined to
 %%
@@ -365,7 +371,10 @@ group_poll(ContentType,Group) ->
 %% @end
 %%--------------------------------------------------------------------
 registered_list(ContentType) ->
-  ClientsList = [build_carrier("client",[build_carrier("nick",Nick),build_carrier("name",Name),build_carrier("email",Email)])
+  ClientsList = [build_carrier("client",
+                               [build_carrier("nick",Nick),
+                                build_carrier("name",Name),
+                                build_carrier("email",Email)])
                  || {Nick,Name,Email}
                       <- chatterl_store:registered()],
   Result = build_carrier("registered",ClientsList),
