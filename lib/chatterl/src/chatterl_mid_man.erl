@@ -537,6 +537,15 @@ user_check(Client,ContentType,Fun) ->
     end,
   get_response_body(ContentType,build_carrier(Type,Result)).
 
+%%--------------------------------------------------------------------
+%% @doc
+%% Checks Chatterl for the given group.
+%%
+%% If the group is found the fun is executed
+%%
+%% @spec group_check(Group,ContentType,Fun) -> {ok, NewState}
+%% @end
+%%--------------------------------------------------------------------
 group_check(Group,ContentType,Fun) ->
   {Type,Result} =
     case gen_server:call({global,chatterl_serv},{group_exists,Group},infinity) of
