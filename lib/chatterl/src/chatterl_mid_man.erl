@@ -337,19 +337,16 @@ group_send(ContentType,{Group,Sender,Message}) ->
 %% @end
 %%--------------------------------------------------------------------
 group_poll(ContentType,Group) ->
-     {Type,Result} =
-	case gen_server:call({global,chatterl_serv},{group_exists,Group},infinity) of
-	    true ->
-		case gen_server:call({global,Group},poll_messages,infinity) of
-		    [] -> {"success",build_carrier("messages","")};
-		    Messages ->
-			MessagesList = [build_carrier("message",format_messages(Message))||Message <- Messages],
-			{"success",build_carrier("messages",MessagesList)}
-		end;
-	    false ->
-		{"error",lists:append(lists:append("Group: ", Group), " doesn't exist!")}
-	end,
-  get_response_body(ContentType,build_carrier(Type,Result)).
+  Fun =
+    fun(GroupName) ->
+        case gen_server:call({global,GroupName},poll_messages,infinity) of
+          [] -> {"success",build_carrier("messages","")};
+          Messages ->
+            MessagesList = [build_carrier("message",format_messages(Message))||Message <- Messages],
+            {"success",build_carrier("messages",MessagesList)}
+	end
+    end,
+  group_check(Group,ContentType,Fun).
 
 %%--------------------------------------------------------------------
 %% @doc Lists all clients registered to chatterl.
