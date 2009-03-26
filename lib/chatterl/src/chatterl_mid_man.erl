@@ -539,3 +539,13 @@ user_check(Client,ContentType,Fun) ->
         {"failure","Client: "++ Client ++ " doesn't exist"}
     end,
   get_response_body(ContentType,build_carrier(Type,Result)).
+
+group_check(Group,ContentType,Fun) ->
+  {Type,Result} =
+    case gen_server:call({global,chatterl_serv},{group_exists,Group},infinity) of
+      true ->
+        Fun(Group);
+      false ->
+        {"error",lists:append(lists:append("Group: ", Group), " doesn't exist!")}
+    end,
+  get_response_body(ContentType,build_carrier(Type,Result)).
