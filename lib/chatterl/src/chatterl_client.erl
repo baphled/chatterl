@@ -33,17 +33,6 @@
 %%====================================================================
 %% API
 %%====================================================================
-get_messages(Nick) ->
-  case chatterl_store:logged_in(Nick) of
-    true ->
-      case chatterl_store:get_messages(Nick) of
-        [] -> {ok,no_messages};
-        Messages -> [gen_server:call({global,Recipient},{receive_msg,CreatedOn,{client,Sender},Message})||
-                      {messages,Recipient,CreatedOn,Sender,Message} <- Messages]
-          end;
-    false -> {ok,no_messages}
-  end.
-
 %%--------------------------------------------------------------------
 %% @doc
 %% Connects the client to Chatterl
@@ -69,6 +58,24 @@ stop(Client) ->
         {error,Error} -> stopped
       end;
     _ -> {error,"Unable to stop"}
+  end.
+
+%%--------------------------------------------------------------------
+%% @doc
+%% Retrieves all archived messages to a registered client
+%%
+%% @spec get_messages(Nick) -> {ok,no_messages} | [MessageResult]
+%% @end
+%%--------------------------------------------------------------------
+get_messages(Nick) ->
+  case chatterl_store:logged_in(Nick) of
+    true ->
+      case chatterl_store:get_messages(Nick) of
+        [] -> {ok,no_messages};
+        Messages -> [gen_server:call({global,Recipient},{receive_msg,CreatedOn,{client,Sender},Message})||
+                      {messages,Recipient,CreatedOn,Sender,Message} <- Messages]
+          end;
+    false -> {ok,no_messages}
   end.
 
 %%--------------------------------------------------------------------
