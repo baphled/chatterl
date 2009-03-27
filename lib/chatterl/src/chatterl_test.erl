@@ -54,11 +54,9 @@ chatterl_client_handle_test_() ->
   [{setup,
     fun() ->
         start_client(Client1,Group,Description),
-        chatterl_store:start_link(ram_copies),
         chatterl_client:start(Client2)
     end,
     fun(_) ->
-        chatterl_store:stop(),
         mnesia:delete_table(registered_user),
         chatterl:stop() end,
     [{"Can we retrieve client information from a client process",
@@ -177,12 +175,10 @@ chatterl_serv_register_test_() ->
   {Nick1,Name1,Email1,Password1} = {"noobie","noobie 1","noobie@noobie.com","blahblah"},
   [{setup,
     fun() ->
-        chatterl:start(),
-        chatterl_store:start_link(ram_copies)
+        chatterl:start()
     end,
     fun(_) ->
         chatterl:stop(),
-        chatterl_store:stop(),
         mnesia:delete_table(registered_user)
     end,
     [{"Client can login via chatterl_serv",
@@ -196,15 +192,13 @@ chatterl_mid_man_registered_client_test_() ->
   {Nick1,Name1,Email1,Password1,Password2} = {"noobie","noobie 1","noobie@noobie.com","blahblah","asfdasdf"},
   [{setup,
     fun() ->
-        chatterl:start(),
-        chatterl_store:start_link(ram_copies)
+        chatterl:start()
     end,
     fun(_) ->
         chatterl:stop(),
-        chatterl_store:stop(),
         mnesia:delete_table(registered_user)
     end,
-    [{"Client can register via chatterl_mid_man",
+    [{timeout,5000,{"Client can register via chatterl_mid_man",
      fun() ->
          ?assertEqual(<<"noobie's passwords must match">>,
                       check_json(mochijson2:decode(chatterl_mid_man:register(["text/json"],{Nick1,{Name1,Email1,Password1,Password2}})))),
@@ -212,8 +206,8 @@ chatterl_mid_man_registered_client_test_() ->
                       check_json(mochijson2:decode(chatterl_mid_man:register(["text/json"],{Nick1,{Name1,Email1,Password1,Password1}})))),
          ?assertEqual(<<"noobie is already registered">>,
                       check_json(mochijson2:decode(chatterl_mid_man:register(["text/json"],{Nick1,{Name1,Email1,Password1,Password1}}))))
-     end},
-     {"Client can login via chatterl_mid_man",
+     end}},
+     {timeout,5000,{"Client can login via chatterl_mid_man",
       fun() ->
           ?assertEqual(<<"Unable to login">>,
                        check_json(mochijson2:decode(chatterl_mid_man:login(["text/json"],{Nick1,Password2})))),
@@ -221,7 +215,7 @@ chatterl_mid_man_registered_client_test_() ->
                        check_json(mochijson2:decode(chatterl_mid_man:login(["text/json"],{Nick1,Password1})))),
           ?assertEqual(<<"Already logged in">>,
                        check_json(mochijson2:decode(chatterl_mid_man:login(["text/json"],{Nick1,Password1}))))
-      end},
+      end}},
      {"Client can logout via chatterl_mid_man",
       fun() ->
           ?assertEqual(<<"Not logged in">>,check_json(mochijson2:decode(chatterl_mid_man:logout(["text/json"],"blah")))),
@@ -403,11 +397,9 @@ chatterl_store_test_() ->
         chatterl:start(),
         chatterl_serv:create(Group,Description),
         chatterl_client:start(Client),
-        gen_server:call({global,Client},{join_group,Group}),
-        chatterl_store:start_link(ram_copies)
+        gen_server:call({global,Client},{join_group,Group})
     end,
     fun(_) ->
-        chatterl_store:stop(),
         mnesia:clear_table(group),
         mnesia:clear_table(client),
         mnesia:clear_table(registered_user),
@@ -444,11 +436,9 @@ chatterl_store_user_register_test_() ->
   [{setup,
     fun() ->
         chatterl:start(),
-        chatterl_client:start(Nick1),
-        chatterl_store:start_link(ram_copies)
+        chatterl_client:start(Nick1)
     end,
     fun(_) ->
-        chatterl_store:stop(),
         mnesia:delete_table(client),
         mnesia:delete_table(group),
         mnesia:clear_table(registered_user),
@@ -476,11 +466,9 @@ chatterl_registered_user_store_group_test_() ->
   {Nick2,Name2,Email2,Password2} = {"nerf","nerf 1","nerf@noobie.com","asfdasdf"},
   [{setup,
     fun() ->
-        chatterl:start(),
-        chatterl_store:start_link(ram_copies)
+        chatterl:start()
     end,
     fun(_) ->
-        chatterl_store:stop(),
         mnesia:clear_table(registered_user),
         chatterl:stop()
     end,
@@ -513,11 +501,9 @@ chatterl_registered_users_can_login_and_out_test_() ->
   [{setup,
     fun() ->
         chatterl:start(),
-        chatterl_store:start_link(ram_copies),
         chatterl_store:register(Nick1,{Name1,Email1,Password1,Password1})
     end,
     fun(_) ->
-        chatterl_store:stop(),
         mnesia:delete_table(registered_user),
         chatterl:stop()
     end,
@@ -555,12 +541,12 @@ chatterl_registered_users_can_login_and_out_test_() ->
          ?assertEqual({ok,"noobie is logged out."},chatterl_serv:logout(Nick1)),
          ?assertEqual(false,gen_server:call({global,chatterl_serv},{user_exists,Nick1}))
      end},
-     {"Can a client successfully logout",
+     {timeout,5000,{"Can a client successfully logout",
       fun() ->
          ?assertEqual(false,chatterl_store:logged_in(Nick2)),
          ?assertEqual({error,"Not logged in"},chatterl_serv:logout(Nick2)),
          ?assertEqual(false,chatterl_store:logged_in(Nick1))
-      end}]}].
+      end}}]}].
 
 chatterl_registered_users_can_logout_properly_test_() ->
   {Nick1,Name1,Email1,Password1,Nick2} = {"noobie","noobie 1","noobie@noobie.com","blahblah","nerf"},
@@ -568,12 +554,10 @@ chatterl_registered_users_can_logout_properly_test_() ->
   [{setup,
     fun() ->
         chatterl:start(),
-        chatterl_store:start_link(ram_copies),
         chatterl_store:register(Nick1,{Name1,Email1,Password1,Password1}),
         chatterl_serv:login(Nick1,Password1)
     end,
     fun(_) ->
-        chatterl_store:stop(),
         mnesia:delete_table(registered_user),
         chatterl:stop()
     end,
@@ -603,14 +587,12 @@ chatterl_registered_users_archive_messages_test_() ->
   [{setup,
     fun() ->
         chatterl:start(),
-        chatterl_store:start_link(ram_copies),
         chatterl_store:register(Nick1,{Name1,Email1,Password1,Password1}),
         chatterl_store:register(Nick2,{Name2,Email2,Password2,Password2}),
         chatterl_serv:login(Nick2,Password2)
     end,
     fun(_) ->
         chatterl:stop(),
-        chatterl_store:stop(),
         mnesia:delete_table(registered_user),
         mnesia:delete_table(messages)
     end,
