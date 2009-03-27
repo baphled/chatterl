@@ -75,9 +75,21 @@
 start() ->
     gen_server:start_link({global, ?SERVER}, ?MODULE, [], []).
 
+%%--------------------------------------------------------------------
+%% @doc Stop Chatterl's middle man process.
+%%
+%% @spec stop() -> {ok,Pid} | ignore | {error,Error}
+%% @end
+%%--------------------------------------------------------------------
 stop() ->
   gen_server:call({global,?SERVER},stop).
 
+%%--------------------------------------------------------------------
+%% @doc Logins a client into chatterl.
+%%
+%% @spec login(ContentType,{Client,Password}) -> {ResponseType,Message}
+%% @end
+%%--------------------------------------------------------------------
 login(ContentType,{Client,Password}) ->
   {Type,Reply} =
     case chatterl_serv:login(Client,Password) of
@@ -85,6 +97,7 @@ login(ContentType,{Client,Password}) ->
       {ok,Msg} -> {"success",Msg}
     end,
   get_response_body(ContentType,build_carrier(Type,Reply)).
+
 %%--------------------------------------------------------------------
 %% @doc Connects a client to the Chatterl system.
 %%
