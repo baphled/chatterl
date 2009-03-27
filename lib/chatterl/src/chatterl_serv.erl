@@ -65,18 +65,14 @@ stop() ->
 %% @end
 %%--------------------------------------------------------------------
 login(User,Password) ->
-  case chatterl_store:login(User,Password) of
-    {ok,_Msg} ->
-      case chatterl_client:start(User) of
-        {ok,_Pid} ->
-          case chatterl_client:get_messages(User) of
-            {ok,_} ->
-              {ok,lists:append(User," is logged in.")};
-            Error -> Error
-          end;
-        {error,Error} -> {error,Error}
+  case chatterl_store:logged_in(User) of
+    false ->
+      case chatterl_store:login(User,Password) of
+        {ok,_Msg} ->
+          set_client(User);
+        {error,Msg} -> {error,Msg}
       end;
-    {error,Msg} -> {error,Msg}
+    true -> {error,"Already logged in"}
   end.
 
 %%--------------------------------------------------------------------
@@ -98,8 +94,16 @@ logout(User) ->
     {error,Error} -> {error,Error}
   end.
 
+%%--------------------------------------------------------------------
+%% @doc
+%% Register a client to chatterl
+%%
+%% @spec register(Nick,{Name,Email,Password1,Password2}) -> {ok,Message} | {error,Error}
+%% @end
+%%--------------------------------------------------------------------
 register(Nick,{Name,Email,Password1,Password2}) ->
   chatterl_store:register(Nick,{Name,Email,Password1,Password2}).
+
 %%--------------------------------------------------------------------
 %% @doc
 %% Connects client to server, must be done before a user can interact with chatterl.
@@ -416,3 +420,22 @@ shutdown_groups(GroupNames) ->
 	      gen_server:call({global,GroupName},stop)
       end,
       GroupNames).
+
+%%--------------------------------------------------------------------
+%% @private
+%% @doc
+%% Sets up our client process on login.
+%%
+%% @spec set_client(User) -> {ok,Msg} | {error,Error}
+%% @end
+%%--------------------------------------------------------------------
+set_client(User) ->
+  case chatterl_client:start(User) of
+    {ok,_Pid} ->
+      case chatterl_client:get_messages(User) of
+        {ok,_} ->
+          {ok,lists:append(User," is logged in.")};
+        Error -> Error
+      end;
+    {error,Error} -> {error,Error}
+  end.
