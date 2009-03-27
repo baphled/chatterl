@@ -347,6 +347,7 @@ edit_profile(Nickname,{Key,Value}) ->
 %% @end
 %%--------------------------------------------------------------------
 init([Copies]) ->
+	io:format("Starting storage process~n"),
   create_tables(Copies),
   {ok,#state{}}.
 
@@ -411,6 +412,7 @@ handle_info(_Info, State) ->
 %% @end
 %%--------------------------------------------------------------------
 terminate(_Reason, _State) ->
+  io:format("Shutting down storage process~n"),
   ok.
 
 %%--------------------------------------------------------------------

@@ -52,8 +52,8 @@ stop() ->
 %%      StartArgs = term()
 %% @end
 %%--------------------------------------------------------------------
-start(_StartType, Port) ->
-    case chatterl_sup:start_link(Port) of
+start(_StartType, StartArgs) ->
+    case chatterl_sup:start_link(StartArgs) of
         {ok, Pid} ->
             {ok, Pid};
         Error ->

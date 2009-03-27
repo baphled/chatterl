@@ -68,7 +68,7 @@ init([]) ->
   Server = {chatterl_serv, {chatterl_serv, start, []},
               Restart, Shutdown, Type, [chatterl_serv]},
 
-    {ok, {SupFlags, [Server,Storage]}}.
+    {ok, {SupFlags, [Storage,Server]}}.
 
 %%%===================================================================
 %%% Internal functions

@@ -29,8 +29,8 @@
 %% @spec start_link(Port) -> {ok, Pid} | ignore | {error, Error}
 %% @end
 %%--------------------------------------------------------------------
-start_link(Port) ->
-    supervisor:start_link({local, ?SERVER}, ?MODULE, [Port]).
+start_link(StartArgs) ->
+    supervisor:start_link({local, ?SERVER}, ?MODULE, [StartArgs]).
 
 %%%===================================================================
 %%% Supervisor callbacks
@@ -49,7 +49,7 @@ start_link(Port) ->
 %%                     {error, Reason}
 %% @end
 %%--------------------------------------------------------------------
-init([Port]) ->
+init([{port,Port}]) ->
     RestartStrategy = one_for_one,
     MaxRestarts = 5,
     MaxSecondsBetweenRestarts = 60,
