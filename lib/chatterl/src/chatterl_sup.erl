@@ -30,7 +30,7 @@
 %% @end
 %%--------------------------------------------------------------------
 start_link(StartArgs) ->
-    supervisor:start_link({local, ?SERVER}, ?MODULE, [StartArgs]).
+    supervisor:start_link({local, ?SERVER}, ?MODULE, StartArgs).
 
 %%%===================================================================
 %%% Supervisor callbacks
@@ -49,7 +49,7 @@ start_link(StartArgs) ->
 %%                     {error, Reason}
 %% @end
 %%--------------------------------------------------------------------
-init([{port,Port}]) ->
+init([{port,Port},{copy,Copies}]) ->
     RestartStrategy = one_for_one,
     MaxRestarts = 5,
     MaxSecondsBetweenRestarts = 60,

@@ -17,5 +17,5 @@
 	     chatterl_test]},
    {registered,[chatterl_groups, chatterl_mid_man, chatterl,serv, chatterl_sup]},
    {applications, [kernel, stdlib, crypto, inets, mochiweb]},
-   {mod, {chatterl,[{port,9000}]}},
+   {mod, {chatterl,[{port,9000},{copy,ram_copies}]}},
    {start_phases, []}]}.
