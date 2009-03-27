@@ -219,6 +219,8 @@ chatterl_mid_man_register_test_() ->
           ?assertEqual(<<"Unable to login">>,
                        check_json(mochijson2:decode(chatterl_mid_man:login(["text/json"],{Nick1,Password2})))),
           ?assertEqual(<<"noobie is logged in.">>,
+                       check_json(mochijson2:decode(chatterl_mid_man:login(["text/json"],{Nick1,Password1})))),
+          ?assertEqual(<<"Already logged in">>,
                        check_json(mochijson2:decode(chatterl_mid_man:login(["text/json"],{Nick1,Password1}))))
       end}]}].
 
