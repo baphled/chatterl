@@ -208,10 +208,8 @@ user_msg(ContentType,{Sender, Client, Message}) ->
     case gen_server:call({global,chatterl_serv},{user_exists,Sender},infinity) of
       true ->
         case gen_server:call({global, ?MODULE}, {private_msg, Sender, Client, Message},infinity) of
-          {ok,Msg} ->
-            {"success",Msg};
-          {error,Error} ->
-            {"error",Error}
+          {ok,Msg} -> {"success",Msg};
+          {error,Error} -> {"error",Error}
         end;
       false ->
         {"failure",lists:append(Sender," is not connected!")}
