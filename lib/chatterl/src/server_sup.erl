@@ -13,7 +13,7 @@
 -behaviour(supervisor).
 
 %% API
--export([start_link/0]).
+-export([start_link/1]).
 
 %% Supervisor callbacks
 -export([init/1]).
@@ -31,8 +31,8 @@
 %% @spec start_link() -> {ok, Pid} | ignore | {error, Error}
 %% @end
 %%--------------------------------------------------------------------
-start_link() ->
-    supervisor:start_link({local, ?SERVER}, ?MODULE, []).
+start_link(Copies) ->
+    supervisor:start_link({local, ?SERVER}, ?MODULE, [Copies]).
 
 %%%===================================================================
 %%% Supervisor callbacks
@@ -51,7 +51,7 @@ start_link() ->
 %%                     {error, Reason}
 %% @end
 %%--------------------------------------------------------------------
-init([]) ->
+init([Copies]) ->
     process_flag(trap_exit, true),
     RestartStrategy = one_for_one,
     MaxRestarts = 1000,
@@ -63,7 +63,7 @@ init([]) ->
     Shutdown = 2000,
     Type = worker,
 
-  Storage = {chatterl_store, {chatterl_store, start_link, [ram_copies]},
+  Storage = {chatterl_store, {chatterl_store, start_link, [Copies]},
              Restart, Shutdown, Type, [chatterl_store]},
   Server = {chatterl_serv, {chatterl_serv, start, []},
               Restart, Shutdown, Type, [chatterl_serv]},
