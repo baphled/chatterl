@@ -17,7 +17,7 @@
 %% API
 -export([start/0,stop/0,login/2,logout/1,connect/1,disconnect/1,create/2,drop/1]).
 %% User specific
--export([list_users/0]).
+-export([list_users/0,register/2]).
 %% Group specific
 -export([group_description/1,list_groups/0,list_users/1]).
 %% gen_server callbacks
@@ -98,6 +98,8 @@ logout(User) ->
     {error,Error} -> {error,Error}
   end.
 
+register(Nick,{Name,Email,Password1,Password2}) ->
+  chatterl_store:register(Nick,{Name,Email,Password1,Password2}).
 %%--------------------------------------------------------------------
 %% @doc
 %% Connects client to server, must be done before a user can interact with chatterl.
