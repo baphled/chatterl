@@ -53,7 +53,7 @@ start_link() ->
 %%--------------------------------------------------------------------
 init([]) ->
     process_flag(trap_exit, true),
-    RestartStrategy = one_for_all,
+    RestartStrategy = one_for_one,
     MaxRestarts = 1000,
     MaxSecondsBetweenRestarts = 3600,
 
@@ -63,10 +63,12 @@ init([]) ->
     Shutdown = 2000,
     Type = worker,
 
-    Server = {chatterl_serv, {chatterl_serv, start, []},
+  Storage = {chatterl_store, {chatterl_store, start_link, [ram_copies]},
+             Restart, Shutdown, Type, [chatterl_store]},
+  Server = {chatterl_serv, {chatterl_serv, start, []},
               Restart, Shutdown, Type, [chatterl_serv]},
 
-    {ok, {SupFlags, [Server]}}.
+    {ok, {SupFlags, [Server,Storage]}}.
 
 %%%===================================================================
 %%% Internal functions
