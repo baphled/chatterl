@@ -18,6 +18,7 @@
 		test_chatterl_serv,
 		test_chatterl_groups,
 		test_chatterl_client,
+		test_chatterl_mid_man,
 	     chatterl_test]},
    {registered,[chatterl_groups, chatterl_mid_man, chatterl,serv, chatterl_sup]},
    {applications, [kernel, stdlib, crypto, inets, mochiweb]},
