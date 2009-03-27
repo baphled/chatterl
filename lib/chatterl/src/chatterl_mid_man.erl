@@ -19,6 +19,7 @@
          start/0,
          stop/0,
          register/2,
+         login/2,
          connect/2,
          disconnect/2,
          user_list/1,
@@ -76,6 +77,14 @@ start() ->
 
 stop() ->
   gen_server:call({global,?SERVER},stop).
+
+login(ContentType,{Client,Password}) ->
+  {Type,Reply} =
+    case chatterl_serv:login(Client,Password) of
+      {error,Error} -> {"failure",Error};
+      {ok,Msg} -> {"success",Msg}
+    end,
+  get_response_body(ContentType,build_carrier(Type,Reply)).
 %%--------------------------------------------------------------------
 %% @doc Connects a client to the Chatterl system.
 %%
