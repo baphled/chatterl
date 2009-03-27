@@ -99,6 +99,12 @@ login(ContentType,{Client,Password}) ->
     end,
   get_response_body(ContentType,build_carrier(Type,Reply)).
 
+%%--------------------------------------------------------------------
+%% @doc Logs a client out of chatterl.
+%%
+%% @spec logout(ContentType,Client) -> {ResponseType,Message}
+%% @end
+%%--------------------------------------------------------------------
 logout(ContentType,Client) ->
   {Type,Reply} =
     case chatterl_serv:logout(Client) of
