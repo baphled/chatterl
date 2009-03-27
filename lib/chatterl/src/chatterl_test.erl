@@ -130,6 +130,7 @@ chatterl_group_handle_test_() ->
          ?assertEqual({error,already_sent},gen_server:call({global,Group},{send_msg,Client,"heya"})),
          ?assert(erlang:is_list(gen_server:call({global,Group},poll_messages)))
      end}]}].
+
 %% Test all our middle man json response
 chatterl_mid_man_basics_test_() ->
   [{setup,
@@ -174,7 +175,6 @@ chatterl_mid_man_message_poll_test_() ->
 
 chatterl_serv_register_test_() ->
   {Nick1,Name1,Email1,Password1} = {"noobie","noobie 1","noobie@noobie.com","blahblah"},
-  {Nick2,Name2,Email2,Password2} = {"nerf","nerf 1","nerf@noobie.com","asfdasdf"},
   [{setup,
     fun() ->
         chatterl:start(),
@@ -192,9 +192,8 @@ chatterl_serv_register_test_() ->
          ?assertEqual({error,"noobie is already registered"},chatterl_serv:register(Nick1,{Name1,Email1,Password1,Password1}))
      end}]}].
 
-chatterl_mid_man_register_test_() ->
-  {Nick1,Name1,Email1,Password1} = {"noobie","noobie 1","noobie@noobie.com","blahblah"},
-  {Nick2,Name2,Email2,Password2} = {"nerf","nerf 1","nerf@noobie.com","asfdasdf"},
+chatterl_mid_man_registered_client_test_() ->
+  {Nick1,Name1,Email1,Password1,Password2} = {"noobie","noobie 1","noobie@noobie.com","blahblah","asfdasdf"},
   [{setup,
     fun() ->
         chatterl:start(),
@@ -225,7 +224,7 @@ chatterl_mid_man_register_test_() ->
       end},
      {"Client can logout via chatterl_mid_man",
       fun() ->
-          ?assertEqual(<<"Not logged in">>,check_json(mochijson2:decode(chatterl_mid_man:logout(["text/json"],Nick2)))),
+          ?assertEqual(<<"Not logged in">>,check_json(mochijson2:decode(chatterl_mid_man:logout(["text/json"],"blah")))),
           ?assertEqual(<<"noobie is logged out.">>,check_json(mochijson2:decode(chatterl_mid_man:logout(["text/json"],Nick1))))
       end}]}].
 
@@ -564,7 +563,7 @@ chatterl_registered_users_can_login_and_out_test_() ->
       end}]}].
 
 chatterl_registered_users_can_logout_properly_test_() ->
-  {Nick1,Name1,Email1,Password1,Nick2,Password2} = {"noobie","noobie 1","noobie@noobie.com","blahblah","nerf","asdasd"},
+  {Nick1,Name1,Email1,Password1,Nick2} = {"noobie","noobie 1","noobie@noobie.com","blahblah","nerf"},
   {NewName,NewEmail,NewPassword} = {"new name","y@me.com","encrypt"},
   [{setup,
     fun() ->
