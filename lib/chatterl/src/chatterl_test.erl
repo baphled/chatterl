@@ -192,6 +192,29 @@ chatterl_serv_register_test_() ->
          ?assertEqual({error,"noobie is already registered"},chatterl_serv:register(Nick1,{Name1,Email1,Password1,Password1}))
      end}]}].
 
+chatterl_mid_man_register_test_() ->
+  {Nick1,Name1,Email1,Password1} = {"noobie","noobie 1","noobie@noobie.com","blahblah"},
+  {Nick2,Name2,Email2,Password2} = {"nerf","nerf 1","nerf@noobie.com","asfdasdf"},
+  [{setup,
+    fun() ->
+        chatterl:start(),
+        chatterl_store:start_link(ram_copies)
+    end,
+    fun(_) ->
+        chatterl:stop(),
+        chatterl_store:stop(),
+        mnesia:delete_table(registered_user)
+    end,
+    [{"Client can login via chatterl_serv",
+     fun() ->
+         ?assertEqual(<<"noobie's passwords must match">>,
+                      check_json(mochijson2:decode(chatterl_mid_man:register(["text/json"],{Nick1,{Name1,Email1,Password1,Password2}})))),
+         ?assertEqual(<<"noobie is registered">>,
+                      check_json(mochijson2:decode(chatterl_mid_man:register(["text/json"],{Nick1,{Name1,Email1,Password1,Password1}})))),
+         ?assertEqual(<<"noobie is already registered">>,
+                      check_json(mochijson2:decode(chatterl_mid_man:register(["text/json"],{Nick1,{Name1,Email1,Password1,Password1}}))))
+     end}]}].
+
 chatterl_mid_man_user_connect_test_() ->
   {Client1,Client2,Client3,Group} = {"baft","boodah","baphled","sum room"},
   [{setup,
