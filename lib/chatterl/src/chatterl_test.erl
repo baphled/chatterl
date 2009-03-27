@@ -222,6 +222,11 @@ chatterl_mid_man_register_test_() ->
                        check_json(mochijson2:decode(chatterl_mid_man:login(["text/json"],{Nick1,Password1})))),
           ?assertEqual(<<"Already logged in">>,
                        check_json(mochijson2:decode(chatterl_mid_man:login(["text/json"],{Nick1,Password1}))))
+      end},
+     {"Client can logout via chatterl_mid_man",
+      fun() ->
+          ?assertEqual(<<"Not logged in">>,check_json(mochijson2:decode(chatterl_mid_man:logout(["text/json"],Nick2)))),
+          ?assertEqual(<<"noobie is logged out.">>,check_json(mochijson2:decode(chatterl_mid_man:logout(["text/json"],Nick1))))
       end}]}].
 
 chatterl_mid_man_user_connect_test_() ->
