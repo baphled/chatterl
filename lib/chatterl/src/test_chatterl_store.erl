@@ -59,57 +59,24 @@ chatterl_store_user_register_test_() ->
         mnesia:clear_table(registered_user),
         chatterl:stop()
     end,
-    [fun() ->
+    [{"We can register a client",
+      fun() ->
           ?assertEqual({ok,"noobie is registered"},chatterl_store:register(Nick1,{Name1,Email1,Password1,Password1})),
           ?assertEqual({ok,"nerf is registered"},chatterl_store:register(Nick2,{Name2,Email2,Password2,Password2})),
           ?assertEqual({error,"noobie's passwords must match"},chatterl_store:register(Nick1,{Name1,Email1,Password1,"blah"}))
-     end,
-     fun() ->
+     end},
+     {"We can authorise a client",
+      fun() ->
          ?assertEqual({ok,"noobie Authorized"},chatterl_store:auth(Nick1,Password1)),
          ?assertEqual({error,"Unable to authorise blah"},chatterl_store:auth("blah","blah")),
          ?assertEqual([{Nick2,Name2,Email2},{Nick1,Name1,Email1}], chatterl_store:registered())
-     end,
-     fun() ->
+     end},
+     {"A client can register is can be authorised",
+      fun() ->
          ?assertEqual({error,"noobie is already registered"},chatterl_store:register(Nick1,{Name1,Email1,Password1,Password1})),
          ?assert(chatterl_store:is_auth(Nick1,Password1)),
          ?assert(false =:= chatterl_store:is_auth(Nick1,"blah"))
-      end]}].
-
-chatterl_registered_user_store_group_test_() ->
-  ContentType = ["text/json"],
-  {Nick1,Name1,Email1,Password1} = {"noobie","noobie 1","noobie@noobie.com","blahblah"},
-  {Nick2,Name2,Email2,Password2} = {"nerf","nerf 1","nerf@noobie.com","asfdasdf"},
-  [{setup,
-    fun() ->
-        chatterl:start()
-    end,
-    fun(_) ->
-        mnesia:clear_table(registered_user),
-        chatterl:stop()
-    end,
-    [{timeout,5000,
-      fun() ->
-          ?assertEqual({ok,"noobie is registered"},chatterl_store:register(Nick1,{Name1,Email1,Password1,Password1})),
-          ?assertEqual([{Nick1,Name1,Email1}],chatterl_store:registered()),
-          ?assertEqual({struct,[{<<"registered">>,
-                                 {struct,[{<<"client">>,[{struct,[{<<"nick">>,<<"noobie">>}]},
-                                                         {struct,[{<<"name">>,<<"noobie 1">>}]},
-                                                         {struct,[{<<"email">>,<<"noobie@noobie.com">>}]}]}]}
-                                }]},
-                       check_json(mochijson2:decode(chatterl_mid_man:registered_list(ContentType))))
-      end},
-     fun() ->
-         ?assertEqual({ok,"nerf is registered"},chatterl_store:register(Nick2,{Name2,Email2,Password2,Password2})),
-         ?assertEqual([{Nick2,Name2,Email2},{Nick1,Name1,Email1}],chatterl_store:registered()),
-         ?assertEqual({struct,[{<<"registered">>,[
-                                                  {struct,[{<<"client">>,[{struct,[{<<"nick">>,<<"nerf">>}]},
-                                                                          {struct,[{<<"name">>,<<"nerf 1">>}]},
-                                                                          {struct,[{<<"email">>,<<"nerf@noobie.com">>}]}]}]},
-                                                  {struct,[{<<"client">>,[{struct,[{<<"nick">>,<<"noobie">>}]},
-                                                                          {struct,[{<<"name">>,<<"noobie 1">>}]},
-                                                                          {struct,[{<<"email">>,<<"noobie@noobie.com">>}]}]}]}
-                                                 ]}]}, check_json(mochijson2:decode(chatterl_mid_man:registered_list(ContentType))))
-     end]}].
+      end}]}].
 
 chatterl_registered_users_can_login_and_out_test_() ->
   {Nick1,Name1,Email1,Password1,Nick2,Password2} = {"noobie","noobie 1","noobie@noobie.com","blahblah","nerf","asdasd"},
