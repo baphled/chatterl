@@ -205,7 +205,7 @@ chatterl_mid_man_register_test_() ->
         chatterl_store:stop(),
         mnesia:delete_table(registered_user)
     end,
-    [{"Client can login via chatterl_serv",
+    [{"Client can register via chatterl_mid_man",
      fun() ->
          ?assertEqual(<<"noobie's passwords must match">>,
                       check_json(mochijson2:decode(chatterl_mid_man:register(["text/json"],{Nick1,{Name1,Email1,Password1,Password2}})))),
@@ -213,7 +213,14 @@ chatterl_mid_man_register_test_() ->
                       check_json(mochijson2:decode(chatterl_mid_man:register(["text/json"],{Nick1,{Name1,Email1,Password1,Password1}})))),
          ?assertEqual(<<"noobie is already registered">>,
                       check_json(mochijson2:decode(chatterl_mid_man:register(["text/json"],{Nick1,{Name1,Email1,Password1,Password1}}))))
-     end}]}].
+     end},
+     {"Client can login via chatterl_mid_man",
+      fun() ->
+          ?assertEqual(<<"Unable to login">>,
+                       check_json(mochijson2:decode(chatterl_mid_man:login(["text/json"],{Nick1,Password2})))),
+          ?assertEqual(<<"noobie is logged in.">>,
+                       check_json(mochijson2:decode(chatterl_mid_man:login(["text/json"],{Nick1,Password1}))))
+      end}]}].
 
 chatterl_mid_man_user_connect_test_() ->
   {Client1,Client2,Client3,Group} = {"baft","boodah","baphled","sum room"},
