@@ -1,4 +1,4 @@
--module(chatterl_test).
+-module(test_chatterl_store).
 
 -include_lib("eunit/include/eunit.hrl").
 -include_lib("chatterl.hrl").

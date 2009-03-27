@@ -19,7 +19,7 @@
 		test_chatterl_groups,
 		test_chatterl_client,
 		test_chatterl_mid_man,
-	     chatterl_test]},
+	    test_chatterl_store]},
    {registered,[chatterl_groups, chatterl_mid_man, chatterl,serv, chatterl_sup]},
    {applications, [kernel, stdlib, crypto, inets, mochiweb]},
    {mod, {chatterl,[{port,9000},{copy,ram_copies}]}},
