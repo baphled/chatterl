@@ -2,6 +2,9 @@
 
 -include_lib("eunit/include/eunit.hrl").
 -include_lib("chatterl.hrl").
+
+-import(test_helpers,[start_client/3,start_group/2]).
+
 %% Test our groups functionality
 chatterl_group_handle_test_() ->
   {Client,Group,Description} = {"boodah","anuva","a nu room"},
@@ -43,11 +46,3 @@ chatterl_group_handle_test_() ->
          ?assert(erlang:is_list(gen_server:call({global,Group},poll_messages)))
      end}]}].
 
-%% Helper functions.
-start_client(Client,Group,Description) ->
-  start_group(Group,Description),
-  chatterl_client:start(Client).
-
-start_group(Group,Description) ->
-  chatterl:start(),
-  chatterl_serv:create(Group,Description).

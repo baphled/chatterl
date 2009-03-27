@@ -196,8 +196,8 @@ handle(Path,ContentType,Req) ->
   Response =
     case Path of
       %% Client based requests
-      "/connect/" ++ Client -> chatterl_mid_man:connect(ContentType,Client);
-      "/disconnect/" ++ Client -> chatterl_mid_man:disconnect(ContentType,Client);
+      "/users/connect/" ++ Client -> chatterl_mid_man:connect(ContentType,Client);
+      "/users/disconnect/" ++ Client -> chatterl_mid_man:disconnect(ContentType,Client);
       "/users/list" -> chatterl_mid_man:user_list(ContentType);
       "/users/list/" ++Group -> chatterl_mid_man:user_list(ContentType,Group);
       "/users/send/" ++ Sender -> [Client, Message] = get_properties(Req,["client","msg"]),

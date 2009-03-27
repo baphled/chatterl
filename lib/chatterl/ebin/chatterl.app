@@ -14,6 +14,7 @@
 	     chatterl_sup,
 	     server_sup,
 	     cwiga_sup,
+		test_helpers,
 		test_chatterl_serv,
 		test_chatterl_groups,
 		test_chatterl_client,
