@@ -20,6 +20,7 @@
          stop/0,
          register/2,
          login/2,
+         logout/2,
          connect/2,
          disconnect/2,
          user_list/1,
@@ -98,6 +99,14 @@ login(ContentType,{Client,Password}) ->
     end,
   get_response_body(ContentType,build_carrier(Type,Reply)).
 
+logout(ContentType,Client) ->
+  {Type,Reply} =
+    case chatterl_serv:logout(Client) of
+      {error,Error} -> {"failure",Error};
+      {ok,Msg} -> {"success",Msg}
+    end,
+  get_response_body(ContentType,build_carrier(Type,Reply)).
+
 %%--------------------------------------------------------------------
 %% @doc Connects a client to the Chatterl system.
 %%
@@ -132,6 +141,13 @@ disconnect(ContentType,Client) ->
     end,
   get_response_body(ContentType,build_carrier(Type,Reply)).
 
+%%--------------------------------------------------------------------
+%% @doc Register a client to chatterl.
+%%
+%% @spec register(ContentType,{Nick,{Name,Email,Password1,Password2}}) ->
+%%                                              {ResponseType,Message}
+%% @end
+%%--------------------------------------------------------------------
 register(ContentType,{Nick,{Name,Email,Password1,Password2}}) ->
   {Type,Reply} =
     case chatterl_serv:register(Nick,{Name,Email,Password1,Password2}) of
