@@ -46,3 +46,37 @@ chatterl_serv_groups_test_() ->
          ?assertEqual({ok,"Group dropped anuva"},chatterl_serv:drop(Group2)),
          ?assert(erlang:is_list(gen_server:call({global,chatterl_serv},{group_info,Group1})))
      end]}].
+
+chatterl_registered_users_can_login_and_out_test_() ->
+  {Nick1,Name1,Email1,Password1,Nick2,Password2} = {"noobie","noobie 1","noobie@noobie.com","blahblah","nerf","asdasd"},
+  [{setup,
+    fun() ->
+        chatterl:start(),
+        chatterl_store:register(Nick1,{Name1,Email1,Password1,Password1})
+    end,
+    fun(_) ->
+        mnesia:delete_table(registered_user),
+        chatterl:stop()
+    end,
+    [{"Can our client login using chatterl_serv?",
+     fun() ->
+         ?assertEqual({error,"Unable to login"},chatterl_serv:login(Nick1,"blah")),
+         ?assertEqual({error,"Not Registered"},chatterl_serv:login(Nick2,Password2)),
+         ?assertEqual({ok,"noobie is logged in."},chatterl_serv:login(Nick1,Password1)),
+         ?assertEqual([Nick1],chatterl_store:get_logged_in())
+     end},
+    {"Does chatterl handle logins as we expect them to",
+     fun() ->
+         ?assertEqual(true,gen_server:call({global,chatterl_serv},{user_exists,Nick1})),
+         ?assertEqual(false,gen_server:call({global,chatterl_serv},{user_exists,Nick2})),
+         ?assertEqual(true,chatterl_store:logged_in(Nick1)),
+         ?assertEqual({ok,"noobie is logged out."},chatterl_serv:logout(Nick1)),
+         ?assertEqual(false,gen_server:call({global,chatterl_serv},{user_exists,Nick1}))
+     end},
+    {timeout,5000,
+     {"Can a client successfully logout",
+      fun() ->
+          ?assertEqual(false,chatterl_store:logged_in(Nick2)),
+          ?assertEqual({error,"Not logged in"},chatterl_serv:logout(Nick2)),
+          ?assertEqual(false,chatterl_store:logged_in(Nick1))
+      end}}]}].
