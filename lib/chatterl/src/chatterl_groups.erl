@@ -165,6 +165,8 @@ handle_call({send_msg,User,Message},_From,State) ->
         end
     end,
   {reply, Reply, State#group{messages=NewTree}};
+handle_call({user_exists,User},_From,State) ->
+  {reply,gb_trees:is_defined(User,State#group.users),State};
 handle_call(get_state,_From,State) ->
   {reply,State,State}.
 %%--------------------------------------------------------------------

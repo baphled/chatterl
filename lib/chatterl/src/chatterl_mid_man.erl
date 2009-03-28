@@ -327,17 +327,17 @@ group_info(ContentType,Group) ->
 %%--------------------------------------------------------------------
 group_join(ContentType,{Group,Client}) ->
   {Type,Reply} =
-	case gen_server:call({global,chatterl_serv},{group_exists,Group},infinity) of
-	    true ->
-		 case gen_server:call({global,Client},{join_group,Group},infinity) of
-			{ok,_} ->
-			    {"success",lists:append(Client," joined group")};
-			{error,Error} ->
-			    {"failure",Error}
-		    end;
-	    false ->
-		{"error","Group: "++ Group ++ " doesn't exist"}
-	end,
+    case gen_server:call({global,chatterl_serv},{group_exists,Group},infinity) of
+      true ->
+        case gen_server:call({global,Client},{join_group,Group},infinity) of
+          {ok,_} ->
+            {"success",lists:append(Client," joined group")};
+          {error,Error} ->
+            {"failure",Error}
+        end;
+      false ->
+        {"error","Group: "++ Group ++ " doesn't exist"}
+    end,
   get_response_body(ContentType,build_carrier(Type,Reply)).
 
 %%--------------------------------------------------------------------
@@ -368,18 +368,23 @@ group_leave(ContentType,{Group,Client}) ->
 %% @end
 %%--------------------------------------------------------------------
 group_send(ContentType,{Group,Sender,Message}) ->
-    {Type,Reply} =
-	case gen_server:call({global,chatterl_serv},{group_exists,Group},infinity) of
-	    true ->
-		case gen_server:call({global,?MODULE},{group_msg,Sender,Group,Message}, infinity) of
-		    {ok,Msg} ->
-			{"success",Msg};
-		    {error,Error} ->
-			{"failure",Error}
-		end;
-	    false ->
-		{"failure","User not joined"}
-	end,
+  {Type,Reply} =
+    case gen_server:call({global,chatterl_serv},{group_exists,Group},infinity) of
+      true ->
+        case gen_server:call({global,Group},{user_exists,Sender}) of
+          true ->
+            case gen_server:call({global,?MODULE},{group_msg,Sender,Group,Message}, infinity) of
+              {ok,Msg} ->
+                {"success",Msg};
+              {error,Error} ->
+                {"failure",Error}
+            end;
+          false ->
+            {"error","Must join group first!"}
+        end;
+      false ->
+        {"failure","Group does not exist"}
+    end,
   get_response_body(ContentType,build_carrier(Type,Reply)).
 
 %%--------------------------------------------------------------------
@@ -475,7 +480,7 @@ handle_call({disconnect, Client}, _From,State) ->
 handle_call({group_msg, Sender, Group, Message}, _From, State) ->
     Reply = case dict:find(Sender, State) of
 		error ->
-		    io:format("~s is not joined to group: ~s~n",[Sender,Group]),
+		    io:format("~s is not connected: ~s~n",[Sender,Group]),
 		    {error,"Unable to send msg!"};
 		{ok, Pid} ->
 		    Pid ! {group_msg, Sender, Group, Message},

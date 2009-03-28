@@ -34,8 +34,8 @@ handles_test_() ->
      {"CWIGA can retrieve an empty list of users",
       fun() ->
          Response = http:request("http://127.0.0.1:8080/users/list"),
-         ?assertEqual(200,check_response(code,Response)),
-         ?assertEqual({struct,[{<<"clients">>,[]}]},check_json(mochijson2:decode(check_response(body,Response))))
+          ?assertEqual(200,check_response(code,Response)),
+          ?assertEqual({struct,[{<<"clients">>,[]}]},check_json(mochijson2:decode(check_response(body,Response))))
      end},
      {"CWIGA can list of users in a groups",
       fun() ->
@@ -135,20 +135,28 @@ groups_send_message_handle_test_() ->
         chatterl_mid_man:start(),
         cwiga:start_link(8080),
         chatterl_serv:create(Group,"nu room"),
-        http:request("http://127.0.0.1:8080/users/connect/" ++ Client)
+        http:request("http://127.0.0.1:8080/users/connect/" ++ Client),
+        http:request("http://127.0.0.1:8080/users/connect/" ++ Client2)
     end,
     fun(_) ->
         chatterl_mid_man:stop(),
         chatterl_serv:stop(),
         cwiga:stop()
     end,
-    [{"CWIGA clients are unable to send messages a group if they are not connected to it",
+    [{"CWIGA can retrieve a list of groups a client is joined to",
       fun() ->
-          Args = [{"msg","hey"},{"client","blah"}],
+          Args = [{"client",Client}],
+          Body = set_params(Args),
+          Response = http:request(post, {?URL ++ "/groups/join/" ++ Group, [], "application/x-www-form-urlencoded", Body}, [], []),
+          ?assertEqual(200,check_response(code,Response))
+          end},
+     {"CWIGA clients are unable to send messages a group if they are not connected to it",
+      fun() ->
+          Args = [{"msg","hey"},{"client",Client2}],
           Body = set_params(Args),
           Response = http:request(post, {?URL ++ "/groups/send/" ++ Group, [], "application/x-www-form-urlencoded", Body}, [], []),
-          ?assertEqual(501,check_response(code,Response)),
-          ?assertEqual(<<"Unable to send msg!">>,check_json(mochijson2:decode(check_response(body,Response))))
+          %?assertEqual(404,check_response(code,Response)),
+          ?assertEqual(<<"Must join group first!">>,check_json(mochijson2:decode(check_response(body,Response))))
       end},
      {"CWIGA allows clients to send messages to chatterl groups",
       fun() ->
@@ -200,3 +208,13 @@ old_integer_to_hex(I) when I<16 ->
 old_integer_to_hex(I) when I>=16 ->
     N = trunc(I/16),
     old_integer_to_hex(N) ++ old_integer_to_hex(I rem 16).
+
+headers(nil, nil) -> [{"User-Agent", "ChatterlTest/0.1"}];
+headers(User, Pass) when is_binary(User) ->
+    headers(binary_to_list(User), Pass);
+headers(User, Pass) when is_binary(Pass) ->
+    headers(User, binary_to_list(Pass));
+headers(User, Pass) ->
+    UP = base64:encode(User ++ ":" ++ Pass),
+    Basic = lists:flatten(io_lib:fwrite("Basic ~s", [UP])),
+    [{"User-Agent", "ChatterlTest/0.1"}, {"Authorization", Basic}].

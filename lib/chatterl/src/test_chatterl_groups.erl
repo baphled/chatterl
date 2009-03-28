@@ -17,6 +17,7 @@ chatterl_group_handle_test_() ->
    [{"Can retrieve group information",
      fun() ->
          ?assert(erlang:is_tuple(gen_server:call({global, chatterl_serv}, {get_group, Group}, infinity))),
+         ?assertEqual(false,gen_server:call({global,Group},{user_exists,Client})),
          ?assertEqual({name,Group},gen_server:call({global,Group},name)),
          ?assertEqual({description,"a nu room"}, gen_server:call({global,Group},description)),
          ?assert(erlang:is_tuple(gen_server:call({global,Group},created))),
@@ -45,4 +46,3 @@ chatterl_group_handle_test_() ->
          ?assertEqual({error,already_sent},gen_server:call({global,Group},{send_msg,Client,"heya"})),
          ?assert(erlang:is_list(gen_server:call({global,Group},poll_messages)))
      end}]}].
-

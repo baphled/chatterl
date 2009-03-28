@@ -54,6 +54,10 @@ handle('POST',"/groups/send/" ++ Group,ContentType,Post) ->
   [{"client",Sender},{"msg",Message}] = Post,
   Response = chatterl_mid_man:group_send(ContentType,{Group,Sender,Message}),
   handle_response(Response,ContentType);
+handle('POST',"/groups/join/" ++ Group,ContentType,Post) ->
+  [{"client",Client}] = Post,
+  Response = chatterl_mid_man:group_join(ContentType,{Group,Client}),
+  handle_response(Response,ContentType);
 handle('GET',"/users/connect/" ++ Client,ContentType,_Post) ->
   handle_response(chatterl_mid_man:connect(ContentType,Client),ContentType);
 handle('GET',"/users/disconnect/" ++ Client,ContentType,_Post) ->
@@ -75,27 +79,8 @@ handle('GET',"/groups/info/" ++ Group,ContentType,_Post) ->
 handle(_,Path,ContentType,_) ->
   Response = message_handler:get_response_body(ContentType,
                                                message_handler:build_carrier("error", "Unknown command: " ++Path)),
-  {404, [{"Content-Type", ContentType}], list_to_binary(Response)}.
+  error(Response,ContentType).
 
-handle_response(Response,ContentType) ->
-  case check_json_response(Response) of
-    {<<"failure">>,_} -> failure(Response,ContentType);
-    {<<"success">>,_} -> success(Response,ContentType);
-    {<<"error">>,_} -> error(Response,ContentType)
-  end.
-
-check_json_response(Json) ->
-  {struct,[{<<"chatterl">>,{struct,[{<<"response">>,{struct,[Response]}}]}}]} = mochijson2:decode(Json),
-  Response.
-
-error(Response,ContentType) ->
-  {404, [{"Content-Type", ContentType}], list_to_binary(Response)}.
-
-failure(Response,ContentType) ->
-  {501, [{"Content-Type", ContentType}], list_to_binary(Response)}.
-
-success(Response,ContentType) ->
-  {200, [{"Content-Type", ContentType}], list_to_binary(Response)}.
 %%====================================================================
 %% gen_server callbacks
 %%====================================================================
@@ -191,3 +176,24 @@ get_content_type(Type) ->
 	    ["text/xml"];
 	_ -> ["text/json"]
     end.
+
+check_json_response(Json) ->
+  {struct,[{<<"chatterl">>,{struct,[{<<"response">>,{struct,[Response]}}]}}]} = mochijson2:decode(Json),
+  Response.
+
+error(Response,ContentType) ->
+  {404, [{"Content-Type", ContentType}], list_to_binary(Response)}.
+
+failure(Response,ContentType) ->
+  {501, [{"Content-Type", ContentType}], list_to_binary(Response)}.
+
+success(Response,ContentType) ->
+  {200, [{"Content-Type", ContentType}], list_to_binary(Response)}.
+
+
+handle_response(Response,ContentType) ->
+  case check_json_response(Response) of
+    {<<"failure">>,_} -> failure(Response,ContentType);
+    {<<"success">>,_} -> success(Response,ContentType);
+    {<<"error">>,_} -> error(Response,ContentType)
+  end.
