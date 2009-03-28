@@ -83,7 +83,7 @@ stop() ->
 login(Nickname,Password) ->
   case get_registered(Nickname) of
     [] ->
-      {error,"Not Registered"};
+      {error,"Not registered"};
     [_Result] ->
       case is_auth(Nickname,Password) of
         false ->

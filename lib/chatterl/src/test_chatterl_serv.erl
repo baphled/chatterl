@@ -10,8 +10,7 @@ chatterl_serv_test_() ->
     end,
     fun(_) ->
         chatterl:stop() end,
-    [{timeout, 5000,
-      fun() ->
+    [fun() ->
          {Group1,Description} = {"anuva","nu room"},
          ?assertEqual([],chatterl_serv:list_groups()),
          ?assertEqual([],chatterl_serv:list_users()),
@@ -20,7 +19,7 @@ chatterl_serv_test_() ->
          ?assertEqual({error,already_created},chatterl_serv:create(Group1,Description)),
          ?assertEqual([],chatterl_serv:list_users(Group1)),
          ?assertEqual([Group1],chatterl_serv:list_groups())
-      end}]}].
+      end]}].
 
 chatterl_serv_groups_test_() ->
   {Client1,Group1,Group2,Description} = {"blah","room","anuva","nu room"},
@@ -78,7 +77,7 @@ chatterl_registered_users_can_login_and_out_test_() ->
     [{"Can our client login using chatterl_serv?",
      fun() ->
          ?assertEqual({error,"Unable to login"},chatterl_serv:login(Nick1,"blah")),
-         ?assertEqual({error,"Not Registered"},chatterl_serv:login(Nick2,Password2)),
+         ?assertEqual({error,"Not registered"},chatterl_serv:login(Nick2,Password2)),
          ?assertEqual({ok,"noobie is logged in."},chatterl_serv:login(Nick1,Password1)),
          ?assertEqual([Nick1],chatterl_store:get_logged_in())
      end},
@@ -90,10 +89,9 @@ chatterl_registered_users_can_login_and_out_test_() ->
          ?assertEqual({ok,"noobie is logged out."},chatterl_serv:logout(Nick1)),
          ?assertEqual(false,gen_server:call({global,chatterl_serv},{user_exists,Nick1}))
      end},
-    {timeout,5000,
-     {"Can a client successfully logout",
+    {"Can a client successfully logout",
       fun() ->
           ?assertEqual(false,chatterl_store:logged_in(Nick2)),
           ?assertEqual({error,"Not logged in"},chatterl_serv:logout(Nick2)),
           ?assertEqual(false,chatterl_store:logged_in(Nick1))
-      end}}]}].
+      end}]}].

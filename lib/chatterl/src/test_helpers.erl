@@ -1,6 +1,6 @@
 -module(test_helpers).
 
--export([start_client/3,start_group/2,check_response/2,check_json/1,set_params/1,http_request/3,headers/2]).
+-export([start_client/3,start_group/2,check_response/2,check_json/1,set_params/1,http_request/3,http_login/2,headers/2]).
 
 %% Helper functions.
 start_client(Client,Group,Description) ->
@@ -80,6 +80,9 @@ old_integer_to_hex(I) when I>=16 ->
 
 http_request(post,Url,Body) ->
   http:request(post, {Url, [], "application/x-www-form-urlencoded", Body}, [], []).
+
+http_login(Url,{Login,Pass}) ->
+  http:request(get, {Url, headers(Login, Pass)}, [], []).
 
 headers(nil, nil) -> [{"User-Agent", "ChatterlTest/0.1"}];
 headers(User, Pass) when is_binary(User) ->

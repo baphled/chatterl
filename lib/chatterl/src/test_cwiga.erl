@@ -3,7 +3,7 @@
 -include_lib("eunit/include/eunit.hrl").
 -include_lib("chatterl.hrl").
 
--import(test_helpers,[check_response/2,check_json/1,http_request/3,set_params/1]).
+-import(test_helpers,[check_response/2,check_json/1,http_request/3,http_login/2,set_params/1]).
 
 -define(URL,"http://127.0.0.1:8080").
 
@@ -222,4 +222,31 @@ cwiga_registeration_based_test_() ->
           Response = http_request(post,?URL ++ "/register/" ++ Nick1, Body),
           ?assertEqual(404,check_response(code,Response)),
           ?assertEqual(<<"noobie is already registered">>,check_json(mochijson2:decode(check_response(body,Response))))
+      end},
+     {"CWIGA will not login clients if their credentials are not correct",
+      fun() ->
+          Args = [{"pass","blah"},{"login",Nick1}],
+          Body = set_params(Args),
+          Response = http_request(post,?URL ++ "/login", Body),
+          ?assertEqual(501,check_response(code,Response)),
+          ?assertEqual(<<"Unable to login">>,check_json(mochijson2:decode(check_response(body,Response))))
+      end},
+     {"CWIGA allows a registered client to login to chatterl",
+      fun() ->
+          Args = [{"pass",Password1},{"login",Nick1}],
+          Body = set_params(Args),
+          Response = http_request(post,?URL ++ "/login", Body),
+          Response2 = http_request(post,?URL ++ "/login", Body),
+          ?assertEqual(200,check_response(code,Response)),
+          ?assertEqual(<<"noobie is logged in.">>,check_json(mochijson2:decode(check_response(body,Response)))),
+          ?assertEqual(501,check_response(code,Response2)),
+          ?assertEqual(<<"Already logged in">>,check_json(mochijson2:decode(check_response(body,Response2))))
+      end},
+     {"CWIGA alerts clients to the fact they need to be registered to login",
+      fun() ->
+          Args = [{"pass","blah"},{"login","blah"}],
+          Body = set_params(Args),
+          Response = http_request(post,?URL ++ "/login", Body),
+          ?assertEqual(501,check_response(code,Response)),
+          ?assertEqual(<<"Not registered">>,check_json(mochijson2:decode(check_response(body,Response))))
       end}]}].
