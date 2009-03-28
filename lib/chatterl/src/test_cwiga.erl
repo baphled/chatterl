@@ -3,7 +3,8 @@
 -include_lib("eunit/include/eunit.hrl").
 -include_lib("chatterl.hrl").
 
--import(test_helpers,[check_response/2,check_json/1]).
+-import(test_helpers,[check_response/2,check_json/1,http_request/3,set_params/1]).
+
 -define(URL,"http://127.0.0.1:8080").
 
 handles_test_() ->
@@ -147,22 +148,18 @@ groups_send_message_handle_test_() ->
       fun() ->
           Args = [{"client",Client}],
           Body = set_params(Args),
-          Response = http:request(post, {?URL ++ "/groups/join/" ++ Group, [], "application/x-www-form-urlencoded", Body}, [], []),
+          Response = http_request(post,?URL ++ "/groups/join/" ++ Group, Body),
+          Response2 = http_request(post,?URL ++ "/groups/join/" ++ Group, Body),
           ?assertEqual(200,check_response(code,Response)),
-          ?assertEqual(<<"baph joined group">>,check_json(mochijson2:decode(check_response(body,Response))))
-      end},
-     {"CWIGA can retrieve a list of groups a client is joined to",
-      fun() ->
-          Args = [{"client",Client}],
-          Body = set_params(Args),
-          Response = http:request(post, {?URL ++ "/groups/list/" ++ "blah", [], "application/x-www-form-urlencoded", Body}, [], []),
-          ?assertEqual(404,check_response(code,Response))
+          ?assertEqual(501,check_response(code,Response2)),
+          ?assertEqual(<<"baph joined group">>,check_json(mochijson2:decode(check_response(body,Response)))),
+          ?assertEqual(<<"Unable to connect!">>,check_json(mochijson2:decode(check_response(body,Response2))))
       end},
      {"CWIGA clients are unable to send messages a group if they are not connected to it",
       fun() ->
           Args = [{"msg","hey"},{"client",Client2}],
           Body = set_params(Args),
-          Response = http:request(post, {?URL ++ "/groups/send/" ++ Group, [], "application/x-www-form-urlencoded", Body}, [], []),
+          Response = http_request(post,?URL ++ "/groups/send/" ++ Group, Body),
           ?assertEqual(404,check_response(code,Response)),
           ?assertEqual(<<"Must join group first!">>,check_json(mochijson2:decode(check_response(body,Response))))
       end},
@@ -170,59 +167,7 @@ groups_send_message_handle_test_() ->
       fun() ->
           Args = [{"msg","hey"},{"client",Client}],
           Body = set_params(Args),
-          Response = http:request(post, {?URL ++ "/groups/send/" ++ Group, [], "application/x-www-form-urlencoded", Body}, [], []),
+          Response = http_request(post,?URL ++ "/groups/send/" ++ Group, Body),
           ?assertEqual(200,check_response(code,Response)),
           ?assertEqual(<<"Message sent">>,check_json(mochijson2:decode(check_response(body,Response))))
       end}]}].
-
-set_params(Args) ->
-  lists:concat(lists:foldl(
-                 fun (Rec, []) -> [Rec]; (Rec, Ac) -> [Rec, "&" | Ac] end,
-                 [],[K ++ "=" ++ url_encode(V) || {K, V} <- Args])).
-
-url_encode([H|T]) ->
-    if
-        H >= $a, $z >= H ->
-            [H|url_encode(T)];
-        H >= $A, $Z >= H ->
-            [H|url_encode(T)];
-        H >= $0, $9 >= H ->
-            [H|url_encode(T)];
-        H == $_; H == $.; H == $-; H == $/; H == $: ->
-            [H|url_encode(T)];
-        true ->
-            case integer_to_hex(H) of
-                [X, Y] ->
-                    [$%, X, Y | url_encode(T)];
-                [X] ->
-                    [$%, $0, X | url_encode(T)]
-            end
-     end;
-
-url_encode([]) -> [].
-
-integer_to_hex(I) ->
-    case catch erlang:integer_to_list(I, 16) of
-        {'EXIT', _} ->
-            old_integer_to_hex(I);
-        Int ->
-            Int
-    end.
-
-old_integer_to_hex(I) when I<10 ->
-    integer_to_list(I);
-old_integer_to_hex(I) when I<16 ->
-    [I-10+$A];
-old_integer_to_hex(I) when I>=16 ->
-    N = trunc(I/16),
-    old_integer_to_hex(N) ++ old_integer_to_hex(I rem 16).
-
-headers(nil, nil) -> [{"User-Agent", "ChatterlTest/0.1"}];
-headers(User, Pass) when is_binary(User) ->
-    headers(binary_to_list(User), Pass);
-headers(User, Pass) when is_binary(Pass) ->
-    headers(User, binary_to_list(Pass));
-headers(User, Pass) ->
-    UP = base64:encode(User ++ ":" ++ Pass),
-    Basic = lists:flatten(io_lib:fwrite("Basic ~s", [UP])),
-    [{"User-Agent", "ChatterlTest/0.1"}, {"Authorization", Basic}].
