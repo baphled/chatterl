@@ -51,8 +51,10 @@ dispatch_requests(Req) ->
   Response = handle(Method, Path, get_content_type(Ext), Post),
   Req:respond(Response).
 
-
-handle(_,Path,ContentType,_Post) ->
+handle('GET',"/users/list",ContentType,_Post) ->
+  Response =  chatterl_mid_man:user_list(ContentType),
+  {200, [{"Content-Type", ContentType}], list_to_binary(Response)};
+handle(_,Path,ContentType,_) ->
   Response = message_handler:get_response_body(ContentType,
                                                message_handler:build_carrier("error", "Unknown command: " ++Path)),
   {404, [{"Content-Type", ContentType}], list_to_binary(Response)}.
