@@ -26,12 +26,12 @@ check_response(Check,Response) ->
   end.
 
 check_json(Json) ->
-	  {struct,[{<<"chatterl">>,{struct,[{<<"response">>,{struct,[Response]}}]}}]} = Json,
-	  case Response of
-	    {<<"success">>,Result} ->
-	      Result;
-	    {<<"failure">>,Result} ->
-	      Result;
-	    {<<"error">>,Result} ->
-	      Result
-	  end.
+  {struct,[{<<"chatterl">>,{struct,[{<<"response">>,{struct,[Response]}}]}}]} = Json,
+  case Response of
+    {<<"success">>,Result} ->
+      Result;
+    {<<"failure">>,Result} ->
+      Result;
+    {<<"error">>,Result} ->
+      Result
+  end.

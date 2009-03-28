@@ -43,7 +43,6 @@ stop() ->
     gen_server:call({global, ?SERVER}, stop, infinity).
 
 dispatch_requests(Req) ->
-  %Path = Req:get(path),
   [Path|Ext] = string:tokens(Req:get(path),"."),
   Method = Req:get(method),
   Post = Req:parse_post(),
@@ -51,6 +50,14 @@ dispatch_requests(Req) ->
   Response = handle(Method, Path, get_content_type(Ext), Post),
   Req:respond(Response).
 
+handle('POST',"/groups/send/" ++ Group,ContentType,Post) ->
+  [{"client",Sender},{"msg",Message}] = Post,
+  Response = chatterl_mid_man:group_send(ContentType,{Group,Sender,Message}),
+  case check_json_response(Response) of
+    {<<"failure">>,_} -> failure(Response,ContentType);
+    {<<"success">>,_} -> success(Response,ContentType);
+    {<<"error">>,_} -> error(Response,ContentType)
+  end;
 handle('GET',"/users/connect/" ++ Client,ContentType,_Post) ->
   success(chatterl_mid_man:connect(ContentType,Client),ContentType);
 handle('GET',"/users/disconnect/" ++ Client,ContentType,_Post) ->
@@ -73,6 +80,17 @@ handle(_,Path,ContentType,_) ->
   Response = message_handler:get_response_body(ContentType,
                                                message_handler:build_carrier("error", "Unknown command: " ++Path)),
   {404, [{"Content-Type", ContentType}], list_to_binary(Response)}.
+
+
+check_json_response(Json) ->
+  {struct,[{<<"chatterl">>,{struct,[{<<"response">>,{struct,[Response]}}]}}]} = mochijson2:decode(Json),
+  Response.
+
+error(Response,ContentType) ->
+  {404, [{"Content-Type", ContentType}], list_to_binary(Response)}.
+
+failure(Response,ContentType) ->
+  {501, [{"Content-Type", ContentType}], list_to_binary(Response)}.
 
 success(Response,ContentType) ->
   {200, [{"Content-Type", ContentType}], list_to_binary(Response)}.

@@ -4,6 +4,7 @@
 -include_lib("chatterl.hrl").
 
 -import(test_helpers,[check_response/2,check_json/1]).
+-define(URL,"http://127.0.0.1:8080").
 
 handles_test_() ->
   {Client,Client2,Group,ContentType} = {"baph","baphled","nu",["text/json"]},
@@ -124,3 +125,77 @@ groups_handle_test_() ->
           ?assertEqual({struct,[{<<"groups">>,[]}]},check_json(mochijson2:decode(check_response(body,Response)))),
           ?assert(Response /= Response2)
       end}]}].
+
+groups_send_message_handle_test_() ->
+  {Client,Client2,Group,ContentType} = {"baph","baphled","nu",["text/json"]},
+  [{setup,
+    fun() ->
+        inets:start(),
+        chatterl_serv:start(),
+        chatterl_mid_man:start(),
+        cwiga:start_link(8080),
+        chatterl_serv:create(Group,"nu room"),
+        http:request("http://127.0.0.1:8080/users/connect/" ++ Client)
+    end,
+    fun(_) ->
+        chatterl_mid_man:stop(),
+        chatterl_serv:stop(),
+        cwiga:stop()
+    end,
+    [{"CWIGA clients are unable to send messages a group if they are not connected to it",
+      fun() ->
+          Args = [{"msg","hey"},{"client","blah"}],
+          Body = set_params(Args),
+          Response = http:request(post, {?URL ++ "/groups/send/" ++ Group, [], "application/x-www-form-urlencoded", Body}, [], []),
+          ?assertEqual(501,check_response(code,Response))
+      end},
+     {"CWIGA allows clients to send messages to chatterl groups",
+      fun() ->
+          Args = [{"msg","hey"},{"client",Client}],
+          Body = set_params(Args),
+          Response = http:request(post, {?URL ++ "/groups/send/" ++ Group, [], "application/x-www-form-urlencoded", Body}, [], []),
+          ?assertEqual(200,check_response(code,Response)),
+          ?assertEqual(<<"Message sent">>,check_json(mochijson2:decode(check_response(body,Response))))
+      end}]}].
+
+set_params(Args) ->
+  lists:concat(lists:foldl(
+                 fun (Rec, []) -> [Rec]; (Rec, Ac) -> [Rec, "&" | Ac] end,
+                 [],[K ++ "=" ++ url_encode(V) || {K, V} <- Args])).
+
+url_encode([H|T]) ->
+    if
+        H >= $a, $z >= H ->
+            [H|url_encode(T)];
+        H >= $A, $Z >= H ->
+            [H|url_encode(T)];
+        H >= $0, $9 >= H ->
+            [H|url_encode(T)];
+        H == $_; H == $.; H == $-; H == $/; H == $: ->
+            [H|url_encode(T)];
+        true ->
+            case integer_to_hex(H) of
+                [X, Y] ->
+                    [$%, X, Y | url_encode(T)];
+                [X] ->
+                    [$%, $0, X | url_encode(T)]
+            end
+     end;
+
+url_encode([]) -> [].
+
+integer_to_hex(I) ->
+    case catch erlang:integer_to_list(I, 16) of
+        {'EXIT', _} ->
+            old_integer_to_hex(I);
+        Int ->
+            Int
+    end.
+
+old_integer_to_hex(I) when I<10 ->
+    integer_to_list(I);
+old_integer_to_hex(I) when I<16 ->
+    [I-10+$A];
+old_integer_to_hex(I) when I>=16 ->
+    N = trunc(I/16),
+    old_integer_to_hex(N) ++ old_integer_to_hex(I rem 16).
