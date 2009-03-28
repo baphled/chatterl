@@ -62,7 +62,7 @@ handles_test_() ->
       end},
      {"CWIGA can retrieve responses in XML format",
       fun() ->
-         Response = http:request("http://127.0.0.1:8080/users/list.xml"),
+         Response = http:request("http://127.0.0.1:8080/list.xml"),
          ?assertEqual({"content-type","text/xml"},check_response(content_type,Response))
       end},
      {"CWIGA can connect clients to chatterl",
@@ -102,7 +102,7 @@ groups_handle_test_() ->
           Response = http:request("http://127.0.0.1:8080/users/groups/" ++ Client),
           Response2 = http:request("http://127.0.0.1:8080/users/groups/" ++ "blah"),
           ?assertEqual(200,check_response(code,Response)),
-          ?assertEqual(200,check_response(code,Response2)),
+          ?assertEqual(501,check_response(code,Response2)),
           ?assertEqual({struct,[{<<"groups">>,[]}]},check_json(mochijson2:decode(check_response(body,Response)))),
           ?assertEqual(<<"Client: blah doesn't exist">>,check_json(mochijson2:decode(check_response(body,Response2))))
       end},
@@ -110,8 +110,8 @@ groups_handle_test_() ->
       fun() ->
           Response = http:request("http://127.0.0.1:8080/users/poll/" ++ "blah"),
           Response2 = http:request("http://127.0.0.1:8080/users/poll/" ++ Client),
-          ?assertEqual(200,check_response(code,Response)),
-          ?assertEqual(200,check_response(code,Response)),
+          ?assertEqual(501,check_response(code,Response)),
+          ?assertEqual(200,check_response(code,Response2)),
           ?assertEqual(<<"Client: blah doesn't exist">>,check_json(mochijson2:decode(check_response(body,Response)))),
           ?assertEqual({struct,[{<<"messages">>,[]}]},check_json(mochijson2:decode(check_response(body,Response2))))
       end},
@@ -147,7 +147,8 @@ groups_send_message_handle_test_() ->
           Args = [{"msg","hey"},{"client","blah"}],
           Body = set_params(Args),
           Response = http:request(post, {?URL ++ "/groups/send/" ++ Group, [], "application/x-www-form-urlencoded", Body}, [], []),
-          ?assertEqual(501,check_response(code,Response))
+          ?assertEqual(501,check_response(code,Response)),
+          ?assertEqual(<<"Unable to send msg!">>,check_json(mochijson2:decode(check_response(body,Response))))
       end},
      {"CWIGA allows clients to send messages to chatterl groups",
       fun() ->
