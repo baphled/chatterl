@@ -33,8 +33,11 @@
 %% API
 %%====================================================================
 %%--------------------------------------------------------------------
-%% Function: start_link() -> {ok,Pid} | ignore | {error,Error}
-%% Description: Starts the server
+%% @doc
+%% Starts the server
+%%
+%% @spec start(Port) -> {ok,Pid} | ignore | {error,Error}
+%% @end
 %%--------------------------------------------------------------------
 start_link(Port) ->
   gen_server:start_link({global, ?SERVER}, ?MODULE, [Port], []).
@@ -42,14 +45,31 @@ start_link(Port) ->
 stop() ->
     gen_server:call({global, ?SERVER}, stop, infinity).
 
+%%--------------------------------------------------------------------
+%% @doc
+%% Dispatches our requests to the relevant handle.
+%%
+%% Uses clean_path to determine what the action is.
+%% @spec dispatch_requests(Request) -> void()
+%% @end
+%%--------------------------------------------------------------------
 dispatch_requests(Req) ->
   [Path|Ext] = string:tokens(Req:get(path),"."),
   Method = Req:get(method),
   Post = Req:parse_post(),
   io:format("~p request for ~p with post: ~p~n", [Method, Path, Post]),
-  Response = handle(Method, Path, get_content_type(Ext), Post),
+  Response = gen_server:call({global,?MODULE},{Method, Path, get_content_type(Ext), Post}),
   Req:respond(Response).
 
+%%--------------------------------------------------------------------
+%% @doc
+%%
+%% Handles our RESTful resquests.
+%%
+%% @spec handle(Action,Path,ContentType,Post) -> void()
+%%
+%% @end
+%%--------------------------------------------------------------------
 handle('POST',"/register/" ++ Nick,ContentType,Post) ->
   [{"name",Name},{"email",Email},{"pass1",Pass1},{"pass2",Pass2}] = Post,
   Response = chatterl_mid_man:register(ContentType,{Nick,{Name,Email,Pass1,Pass2}}),
@@ -98,13 +118,15 @@ handle(_,Path,ContentType,_) ->
 %%====================================================================
 %% gen_server callbacks
 %%====================================================================
-
 %%--------------------------------------------------------------------
-%% Function: init(Args) -> {ok, State} |
+%% @doc
+%% Initiates the server
+%%
+%% Function: init(Port) -> {ok, State} |
 %%                         {ok, State, Timeout} |
 %%                         ignore               |
 %%                         {stop, Reason}
-%% Description: Initiates the server
+
 %%--------------------------------------------------------------------
 init([Port]) ->
   process_flag(trap_exit, true),
@@ -113,35 +135,104 @@ init([Port]) ->
   {ok, #state{}}.
 
 %%--------------------------------------------------------------------
-%% Function: %% handle_call(Request, From, State) -> {reply, Reply, State} |
+%% @doc
+%% Description: Handling call messages
+%%
+%% @spec handle_call(Request, From, State) -> {reply, Reply, State} |
 %%                                      {reply, Reply, State, Timeout} |
 %%                                      {noreply, State} |
 %%                                      {noreply, State, Timeout} |
 %%                                      {stop, Reason, Reply, State} |
 %%                                      {stop, Reason, State}
-%% Description: Handling call messages
+%% @end
 %%--------------------------------------------------------------------
 handle_call(stop, _From, State) ->
     io:format("Processing shut down ~s~n", [?APP]),
     {stop, normal, stopped, State};
+handle_call({'POST',"/register/" ++ Nick,ContentType,Post},_From,State) ->
+  [{"name",Name},{"email",Email},{"pass1",Pass1},{"pass2",Pass2}] = Post,
+  Response = chatterl_mid_man:register(ContentType,{Nick,{Name,Email,Pass1,Pass2}}),
+  Reply = handle_response(Response,ContentType),
+  {reply, Reply, State};
+handle_call({'POST',"/groups/send/" ++ Group,ContentType,Post},_From,State) ->
+  [{"client",Sender},{"msg",Message}] = Post,
+  Response = chatterl_mid_man:group_send(ContentType,{Group,Sender,Message}),
+  Reply = handle_response(Response,ContentType),
+  {reply, Reply, State};
+handle_call({'POST',"/groups/join/" ++ Group,ContentType,Post},_From,State) ->
+  [{"client",Client}] = Post,
+  Response = chatterl_mid_man:group_join(ContentType,{Group,Client}),
+  Reply = handle_response(Response,ContentType),
+  {reply, Reply, State};
+handle_call({'POST',"/groups/leave/" ++ Group,ContentType,Post},_From,State) ->
+  [{"client",Client}] = Post,
+  Response = chatterl_mid_man:group_leave(ContentType,{Group,Client}),
+  Reply = handle_response(Response,ContentType),
+  {reply, Reply, State};
+handle_call({'POST',"/users/login" ,ContentType,Post},_From,State) ->
+  [{"login",Login},{"pass",Pass}] = Post,
+  Reply = handle_response(chatterl_mid_man:login(ContentType,{Login,Pass}),ContentType),
+  {reply, Reply, State};
+handle_call({'POST',"/users/logout",ContentType,Post},_From,State) ->
+  [{"client",Client}] = Post,
+  Reply = handle_response(chatterl_mid_man:logout(ContentType,Client),ContentType),
+  {reply, Reply, State};
+handle_call({'GET',"/users/connect/" ++ Client,ContentType,_Post},_From,State) ->
+  Reply = handle_response(chatterl_mid_man:connect(ContentType,Client),ContentType),
+  {reply, Reply, State};
+handle_call({'GET',"/users/disconnect/" ++ Client,ContentType,_Post},_From,State) ->
+  Reply = handle_response(chatterl_mid_man:disconnect(ContentType,Client),ContentType),
+  {reply, Reply, State};
+handle_call({'GET',"/users/list/" ++ Group,ContentType,_Post},_From,State) ->
+  Reply = handle_response(chatterl_mid_man:user_list(ContentType,Group),ContentType),
+  {reply, Reply, State};
+handle_call({'GET',"/users/list",ContentType,_Post},_From,State) ->
+  Reply = handle_response(chatterl_mid_man:user_list(ContentType),ContentType),
+  {reply, Reply, State};
+handle_call({'GET',"/users/poll/" ++ Client,ContentType,_Post},_From,State) ->
+  Reply = handle_response(chatterl_mid_man:user_poll(ContentType,Client),ContentType),
+  {reply, Reply, State};
+handle_call({'GET',"/users/groups/" ++ Client,ContentType,_Post},_From,State) ->
+  Reply = handle_response(chatterl_mid_man:user_groups(ContentType,Client),ContentType),
+  {reply, Reply, State};
+handle_call({'GET',"/groups/poll/" ++ Group,ContentType,_Post},_From,State) ->
+  Reply = handle_response(chatterl_mid_man:group_poll(ContentType,Group),ContentType),
+  {reply, Reply, State};
+handle_call({'GET',"/groups/list",ContentType,_Post},_From,State) ->
+  Reply = handle_response(chatterl_mid_man:group_list(ContentType),ContentType),
+  {reply, Reply, State};
+handle_call({'GET',"/groups/info/" ++ Group,ContentType,_Post},_From,State) ->
+  Reply = handle_response(chatterl_mid_man:group_info(ContentType,Group),ContentType),
+  {reply, Reply, State};
+handle_call({_,Path,ContentType,_},_From,State) ->
+  Response = message_handler:get_response_body(ContentType,
+                                               message_handler:build_carrier("error", "Unknown command: " ++Path)),
+  Reply = error(Response,ContentType),
+  {reply, Reply, State};
 handle_call(_Request, _From, State) ->
   Reply = ok,
   {reply, Reply, State}.
 
 %%--------------------------------------------------------------------
-%% Function: handle_cast(Msg, State) -> {noreply, State} |
+%% @doc
+%% Handling cast messages
+%%
+%% @spec handle_cast(Msg, State) -> {noreply, State} |
 %%                                      {noreply, State, Timeout} |
 %%                                      {stop, Reason, State}
-%% Description: Handling cast messages
+%% @end
 %%--------------------------------------------------------------------
 handle_cast(_Msg, State) ->
   {noreply, State}.
 
 %%--------------------------------------------------------------------
-%% Function: handle_info(Info, State) -> {noreply, State} |
+%% @doc
+%% Handling all non call/cast messages
+%%
+%% @spec handle_info(Info, State) -> {noreply, State} |
 %%                                       {noreply, State, Timeout} |
 %%                                       {stop, Reason, State}
-%% Description: Handling all non call/cast messages
+%% @end
 %%--------------------------------------------------------------------
 handle_info({'DOWN', _Ref, _Process, {mochiweb_http, Host}, Reason}, State) ->
     io:format("Unable to start mochiweb on ~s:~nReason: ~s~n",[Host,Reason]),
@@ -150,11 +241,13 @@ handle_info(_Info, State) ->
   {noreply, State}.
 
 %%--------------------------------------------------------------------
-%% Function: terminate(Reason, State) -> void()
-%% Description: This function is called by a gen_server when it is about to
-%% terminate. It should be the opposite of Module:init/1 and do any necessary
-%% cleaning up. When it returns, the gen_server terminates with Reason.
-%% The return value is ignored.
+%% @doc
+%% Terminates Chatterl Web Interface, making sure to shutdown mochiweb
+%% along side it.
+%%
+%% @spec terminate({node,Reason},State) -> void()
+%% @todo Needs a time out for when the port is already in use.
+%% @end
 %%--------------------------------------------------------------------
 terminate(_Reason, _State) ->
     io:format("Shutting down ChatterlWeb on: ~s...~n",[node(self())]),
@@ -162,8 +255,12 @@ terminate(_Reason, _State) ->
     ok.
 
 %%--------------------------------------------------------------------
-%% Func: code_change(OldVsn, State, Extra) -> {ok, NewState}
-%% Description: Convert process state when code is changed
+%% @doc
+%%
+%% Convert process state when code is changed
+%% @spec code_change(OldVsn, State, Extra) -> {ok, NewState}
+%%
+%% @end
 %%--------------------------------------------------------------------
 code_change(_OldVsn, State, _Extra) ->
   {ok, State}.
