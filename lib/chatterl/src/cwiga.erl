@@ -61,8 +61,14 @@ handle('GET',"/users/list",ContentType,_Post) ->
   success(chatterl_mid_man:user_list(ContentType),ContentType);
 handle('GET',"/users/poll/" ++ Client,ContentType,_Post) ->
   success(chatterl_mid_man:user_poll(ContentType,Client),ContentType);
+handle('GET',"/users/groups/" ++ Client,ContentType,_Post) ->
+  success(chatterl_mid_man:user_groups(ContentType,Client),ContentType);
+handle('GET',"/groups/poll/" ++ Group,ContentType,_Post) ->
+  success(chatterl_mid_man:group_poll(ContentType,Group),ContentType);
 handle('GET',"/groups/list",ContentType,_Post) ->
   success(chatterl_mid_man:group_list(ContentType),ContentType);
+handle('GET',"/groups/info/" ++ Group,ContentType,_Post) ->
+  success(chatterl_mid_man:group_info(ContentType,Group),ContentType);
 handle(_,Path,ContentType,_) ->
   Response = message_handler:get_response_body(ContentType,
                                                message_handler:build_carrier("error", "Unknown command: " ++Path)),

@@ -44,6 +44,21 @@ handles_test_() ->
           ?assertEqual({struct,[{<<"clients">>,[]}]},check_json(mochijson2:decode(check_response(body,Response)))),
           ?assertEqual(<<"Group: blah doesn't exist">>,check_json(mochijson2:decode(check_response(body,Response2))))
       end},
+     {"CWIGA can retrieve a groups information",
+      fun() ->
+          Response =  http:request("http://127.0.0.1:8080/groups/info/" ++ Group),
+          Response2 =  http:request("http://127.0.0.1:8080/groups/info/" ++ "blah"),
+          ?assertEqual(200,check_response(code,Response)),
+          ?assert(is_tuple(check_json(mochijson2:decode(check_response(body,Response))))),
+          ?assertEqual(<<"Group doesn't exist!">>,check_json(mochijson2:decode(check_response(body,Response2))))
+      end},
+     {"CWIGA can retrieve a groups messages",
+      fun() ->
+          Response =  http:request("http://127.0.0.1:8080/groups/poll/" ++ Group),
+          Response2 =  http:request("http://127.0.0.1:8080/groups/poll/" ++ "blah"),
+          ?assertEqual(200,check_response(code,Response)),
+          ?assertEqual(<<"Group: blah doesn't exist!">>,check_json(mochijson2:decode(check_response(body,Response2))))
+      end},
      {"CWIGA can retrieve responses in XML format",
       fun() ->
          Response = http:request("http://127.0.0.1:8080/users/list.xml"),
@@ -81,7 +96,15 @@ groups_handle_test_() ->
         chatterl_serv:stop(),
         cwiga:stop()
     end,
-    [
+    [{"CWIGA allows clients to retrieves a list of the groups they are connected to",
+      fun() ->
+          Response = http:request("http://127.0.0.1:8080/users/groups/" ++ Client),
+          Response2 = http:request("http://127.0.0.1:8080/users/groups/" ++ "blah"),
+          ?assertEqual(200,check_response(code,Response)),
+          ?assertEqual(200,check_response(code,Response2)),
+          ?assertEqual({struct,[{<<"groups">>,[]}]},check_json(mochijson2:decode(check_response(body,Response)))),
+          ?assertEqual(<<"Client: blah doesn't exist">>,check_json(mochijson2:decode(check_response(body,Response2))))
+      end},
      {"CWIGA allows clients to poll chatterl for messages",
       fun() ->
           Response = http:request("http://127.0.0.1:8080/users/poll/" ++ "blah"),
