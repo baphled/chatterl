@@ -50,6 +50,10 @@ dispatch_requests(Req) ->
   Response = handle(Method, Path, get_content_type(Ext), Post),
   Req:respond(Response).
 
+handle('POST',"/register/" ++ Nick,ContentType,Post) ->
+  [{"name",Name},{"email",Email},{"pass1",Pass1},{"pass2",Pass2}] = Post,
+  Response = chatterl_mid_man:register(ContentType,{Nick,{Name,Email,Pass1,Pass2}}),
+  handle_response(Response,ContentType);
 handle('POST',"/groups/send/" ++ Group,ContentType,Post) ->
   [{"client",Sender},{"msg",Message}] = Post,
   Response = chatterl_mid_man:group_send(ContentType,{Group,Sender,Message}),
@@ -197,7 +201,7 @@ success(Response,ContentType) ->
 
 handle_response(Response,ContentType) ->
   case check_json_response(Response) of
-    {<<"failure">>,_} -> failure(Response,ContentType);
     {<<"success">>,_} -> success(Response,ContentType);
-    {<<"error">>,_} -> error(Response,ContentType)
+    {<<"error">>,_} -> error(Response,ContentType);
+    {<<"failure">>,_} -> failure(Response,ContentType)
   end.

@@ -181,3 +181,45 @@ groups_send_message_handle_test_() ->
           ?assertEqual(<<"baph has disconnected from nu">>,check_json(mochijson2:decode(check_response(body,Response)))),
           ?assertEqual(501,check_response(code,Response2))
       end}]}].
+
+cwiga_registeration_based_test_() ->
+  {Nick1,Name1,Email1,Password1} = {"noobie","noobie 1","noobie@noobie.com","blahblah"},
+  [{setup,
+    fun() ->
+        inets:start(),
+        chatterl_serv:start(),
+        chatterl_mid_man:start(),
+        chatterl_store:start_link(ram_copies),
+        cwiga:start_link(8080)
+    end,
+    fun(_) ->
+        chatterl_mid_man:stop(),
+        chatterl_serv:stop(),
+        chatterl_store:stop(),
+        mnesia:clear_table(registered_user),
+        cwiga:stop()
+    end,
+    [{"CWIGA does not allow clients to register if their passwords don't match",
+      fun() ->
+          Args = [{"pass2",Password1},{"pass1","adasd"},{"email",Email1},{"name",Name1}],
+          Body = set_params(Args),
+          Response = http_request(post,?URL ++ "/register/" ++ Nick1, Body),
+          ?assertEqual(404,check_response(code,Response)),
+          ?assertEqual(<<"noobie's passwords must match">>,check_json(mochijson2:decode(check_response(body,Response))))
+      end},
+     {"CWIGA allows client to register if they have the correct credentials",
+      fun() ->
+          Args = [{"pass2",Password1},{"pass1",Password1},{"email",Email1},{"name",Name1}],
+          Body = set_params(Args),
+          Response = http_request(post,?URL ++ "/register/" ++ Nick1, Body),
+          ?assertEqual(200,check_response(code,Response)),
+          ?assertEqual(<<"noobie is registered">>,check_json(mochijson2:decode(check_response(body,Response))))
+      end},
+    {"CWIGA does not allows clients to register if a nick is already in use",
+      fun() ->
+          Args = [{"pass2",Password1},{"pass1",Password1},{"email",Email1},{"name",Name1}],
+          Body = set_params(Args),
+          Response = http_request(post,?URL ++ "/register/" ++ Nick1, Body),
+          ?assertEqual(404,check_response(code,Response)),
+          ?assertEqual(<<"noobie is already registered">>,check_json(mochijson2:decode(check_response(body,Response))))
+      end}]}].

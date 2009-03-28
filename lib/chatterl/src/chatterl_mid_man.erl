@@ -158,7 +158,7 @@ register(ContentType,{Nick,{Name,Email,Password1,Password2}}) ->
   {Type,Reply} =
     case chatterl_serv:register(Nick,{Name,Email,Password1,Password2}) of
       {error,Error} ->
-        {"failure",Error};
+        {"error",Error};
       {ok,Msg} -> {"success",Msg}
     end,
   get_response_body(ContentType,build_carrier(Type,Reply)).
@@ -377,7 +377,7 @@ group_send(ContentType,{Group,Sender,Message}) ->
               {ok,Msg} ->
                 {"success",Msg};
               {error,Error} ->
-                {"failure",Error}
+                {"error",Error}
             end;
           false ->
             {"error","Must join group first!"}
