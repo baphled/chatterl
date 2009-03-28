@@ -8,7 +8,7 @@
 -define(URL,"http://127.0.0.1:8080").
 
 handles_test_() ->
-  {Client,Client2,Group,ContentType} = {"baph","baphled","nu",["text/json"]},
+  {Client,Group} = {"baph","nu"},
   [{setup,
     fun() ->
         inets:start(),
@@ -54,7 +54,7 @@ handles_test_() ->
           ?assert(is_tuple(check_json(mochijson2:decode(check_response(body,Response))))),
           ?assertEqual(<<"Group doesn't exist!">>,check_json(mochijson2:decode(check_response(body,Response2))))
       end},
-     {"CWIGA can retrieve a groups messages",
+     {"CWIGA can retrieve a groups empty messages",
       fun() ->
           Response =  http:request("http://127.0.0.1:8080/groups/poll/" ++ Group),
           Response2 =  http:request("http://127.0.0.1:8080/groups/poll/" ++ "blah"),
@@ -84,7 +84,7 @@ handles_test_() ->
       end}]}].
 
 groups_handle_test_() ->
-  {Client,Client2,Group,ContentType} = {"baph","baphled","nu",["text/json"]},
+  {Client,Group} = {"baph","nu"},
   [{setup,
     fun() ->
         inets:start(),
@@ -128,7 +128,7 @@ groups_handle_test_() ->
       end}]}].
 
 groups_send_message_handle_test_() ->
-  {Client,Client2,Group,ContentType} = {"baph","baphled","nu",["text/json"]},
+  {Client,Client2,Group} = {"baph","baphled","nu"},
   [{setup,
     fun() ->
         inets:start(),
@@ -155,7 +155,7 @@ groups_send_message_handle_test_() ->
           ?assertEqual(<<"baph joined group">>,check_json(mochijson2:decode(check_response(body,Response)))),
           ?assertEqual(<<"Unable to connect!">>,check_json(mochijson2:decode(check_response(body,Response2))))
       end},
-     {"CWIGA clients are unable to send messages a group if they are not connected to it",
+     {"CWIGA allows clients are unable to send messages a group if they are not connected to it",
       fun() ->
           Args = [{"msg","hey"},{"client",Client2}],
           Body = set_params(Args),
@@ -170,4 +170,14 @@ groups_send_message_handle_test_() ->
           Response = http_request(post,?URL ++ "/groups/send/" ++ Group, Body),
           ?assertEqual(200,check_response(code,Response)),
           ?assertEqual(<<"Message sent">>,check_json(mochijson2:decode(check_response(body,Response))))
+      end},
+     {"CWIGA allows clients are able to leave a chatterl group",
+      fun() ->
+          Args = [{"client",Client}],
+          Body = set_params(Args),
+          Response = http_request(post,?URL ++ "/groups/leave/" ++ Group, Body),
+          Response2 = http_request(post,?URL ++ "/groups/leave/" ++ Group, Body),
+          ?assertEqual(200,check_response(code,Response)),
+          ?assertEqual(<<"baph has disconnected from nu">>,check_json(mochijson2:decode(check_response(body,Response)))),
+          ?assertEqual(501,check_response(code,Response2))
       end}]}].

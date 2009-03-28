@@ -58,6 +58,10 @@ handle('POST',"/groups/join/" ++ Group,ContentType,Post) ->
   [{"client",Client}] = Post,
   Response = chatterl_mid_man:group_join(ContentType,{Group,Client}),
   handle_response(Response,ContentType);
+handle('POST',"/groups/leave/" ++ Group,ContentType,Post) ->
+  [{"client",Client}] = Post,
+  Response = chatterl_mid_man:group_leave(ContentType,{Group,Client}),
+  handle_response(Response,ContentType);
 handle('GET',"/users/connect/" ++ Client,ContentType,_Post) ->
   handle_response(chatterl_mid_man:connect(ContentType,Client),ContentType);
 handle('GET',"/users/disconnect/" ++ Client,ContentType,_Post) ->

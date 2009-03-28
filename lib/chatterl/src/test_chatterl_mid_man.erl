@@ -72,22 +72,6 @@ chatterl_mid_man_message_poll_test_() ->
           ?assert({struct,[{<<"messages">>,[]}]} /= mochijson2:decode(chatterl_mid_man:user_poll(["text/json"],Client2)))
       end}]}].
 
-chatterl_serv_register_test_() ->
-  {Nick1,Name1,Email1,Password1} = {"noobie","noobie 1","noobie@noobie.com","blahblah"},
-  [{setup,
-    fun() ->
-        chatterl:start()
-    end,
-    fun(_) ->
-        chatterl:stop(),
-        mnesia:delete_table(registered_user)
-    end,
-    [{"Client can login via chatterl_serv",
-      fun() ->
-          ?assertEqual({error,"blah's passwords must match"},chatterl_serv:register("blah",{"yo","y@me.com","pass","pas"})),
-          ?assertEqual({ok,"noobie is registered"},chatterl_serv:register(Nick1,{Name1,Email1,Password1,Password1})),
-          ?assertEqual({error,"noobie is already registered"},chatterl_serv:register(Nick1,{Name1,Email1,Password1,Password1}))
-      end}]}].
 
 chatterl_mid_man_registered_client_test_() ->
   {Nick1,Name1,Email1,Password1,Password2} = {"noobie","noobie 1","noobie@noobie.com","blahblah","asfdasdf"},
