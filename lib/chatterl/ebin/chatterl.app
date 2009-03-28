@@ -22,7 +22,7 @@
 	     test_chatterl_mid_man,
 	     test_chatterl_store,
 	     test_cwiga]},
-   {registered,[chatterl_groups, chatterl_mid_man, chatterl,serv, chatterl_sup]},
+   {registered,[chatterl_groups, chatterl,serv]},
    {applications, [kernel, stdlib, crypto, inets, mochiweb]},
    {mod, {chatterl,[{port,9000},{copy,ram_copies}]}},
    {start_phases, []}]}.

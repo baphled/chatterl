@@ -63,8 +63,8 @@ init([Port]) ->
     Shutdown = 2000,
     Type = worker,
 
-    Gateway = {chatterl_gateway, {chatterl_gateway, start, [Port]},
-              Restart, Shutdown, Type, [chatterl_serv]},
+    Gateway = {cwiga, {cwiga, start_link, [Port]},
+              Restart, Shutdown, Type, [cwiga]},
 
     %% Ideally we want this supervisor to be optional
     MidMan = {chatterl_mid_man, {chatterl_mid_man, start, []},
