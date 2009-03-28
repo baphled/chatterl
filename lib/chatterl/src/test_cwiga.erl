@@ -143,19 +143,27 @@ groups_send_message_handle_test_() ->
         chatterl_serv:stop(),
         cwiga:stop()
     end,
-    [{"CWIGA can retrieve a list of groups a client is joined to",
+    [{"CWIGA allows a client to join a group",
       fun() ->
           Args = [{"client",Client}],
           Body = set_params(Args),
           Response = http:request(post, {?URL ++ "/groups/join/" ++ Group, [], "application/x-www-form-urlencoded", Body}, [], []),
-          ?assertEqual(200,check_response(code,Response))
-          end},
+          ?assertEqual(200,check_response(code,Response)),
+          ?assertEqual(<<"baph joined group">>,check_json(mochijson2:decode(check_response(body,Response))))
+      end},
+     {"CWIGA can retrieve a list of groups a client is joined to",
+      fun() ->
+          Args = [{"client",Client}],
+          Body = set_params(Args),
+          Response = http:request(post, {?URL ++ "/groups/list/" ++ "blah", [], "application/x-www-form-urlencoded", Body}, [], []),
+          ?assertEqual(404,check_response(code,Response))
+      end},
      {"CWIGA clients are unable to send messages a group if they are not connected to it",
       fun() ->
           Args = [{"msg","hey"},{"client",Client2}],
           Body = set_params(Args),
           Response = http:request(post, {?URL ++ "/groups/send/" ++ Group, [], "application/x-www-form-urlencoded", Body}, [], []),
-          %?assertEqual(404,check_response(code,Response)),
+          ?assertEqual(404,check_response(code,Response)),
           ?assertEqual(<<"Must join group first!">>,check_json(mochijson2:decode(check_response(body,Response))))
       end},
      {"CWIGA allows clients to send messages to chatterl groups",
