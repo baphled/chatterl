@@ -4,14 +4,18 @@
 -include_lib("chatterl.hrl").
 
 -import(test_helpers,[check_response/2,check_json/1]).
+
 handles_test_() ->
+  {Client,Group,ContentType} = {"baph","nu",["text/json"]},
   [{setup,
     fun() ->
         inets:start(),
         chatterl_serv:start(),
+        chatterl_mid_man:start(),
         cwiga:start_link(8080)
     end,
     fun(_) ->
+        chatterl_mid_man:stop(),
         chatterl_serv:stop(),
         cwiga:stop()
     end,
@@ -35,4 +39,20 @@ handles_test_() ->
       fun() ->
          Response = http:request("http://127.0.0.1:8080/users/list.xml"),
          ?assertEqual({"content-type","text/xml"},check_response(content_type,Response))
+      end},
+     {"CWIGA can connect clients to chatterl",
+      fun() ->
+          Response = http:request("http://127.0.0.1:8080/users/connect/" ++ Client),
+          Response2 = http:request("http://127.0.0.1:8080/users/connect/" ++ Client),
+          ?assertEqual(200,check_response(code,Response)),
+          ?assertEqual(<<"baph now connected">>,check_json(mochijson2:decode(check_response(body,Response)))),
+          ?assertEqual(<<"baph is already connected">>,check_json(mochijson2:decode(check_response(body,Response2))))
+      end},
+     {"CWIGA can disconnect clients from chatterl",
+      fun() ->
+          Response = http:request("http://127.0.0.1:8080/users/disconnect/" ++ Client),
+          Response2 = http:request("http://127.0.0.1:8080/users/disconnect/" ++ Client),
+          ?assertEqual(200,check_response(code,Response)),
+          ?assertEqual(<<"Disconnected">>,check_json(mochijson2:decode(check_response(body,Response)))),
+          ?assertEqual(<<"Not connected">>,check_json(mochijson2:decode(check_response(body,Response2))))
       end}]}].
