@@ -6,12 +6,13 @@
 -import(test_helpers,[check_response/2,check_json/1]).
 
 handles_test_() ->
-  {Client,Group,ContentType} = {"baph","nu",["text/json"]},
+  {Client,Client2,Group,ContentType} = {"baph","baphled","nu",["text/json"]},
   [{setup,
     fun() ->
         inets:start(),
         chatterl_serv:start(),
         chatterl_mid_man:start(),
+        chatterl_serv:create(Group,"nu room"),
         cwiga:start_link(8080)
     end,
     fun(_) ->
@@ -35,6 +36,14 @@ handles_test_() ->
          ?assertEqual(200,check_response(code,Response)),
          ?assertEqual({struct,[{<<"clients">>,[]}]},check_json(mochijson2:decode(check_response(body,Response))))
      end},
+     {"CWIGA can list of users in a groups",
+      fun() ->
+          Response =  http:request("http://127.0.0.1:8080/users/list/" ++ Group),
+          Response2 =  http:request("http://127.0.0.1:8080/users/list/" ++ "blah"),
+          ?assertEqual(200,check_response(code,Response)),
+          ?assertEqual({struct,[{<<"clients">>,[]}]},check_json(mochijson2:decode(check_response(body,Response)))),
+          ?assertEqual(<<"Group: blah doesn't exist">>,check_json(mochijson2:decode(check_response(body,Response2))))
+      end},
      {"CWIGA can retrieve responses in XML format",
       fun() ->
          Response = http:request("http://127.0.0.1:8080/users/list.xml"),
@@ -55,4 +64,40 @@ handles_test_() ->
           ?assertEqual(200,check_response(code,Response)),
           ?assertEqual(<<"Disconnected">>,check_json(mochijson2:decode(check_response(body,Response)))),
           ?assertEqual(<<"Not connected">>,check_json(mochijson2:decode(check_response(body,Response2))))
+      end}]}].
+
+groups_handle_test_() ->
+  {Client,Client2,Group,ContentType} = {"baph","baphled","nu",["text/json"]},
+  [{setup,
+    fun() ->
+        inets:start(),
+        chatterl_serv:start(),
+        chatterl_mid_man:start(),
+        cwiga:start_link(8080),
+        http:request("http://127.0.0.1:8080/users/connect/" ++ Client)
+    end,
+    fun(_) ->
+        chatterl_mid_man:stop(),
+        chatterl_serv:stop(),
+        cwiga:stop()
+    end,
+    [
+     {"CWIGA allows clients to poll chatterl for messages",
+      fun() ->
+          Response = http:request("http://127.0.0.1:8080/users/poll/" ++ "blah"),
+          Response2 = http:request("http://127.0.0.1:8080/users/poll/" ++ Client),
+          ?assertEqual(200,check_response(code,Response)),
+          ?assertEqual(200,check_response(code,Response)),
+          ?assertEqual(<<"Client: blah doesn't exist">>,check_json(mochijson2:decode(check_response(body,Response)))),
+          ?assertEqual({struct,[{<<"messages">>,[]}]},check_json(mochijson2:decode(check_response(body,Response2))))
+      end},
+     {"CWIGA can list the groups on chatterl",
+      fun() ->
+          Response = http:request("http://127.0.0.1:8080/groups/list"),
+          chatterl_serv:create(Group,"nu room"),
+          Response2 = http:request("http://127.0.0.1:8080/groups/list"),
+          ?assertEqual(200,check_response(code,Response)),
+          ?assertEqual(200,check_response(code,Response2)),
+          ?assertEqual({struct,[{<<"groups">>,[]}]},check_json(mochijson2:decode(check_response(body,Response)))),
+          ?assert(Response /= Response2)
       end}]}].

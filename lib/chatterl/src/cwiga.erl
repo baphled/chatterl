@@ -55,8 +55,14 @@ handle('GET',"/users/connect/" ++ Client,ContentType,_Post) ->
   success(chatterl_mid_man:connect(ContentType,Client),ContentType);
 handle('GET',"/users/disconnect/" ++ Client,ContentType,_Post) ->
   success(chatterl_mid_man:disconnect(ContentType,Client),ContentType);
+handle('GET',"/users/list/" ++ Group,ContentType,_Post) ->
+  success(chatterl_mid_man:user_list(ContentType,Group),ContentType);
 handle('GET',"/users/list",ContentType,_Post) ->
   success(chatterl_mid_man:user_list(ContentType),ContentType);
+handle('GET',"/users/poll/" ++ Client,ContentType,_Post) ->
+  success(chatterl_mid_man:user_poll(ContentType,Client),ContentType);
+handle('GET',"/groups/list",ContentType,_Post) ->
+  success(chatterl_mid_man:group_list(ContentType),ContentType);
 handle(_,Path,ContentType,_) ->
   Response = message_handler:get_response_body(ContentType,
                                                message_handler:build_carrier("error", "Unknown command: " ++Path)),
