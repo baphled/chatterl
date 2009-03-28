@@ -219,7 +219,7 @@ group_test_() ->
                        check_json(mochijson2:decode(chatterl_mid_man:group_create(ContentType,{Room,Description})))),
           ?assertEqual(<<"Unable to create group: nu">>,
                        check_json(mochijson2:decode(chatterl_mid_man:group_create(ContentType,{Room,Description}))))
-       end},
+       end}},
       {"Groups can group destroyed",
        fun() ->
           % abit lazy but not sure how to check the creation date dynamically atm.
