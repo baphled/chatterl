@@ -209,7 +209,8 @@ user_msg(ContentType,{Sender, Client, Message}) ->
       true ->
         case gen_server:call({global, ?MODULE}, {private_msg, Sender, Client, Message},infinity) of
           {ok,Msg} -> {"success",Msg};
-          {error,Error} -> {"error",Error}
+          {error,Error} -> {"error",Error};
+          {fail,Failure} -> {"failure",Failure}
         end;
       false ->
         {"failure",lists:append(Sender," is not connected!")}

@@ -29,7 +29,7 @@ chatterl_client_handle_test_() ->
      {"Can a client send private messages",
       fun() ->
           ?assertEqual({ok,msg_sent}, gen_server:call({global,Client1},{private_msg,Client2,"sup"})),
-          ?assertEqual({error,"Cannot find user!"}, gen_server:call({global,Client1},{private_msg,"noob","sup"})),
+          ?assertEqual({fail,"Cannot find user!"}, gen_server:call({global,Client1},{private_msg,"noob","sup"})),
           ?assertEqual({ok,msg_sent}, gen_server:call({global,Client2},{private_msg,Client1,"sup"})),
           ?assertEqual({ok,msg_sent}, chatterl_client:private_msg(Client2,Client1,"sup")),
           ?assert(erlang:is_list(gen_server:call({global,Client1},poll_messages))),

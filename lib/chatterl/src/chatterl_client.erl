@@ -185,7 +185,7 @@ handle_call({private_msg,Client,Message},_From,State) ->
                    {ok,msg_sent};
                  {error, Error} ->
                    case chatterl_store:get_registered(Client) of
-                     [] -> {error, Error};
+                     [] -> {fail, Error};
                      [Registered] -> chatterl_store:archive_msg(State#client.name,{erlang:localtime(),Client,Message})
                    end
                end
