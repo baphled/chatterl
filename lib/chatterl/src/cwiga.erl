@@ -98,32 +98,9 @@ handle_call(stop, _From, State) ->
 handle_call({'POST',Url,ContentType,Post},_From,State) ->
   Reply = handle_response(handle_request('POST',Url,ContentType,Post),ContentType),
   {reply, Reply, State};
-handle_call({'GET',"/users/connect/" ++ Client,ContentType,_Post},_From,State) ->
-  Reply = handle_response(handle_request('GET',"/users/connect/" ++ Client,ContentType,_Post),ContentType),
-  {reply, Reply, State};
-handle_call({'GET',"/users/disconnect/" ++ Client,ContentType,_Post},_From,State) ->
-  Reply = handle_response(handle_request('GET',"/users/disconnect/" ++ Client,ContentType,_Post),ContentType),
-  {reply, Reply, State};
-handle_call({'GET',"/users/list/" ++ Group,ContentType,_Post},_From,State) ->
-  Reply = handle_response(handle_request('GET',"/users/list/" ++ Group,ContentType,_Post),ContentType),
-  {reply, Reply, State};
-handle_call({'GET',"/users/list",ContentType,_Post},_From,State) ->
-  Reply = handle_response(handle_request('GET',"/users/list",ContentType,_Post),ContentType),
-  {reply, Reply, State};
-handle_call({'GET',"/users/poll/" ++ Client,ContentType,_Post},_From,State) ->
-  Reply = handle_response(handle_request('GET',"/users/poll/" ++ Client,ContentType,_Post),ContentType),
-  {reply, Reply, State};
-handle_call({'GET',"/users/groups/" ++ Client,ContentType,_Post},_From,State) ->
-  Reply = handle_response(handle_request('GET',"/users/groups/" ++ Client,ContentType,_Post),ContentType),
-  {reply, Reply, State};
-handle_call({'GET',"/groups/poll/" ++ Group,ContentType,_Post},_From,State) ->
-  Reply = handle_response(handle_request('GET',"/groups/poll/" ++ Group,ContentType,_Post),ContentType),
-  {reply, Reply, State};
-handle_call({'GET',"/groups/list",ContentType,_Post},_From,State) ->
-  Reply = handle_response(handle_request('GET',"/groups/list",ContentType,_Post),ContentType),
-  {reply, Reply, State};
-handle_call({'GET',"/groups/info/" ++ Group,ContentType,_Post},_From,State) ->
-  Reply = handle_response(handle_request('GET',"/groups/info/" ++ Group,ContentType,_Post),ContentType),
+handle_call({'GET',Url,ContentType,_Post},_From,State) ->
+  Result = handle_request('GET',Url,ContentType),
+  Reply = handle_response(Result,ContentType),
   {reply, Reply, State};
 handle_call({_,Path,ContentType,_},_From,State) ->
   Response = message_handler:get_response_body(ContentType,
@@ -133,49 +110,6 @@ handle_call({_,Path,ContentType,_},_From,State) ->
 handle_call(_Request, _From, State) ->
   Reply = ok,
   {reply, Reply, State}.
-
-handle_request('GET', Url, ContentType,_Post) ->
-  case Url of
-    "/users/connect/" ++ Client ->
-      chatterl_mid_man:connect(ContentType,Client);
-    "/users/disconnect/" ++ Client ->
-      chatterl_mid_man:disconnect(ContentType,Client);
-    "/users/list" ->
-      chatterl_mid_man:user_list(ContentType);
-    "/users/list/" ++ Group ->
-      chatterl_mid_man:user_list(ContentType,Group);
-    "/users/poll/" ++ Client ->
-      chatterl_mid_man:user_poll(ContentType,Client);
-    "/users/groups/" ++ Client ->
-      chatterl_mid_man:user_groups(ContentType,Client);
-    "/groups/poll/" ++ Group ->
-      chatterl_mid_man:group_poll(ContentType,Group);
-    "/groups/list" ->
-      chatterl_mid_man:group_list(ContentType);
-    "/groups/info/" ++ Group ->
-      chatterl_mid_man:group_info(ContentType,Group)
-  end;
-handle_request('POST',Url,ContentType,Post) ->
-  case Url of
-    "/register/" ++ Nick ->
-      [{"name",Name},{"email",Email},{"pass1",Pass1},{"pass2",Pass2}] = Post,
-      chatterl_mid_man:register(ContentType,{Nick,{Name,Email,Pass1,Pass2}});
-    "/groups/send/" ++ Group ->
-      [{"client",Sender},{"msg",Message}] = Post,
-      chatterl_mid_man:group_send(ContentType,{Group,Sender,Message});
-    "/groups/join/" ++ Group ->
-      [{"client",Client}] = Post,
-      chatterl_mid_man:group_join(ContentType,{Group,Client});
-    "/groups/leave/" ++ Group ->
-      [{"client",Client}] = Post,
-      chatterl_mid_man:group_leave(ContentType,{Group,Client});
-    "/users/login" ->
-      [{"login",Login},{"pass",Pass}] = Post,
-      chatterl_mid_man:login(ContentType,{Login,Pass});
-    "/users/logout" ->
-      [{"client",Client}] = Post,
-      chatterl_mid_man:logout(ContentType,Client)
-  end.
 %%--------------------------------------------------------------------
 %% @doc
 %% Handling cast messages
@@ -232,6 +166,53 @@ code_change(_OldVsn, State, _Extra) ->
 %%% Internal functions
 %%--------------------------------------------------------------------
 
+
+handle_request('GET', Url, ContentType) ->
+  case Url of
+    "/users/connect/" ++ Client ->
+      chatterl_mid_man:connect(ContentType,Client);
+    "/users/disconnect/" ++ Client ->
+      chatterl_mid_man:disconnect(ContentType,Client);
+    "/users/list" ->
+      chatterl_mid_man:user_list(ContentType);
+    "/users/list/" ++ Group ->
+      chatterl_mid_man:user_list(ContentType,Group);
+    "/users/poll/" ++ Client ->
+      chatterl_mid_man:user_poll(ContentType,Client);
+    "/users/groups/" ++ Client ->
+      chatterl_mid_man:user_groups(ContentType,Client);
+    "/groups/poll/" ++ Group ->
+      chatterl_mid_man:group_poll(ContentType,Group);
+    "/groups/list" ->
+      chatterl_mid_man:group_list(ContentType);
+    "/groups/info/" ++ Group ->
+      chatterl_mid_man:group_info(ContentType,Group);
+    _ ->
+      message_handler:get_response_body(ContentType,
+                                               message_handler:build_carrier("error", "Unknown command: " ++Url))
+  end.
+
+handle_request('POST',Url,ContentType,Post) ->
+  case Url of
+    "/register/" ++ Nick ->
+      [{"name",Name},{"email",Email},{"pass1",Pass1},{"pass2",Pass2}] = Post,
+      chatterl_mid_man:register(ContentType,{Nick,{Name,Email,Pass1,Pass2}});
+    "/groups/send/" ++ Group ->
+      [{"client",Sender},{"msg",Message}] = Post,
+      chatterl_mid_man:group_send(ContentType,{Group,Sender,Message});
+    "/groups/join/" ++ Group ->
+      [{"client",Client}] = Post,
+      chatterl_mid_man:group_join(ContentType,{Group,Client});
+    "/groups/leave/" ++ Group ->
+      [{"client",Client}] = Post,
+      chatterl_mid_man:group_leave(ContentType,{Group,Client});
+    "/users/login" ->
+      [{"login",Login},{"pass",Pass}] = Post,
+      chatterl_mid_man:login(ContentType,{Login,Pass});
+    "/users/logout" ->
+      [{"client",Client}] = Post,
+      chatterl_mid_man:logout(ContentType,Client)
+  end.
 %%--------------------------------------------------------------------
 %% @private
 %% @doc
@@ -266,8 +247,13 @@ success(Response,ContentType) ->
 
 
 handle_response(Response,ContentType) ->
-  case check_json_response(Response) of
-    {<<"success">>,_} -> success(Response,ContentType);
-    {<<"error">>,_} -> error(Response,ContentType);
-    {<<"failure">>,_} -> failure(Response,ContentType)
+  case ContentType of
+    ["text/xml"] ->
+      success(Response,ContentType);
+    ["text/json"] ->
+      case check_json_response(Response) of
+        {<<"success">>,_} -> success(Response,ContentType);
+        {<<"error">>,_} -> error(Response,ContentType);
+        {<<"failure">>,_} -> failure(Response,ContentType)
+      end
   end.

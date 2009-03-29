@@ -59,7 +59,7 @@ handles_test_() ->
       end},
      {"CWIGA can retrieve responses in XML format",
       fun() ->
-         Response = http:request("http://127.0.0.1:9000/list.xml"),
+         Response = http:request("http://127.0.0.1:9000/users/list.xml"),
          ?assertEqual({"content-type","text/xml"},check_response(content_type,Response))
       end},
      {"CWIGA can connect clients to chatterl",
