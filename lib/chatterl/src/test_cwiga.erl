@@ -1,3 +1,11 @@
+%%%----------------------------------------------------------------
+%%% @author Yomi Colledge <yomi@boodah.net>
+%%% @doc
+%%% Test cases for CWIGA
+%%%
+%%% @end
+%%% @copyright 2009 Yomi Colledge
+%%%----------------------------------------------------------------
 -module(test_cwiga).
 
 -include_lib("eunit/include/eunit.hrl").

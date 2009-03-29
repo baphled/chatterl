@@ -3,14 +3,35 @@
 -export([start_client/3,start_group/2,check_response/2,check_json/1,set_params/1,http_request/3,http_login/2,headers/2]).
 
 %% Helper functions.
+%%--------------------------------------------------------------------
+%% @doc
+%% Sets up a clients & group process
+%%
+%% @spec start_client(Client,Group,Description) -> ok
+%% @end
+%%--------------------------------------------------------------------
 start_client(Client,Group,Description) ->
   start_group(Group,Description),
   chatterl_client:start(Client).
 
+%%--------------------------------------------------------------------
+%% @doc
+%% Sets up a  group process
+%%
+%% @spec start_group(Group,Description) -> ok
+%% @end
+%%--------------------------------------------------------------------
 start_group(Group,Description) ->
   chatterl:start(),
   chatterl_serv:create(Group,Description).
 
+%%--------------------------------------------------------------------
+%% @doc
+%% Sets up a clients & group process
+%%
+%% @spec check_response(Check,Response) -> HTMLBody
+%% @end
+%%--------------------------------------------------------------------
 check_response(Check,Response) ->
   {ok,{{"HTTP/1.1",Code,Status},
      [_Date,
@@ -25,6 +46,14 @@ check_response(Check,Response) ->
     body -> Body
   end.
 
+%%--------------------------------------------------------------------
+%% @doc
+%% Checks our JSON response
+%%
+%% Used to help shorten our results
+%% @spec check_json(Json) -> JSONResponse
+%% @end
+%%--------------------------------------------------------------------
 check_json(Json) ->
   {struct,[{<<"chatterl">>,{struct,[{<<"response">>,{struct,[Response]}}]}}]} = Json,
   case Response of
@@ -36,11 +65,25 @@ check_json(Json) ->
       Result
   end.
 
+%%--------------------------------------------------------------------
+%% @doc
+%% Sets up POST parameters
+%%
+%% @spec set_params(Args) -> [HTTPParams]
+%% @end
+%%--------------------------------------------------------------------
 set_params(Args) ->
   lists:concat(lists:foldl(
                  fun (Rec, []) -> [Rec]; (Rec, Ac) -> [Rec, "&" | Ac] end,
                  [],[K ++ "=" ++ url_encode(V) || {K, V} <- Args])).
 
+%%--------------------------------------------------------------------
+%% @doc
+%% Encode URL
+%%
+%% @spec url_encode([H|T]) -> [URL]
+%% @end
+%%--------------------------------------------------------------------
 url_encode([H|T]) ->
     if
         H >= $a, $z >= H ->
@@ -59,9 +102,15 @@ url_encode([H|T]) ->
                     [$%, $0, X | url_encode(T)]
             end
      end;
-
 url_encode([]) -> [].
 
+%%--------------------------------------------------------------------
+%% @doc
+%% Converts integers to hexidecimal
+%%
+%% @spec integer_to_hex(I]) -> [URL]
+%% @end
+%%--------------------------------------------------------------------
 integer_to_hex(I) ->
     case catch erlang:integer_to_list(I, 16) of
         {'EXIT', _} ->
@@ -78,12 +127,26 @@ old_integer_to_hex(I) when I>=16 ->
     N = trunc(I/16),
     old_integer_to_hex(N) ++ old_integer_to_hex(I rem 16).
 
+%%--------------------------------------------------------------------
+%% @doc
+%% Makes HTTP POST requests
+%%
+%% @spec http_request(post,Url,Body) -> [HTTPResponse]
+%% @end
+%%--------------------------------------------------------------------
 http_request(post,Url,Body) ->
   http:request(post, {Url, [], "application/x-www-form-urlencoded", Body}, [], []).
 
 http_login(Url,{Login,Pass}) ->
   http:request(get, {Url, headers(Login, Pass)}, [], []).
 
+%%--------------------------------------------------------------------
+%% @doc
+%% Sets up our HTTP headers
+%%
+%% @spec headers(Login,Pass) -> [HTTPAuth]
+%% @end
+%%--------------------------------------------------------------------
 headers(nil, nil) -> [{"User-Agent", "ChatterlTest/0.1"}];
 headers(User, Pass) when is_binary(User) ->
     headers(binary_to_list(User), Pass);

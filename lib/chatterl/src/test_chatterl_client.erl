@@ -1,7 +1,17 @@
+%%%----------------------------------------------------------------
+%%% @author Yomi Colledge <yomi@boodah.net>
+%%% @doc
+%%% Test cases for chatterl_client
+%%%
+%%% @end
+%%% @copyright 2009 Yomi Colledge
+%%%----------------------------------------------------------------
 -module(test_chatterl_client).
 
 -include_lib("eunit/include/eunit.hrl").
 -include_lib("chatterl.hrl").
+
+-import(test_helpers,[start_client/3,start_group/2]).
 
 chatterl_client_handle_test_() ->
   {Client1,Client2,Group,Description} = {"noobie","blah","anuva1","a nu room"},
@@ -41,12 +51,3 @@ chatterl_client_handle_test_() ->
           ?assertEqual({ok, drop_group}, gen_server:call({global,Client1},{leave_group,Group})),
           ?assertEqual(stopped,gen_server:call({global,Client2},{stop,"because"}))
       end}]}].
-
-%% Helper functions.
-start_client(Client,Group,Description) ->
-  start_group(Group,Description),
-  chatterl_client:start(Client).
-
-start_group(Group,Description) ->
-  chatterl:start(),
-  chatterl_serv:create(Group,Description).
