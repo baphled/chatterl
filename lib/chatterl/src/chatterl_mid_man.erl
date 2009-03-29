@@ -488,16 +488,16 @@ handle_call({group_msg, Sender, Group, Message}, _From, State) ->
 	    end,
     {reply, Reply, State};
 handle_call({private_msg, Sender, Client, Message}, _From, State) ->
-    Reply =
-	case dict:find(Client, State) of
-	    error ->
-		io:format("user not connected"),
-		{error,lists:append(Client," is not connected!")};
-	    {ok, Pid} ->
-		Pid ! {private_msg, Sender, Client, Message},
-		{ok,lists:append(lists:append("Sending message to ",Client),"...")}
-	end,
-    {reply, Reply, State}.
+  Reply =
+    case dict:find(Client, State) of
+      error ->
+        io:format("user not connected"),
+        gen_server:call({global,Sender},{private_msg,Client,Message});
+      {ok, Pid} ->
+        Pid ! {private_msg, Sender, Client, Message},
+        {ok,lists:append(lists:append("Sending message to ",Client),"...")}
+    end,
+  {reply, Reply, State}.
 
 %%--------------------------------------------------------------------
 %% @doc
