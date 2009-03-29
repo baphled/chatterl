@@ -239,4 +239,12 @@ cwiga_registeration_based_test_() ->
            Response = http_request(post,?URL ++ "/users/logout", Body),
            ?assertEqual(501,check_response(code,Response)),
            ?assertEqual(<<"Not logged in">>,check_json(mochijson2:decode(check_response(body,Response))))
+      end},
+      {"CWIGA will logout a client that is connected to chatterl",
+       fun() ->
+           Args = [{"client",Nick1}],
+           Body = set_params(Args),
+           Response = http_request(post,?URL ++ "/users/logout", Body),
+           ?assertEqual(200,check_response(code,Response)),
+           ?assertEqual(<<"noobie is logged out.">>,check_json(mochijson2:decode(check_response(body,Response))))
       end}]}].
