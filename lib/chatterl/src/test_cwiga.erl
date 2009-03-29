@@ -267,11 +267,11 @@ cwiga_registeration_clients_can_get_archived_messages_test_() ->
     end,
     [{"CWIGA does not allow clients to messages to clients that are not logged in or registered",
       fun() ->
-          Args = [{"msg","hey"},{"client",Nick1}],
+          Args = [{"msg","hey"},{"client",Sender}],
           Body = set_params(Args),
-          Response = http_request(post,?URL ++ "/users/send/" ++ Sender, Body),
+          Response = http_request(post,?URL ++ "/users/send/" ++ Nick1, Body),
           ?assertEqual(501,check_response(code,Response)),
-          ?assertEqual(<<"Cannot find user!">>,check_json(mochijson2:decode(check_response(body,Response))))
+          ?assertEqual(<<"noobie is not connected!">>,check_json(mochijson2:decode(check_response(body,Response))))
       end},
     {"CWIGA does not allow clietns to send message if the sender does not exist",
       fun() ->
@@ -280,4 +280,12 @@ cwiga_registeration_clients_can_get_archived_messages_test_() ->
           Response = http_request(post,?URL ++ "/users/send/" ++ "blah", Body),
           ?assertEqual(501,check_response(code,Response)),
           ?assertEqual(<<"blah is not connected!">>,check_json(mochijson2:decode(check_response(body,Response))))
+      end},
+    {"CWIGA does not allow clietns to send message if the sender does not exist",
+      fun() ->
+          Args = [{"msg","hey"},{"client",Nick1}],
+          Body = set_params(Args),
+          Response = http_request(post,?URL ++ "/users/send/" ++ Sender, Body),
+          ?assertEqual(200,check_response(code,Response)),
+          ?assertEqual(<<"Sending message to noobie...">>,check_json(mochijson2:decode(check_response(body,Response))))
       end}]}].

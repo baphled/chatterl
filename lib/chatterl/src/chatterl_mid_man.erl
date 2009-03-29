@@ -490,7 +490,7 @@ handle_call({group_msg, Sender, Group, Message}, _From, State) ->
     {reply, Reply, State};
 handle_call({private_msg, Sender, Client, Message}, _From, State) ->
   Reply =
-    case dict:find(Client, State) of
+    case dict:find(Sender, State) of
       error ->
         io:format("user not connected"),
         gen_server:call({global,Sender},{private_msg,Client,Message});
