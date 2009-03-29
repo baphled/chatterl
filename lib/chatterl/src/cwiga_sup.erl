@@ -63,7 +63,7 @@ init([Port]) ->
     Shutdown = 2000,
     Type = worker,
 
-    Gateway = {cwiga, {cwiga, start_link, [Port]},
+    Gateway = {cwiga, {cwiga, start, [Port]},
               Restart, Shutdown, Type, [cwiga]},
 
     %% Ideally we want this supervisor to be optional

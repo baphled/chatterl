@@ -19,7 +19,7 @@
 -behaviour(gen_server).
 
 %% API
--export([start_link/1,stop/0]).
+-export([start/1,stop/0]).
 
 -define(APP, "CWIGA").
 %% gen_server callbacks
@@ -39,9 +39,16 @@
 %% @spec start(Port) -> {ok,Pid} | ignore | {error,Error}
 %% @end
 %%--------------------------------------------------------------------
-start_link(Port) ->
+start(Port) ->
   gen_server:start_link({global, ?SERVER}, ?MODULE, [Port], []).
 
+%%--------------------------------------------------------------------
+%% @doc
+%% Stops the server
+%%
+%% @spec stop() -> {ok,Pid} | stopped | {error,Error}
+%% @end
+%%--------------------------------------------------------------------
 stop() ->
     gen_server:call({global, ?SERVER}, stop, infinity).
 
@@ -99,13 +106,10 @@ handle_call({'POST',Url,ContentType,Post},_From,State) ->
   Reply = handle_response(handle_request('POST',Url,ContentType,Post),ContentType),
   {reply, Reply, State};
 handle_call({'GET',Url,ContentType,_Post},_From,State) ->
-  Result = handle_request('GET',Url,ContentType),
-  Reply = handle_response(Result,ContentType),
+  Reply = handle_response(handle_request('GET',Url,ContentType,_Post),ContentType),
   {reply, Reply, State};
 handle_call({_,Path,ContentType,_},_From,State) ->
-  Response = message_handler:get_response_body(ContentType,
-                                               message_handler:build_carrier("error", "Unknown command: " ++Path)),
-  Reply = error(Response,ContentType),
+  Reply = error(unknown(Path,ContentType),ContentType),
   {reply, Reply, State};
 handle_call(_Request, _From, State) ->
   Reply = ok,
@@ -165,9 +169,16 @@ code_change(_OldVsn, State, _Extra) ->
 %%--------------------------------------------------------------------
 %%% Internal functions
 %%--------------------------------------------------------------------
-
-
-handle_request('GET', Url, ContentType) ->
+%%--------------------------------------------------------------------
+%% @private
+%% @doc
+%%
+%% Handles CWIGA's requests
+%% @spec handle_request('GET', Url, ContentType, _Post) -> HTTPResponse
+%%
+%% @end
+%%--------------------------------------------------------------------
+handle_request('GET', Url, ContentType, _Post) ->
   case Url of
     "/users/connect/" ++ Client ->
       chatterl_mid_man:connect(ContentType,Client);
@@ -187,11 +198,8 @@ handle_request('GET', Url, ContentType) ->
       chatterl_mid_man:group_list(ContentType);
     "/groups/info/" ++ Group ->
       chatterl_mid_man:group_info(ContentType,Group);
-    _ ->
-      message_handler:get_response_body(ContentType,
-                                               message_handler:build_carrier("error", "Unknown command: " ++Url))
-  end.
-
+    _ -> unknown(Url,ContentType)
+  end;
 handle_request('POST',Url,ContentType,Post) ->
   case Url of
     "/register/" ++ Nick ->
@@ -215,10 +223,9 @@ handle_request('POST',Url,ContentType,Post) ->
     "/users/logout" ->
       [{"client",Client}] = Post,
       chatterl_mid_man:logout(ContentType,Client);
-     _ ->
-      message_handler:get_response_body(ContentType,
-                                               message_handler:build_carrier("error", "Unknown command: " ++Url))
+     Url -> unknown(Url,ContentType)
   end.
+
 %%--------------------------------------------------------------------
 %% @private
 %% @doc
@@ -238,20 +245,71 @@ get_content_type(Type) ->
 	_ -> ["text/json"]
     end.
 
+%%--------------------------------------------------------------------
+%% @private
+%% @doc
+%% Wrapper method used for successful responses
+%%
+%% @spec check_json_response(Json) -> JSONResponse
+%% @end
+%%--------------------------------------------------------------------
 check_json_response(Json) ->
   {struct,[{<<"chatterl">>,{struct,[{<<"response">>,{struct,[Response]}}]}}]} = mochijson2:decode(Json),
   Response.
 
+%%--------------------------------------------------------------------
+%% @private
+%% @doc
+%% Wrapper method used for error responses
+%%
+%% @spec error(Response,ContentType) -> HTTPResponse
+%% @end
+%%--------------------------------------------------------------------
 error(Response,ContentType) ->
   {404, [{"Content-Type", ContentType}], list_to_binary(Response)}.
 
+%%--------------------------------------------------------------------
+%% @private
+%% @doc
+%% Wrapper method used for failed responses
+%%
+%% @spec failure(Response,ContentType) -> HTTPResponse
+%% @end
+%%--------------------------------------------------------------------
 failure(Response,ContentType) ->
   {501, [{"Content-Type", ContentType}], list_to_binary(Response)}.
 
+%%--------------------------------------------------------------------
+%% @private
+%% @doc
+%% Wrapper method used for successful responses
+%%
+%% @spec success(Response,ContentType) -> HTTPResponse
+%% @end
+%%--------------------------------------------------------------------
 success(Response,ContentType) ->
   {200, [{"Content-Type", ContentType}], list_to_binary(Response)}.
 
+%%--------------------------------------------------------------------
+%% @private
+%% @doc
+%% Wrapper method used for unknown commands
+%%
+%% @spec unknown(Url,ContentType) -> HTTPResponse
+%% @end
+%%--------------------------------------------------------------------
+unknown(Url,ContentType) ->
+  message_handler:get_response_body(ContentType,
+                                    message_handler:build_carrier("error", "Unknown command: " ++Url)).
 
+%%--------------------------------------------------------------------
+%% @private
+%% @doc
+%% Sets up the needed response type for our results.
+%%
+%% @spec handle_response(Response,ContentType) -> HTTPResponse
+%% @end
+%%--------------------------------------------------------------------
 handle_response(Response,ContentType) ->
   case ContentType of
     ["text/xml"] ->
