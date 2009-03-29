@@ -5,7 +5,6 @@
    {vsn, "0.1.1.8"},
    {modules, [chatterl,
    	     message_handler,
-	     chatterl_gateway,
 	     chatterl_mid_man,
    	     chatterl_groups,
 	     chatterl_client,

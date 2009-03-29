@@ -99,31 +99,31 @@ handle_call({'POST',Url,ContentType,Post},_From,State) ->
   Reply = handle_response(handle_request('POST',Url,ContentType,Post),ContentType),
   {reply, Reply, State};
 handle_call({'GET',"/users/connect/" ++ Client,ContentType,_Post},_From,State) ->
-  Reply = handle_response(chatterl_mid_man:connect(ContentType,Client),ContentType),
+  Reply = handle_response(handle_request('GET',"/users/connect/" ++ Client,ContentType,_Post),ContentType),
   {reply, Reply, State};
 handle_call({'GET',"/users/disconnect/" ++ Client,ContentType,_Post},_From,State) ->
-  Reply = handle_response(chatterl_mid_man:disconnect(ContentType,Client),ContentType),
+  Reply = handle_response(handle_request('GET',"/users/disconnect/" ++ Client,ContentType,_Post),ContentType),
   {reply, Reply, State};
 handle_call({'GET',"/users/list/" ++ Group,ContentType,_Post},_From,State) ->
-  Reply = handle_response(chatterl_mid_man:user_list(ContentType,Group),ContentType),
+  Reply = handle_response(handle_request('GET',"/users/list/" ++ Group,ContentType,_Post),ContentType),
   {reply, Reply, State};
 handle_call({'GET',"/users/list",ContentType,_Post},_From,State) ->
-  Reply = handle_response(chatterl_mid_man:user_list(ContentType),ContentType),
+  Reply = handle_response(handle_request('GET',"/users/list",ContentType,_Post),ContentType),
   {reply, Reply, State};
 handle_call({'GET',"/users/poll/" ++ Client,ContentType,_Post},_From,State) ->
-  Reply = handle_response(chatterl_mid_man:user_poll(ContentType,Client),ContentType),
+  Reply = handle_response(handle_request('GET',"/users/poll/" ++ Client,ContentType,_Post),ContentType),
   {reply, Reply, State};
 handle_call({'GET',"/users/groups/" ++ Client,ContentType,_Post},_From,State) ->
-  Reply = handle_response(chatterl_mid_man:user_groups(ContentType,Client),ContentType),
+  Reply = handle_response(handle_request('GET',"/users/groups/" ++ Client,ContentType,_Post),ContentType),
   {reply, Reply, State};
 handle_call({'GET',"/groups/poll/" ++ Group,ContentType,_Post},_From,State) ->
-  Reply = handle_response(chatterl_mid_man:group_poll(ContentType,Group),ContentType),
+  Reply = handle_response(handle_request('GET',"/groups/poll/" ++ Group,ContentType,_Post),ContentType),
   {reply, Reply, State};
 handle_call({'GET',"/groups/list",ContentType,_Post},_From,State) ->
-  Reply = handle_response(chatterl_mid_man:group_list(ContentType),ContentType),
+  Reply = handle_response(handle_request('GET',"/groups/list",ContentType,_Post),ContentType),
   {reply, Reply, State};
 handle_call({'GET',"/groups/info/" ++ Group,ContentType,_Post},_From,State) ->
-  Reply = handle_response(chatterl_mid_man:group_info(ContentType,Group),ContentType),
+  Reply = handle_response(handle_request('GET',"/groups/info/" ++ Group,ContentType,_Post),ContentType),
   {reply, Reply, State};
 handle_call({_,Path,ContentType,_},_From,State) ->
   Response = message_handler:get_response_body(ContentType,
@@ -134,6 +134,27 @@ handle_call(_Request, _From, State) ->
   Reply = ok,
   {reply, Reply, State}.
 
+handle_request('GET', Url, ContentType,_Post) ->
+  case Url of
+    "/users/connect/" ++ Client ->
+      chatterl_mid_man:connect(ContentType,Client);
+    "/users/disconnect/" ++ Client ->
+      chatterl_mid_man:disconnect(ContentType,Client);
+    "/users/list" ->
+      chatterl_mid_man:user_list(ContentType);
+    "/users/list/" ++ Group ->
+      chatterl_mid_man:user_list(ContentType,Group);
+    "/users/poll/" ++ Client ->
+      chatterl_mid_man:user_poll(ContentType,Client);
+    "/users/groups/" ++ Client ->
+      chatterl_mid_man:user_groups(ContentType,Client);
+    "/groups/poll/" ++ Group ->
+      chatterl_mid_man:group_poll(ContentType,Group);
+    "/groups/list" ->
+      chatterl_mid_man:group_list(ContentType);
+    "/groups/info/" ++ Group ->
+      chatterl_mid_man:group_info(ContentType,Group)
+  end;
 handle_request('POST',Url,ContentType,Post) ->
   case Url of
     "/register/" ++ Nick ->
