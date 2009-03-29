@@ -200,6 +200,9 @@ handle_request('POST',Url,ContentType,Post) ->
     "/groups/send/" ++ Group ->
       [{"client",Sender},{"msg",Message}] = Post,
       chatterl_mid_man:group_send(ContentType,{Group,Sender,Message});
+    "/users/send/" ++ Group ->
+      [{"client",Sender},{"msg",Message}] = Post,
+      chatterl_mid_man:user_msg(ContentType,{Group,Sender,Message});
     "/groups/join/" ++ Group ->
       [{"client",Client}] = Post,
       chatterl_mid_man:group_join(ContentType,{Group,Client});
@@ -211,7 +214,10 @@ handle_request('POST',Url,ContentType,Post) ->
       chatterl_mid_man:login(ContentType,{Login,Pass});
     "/users/logout" ->
       [{"client",Client}] = Post,
-      chatterl_mid_man:logout(ContentType,Client)
+      chatterl_mid_man:logout(ContentType,Client);
+     _ ->
+      message_handler:get_response_body(ContentType,
+                                               message_handler:build_carrier("error", "Unknown command: " ++Url))
   end.
 %%--------------------------------------------------------------------
 %% @private

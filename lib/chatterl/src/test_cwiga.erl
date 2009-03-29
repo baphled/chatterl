@@ -248,3 +248,28 @@ cwiga_registeration_based_test_() ->
            ?assertEqual(200,check_response(code,Response)),
            ?assertEqual(<<"noobie is logged out.">>,check_json(mochijson2:decode(check_response(body,Response))))
       end}]}].
+
+cwiga_registeration_clients_can_get_archived_messages_test_() ->
+  {Nick1,Name1,Email1,Password1} = {"noobie","noobie 1","noobie@noobie.com","blahblah"},
+  Sender = "baft",
+  [{setup,
+    fun() ->
+        inets:start(),
+        chatterl:start(),
+        Args = [{"pass2",Password1},{"pass1","adasd"},{"email",Email1},{"name",Name1}],
+        Body = set_params(Args),
+        http_request(post,?URL ++ "/register/" ++ Nick1, Body),
+        http:request(?URL ++ "/users/connect/" ++ Sender)
+    end,
+    fun(_) ->
+        chatterl:stop(),
+        mnesia:clear_table(registered_user)
+    end,
+    [{"CWIGA does not allow clients to register if their passwords don't match",
+      fun() ->
+          Args = [{"msg","hey"},{"client",Sender}],
+          Body = set_params(Args),
+          Response = http_request(post,?URL ++ "/users/send/" ++ Nick1, Body),
+          ?assertEqual(501,check_response(code,Response)),
+          ?assertEqual(<<"noobie is not connected!">>,check_json(mochijson2:decode(check_response(body,Response))))
+      end}]}].
