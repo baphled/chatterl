@@ -13,9 +13,13 @@
          check_json/1,
          set_params/1,
          http_request/3,
+         cwiga_register/1,
+         cwiga_login/2,
+         cwiga_request/2,
          http_login/2,
          headers/2]).
 
+-define(URL,"http://127.0.0.1:9000").
 %% Helper functions.
 %%--------------------------------------------------------------------
 %% @doc
@@ -69,7 +73,7 @@ check_response(Check,Response) ->
 %% @end
 %%--------------------------------------------------------------------
 check_json(Json) ->
-  {struct,[{<<"chatterl">>,{struct,[{<<"response">>,{struct,[Response]}}]}}]} = Json,
+  {struct,[{<<"chatterl">>,{struct,[{<<"response">>,{struct,[Response]}}]}}]} = mochijson2:decode(Json),
   case Response of
     {<<"success">>,Result} ->
       Result;
@@ -154,6 +158,23 @@ http_request(post,Url,Body) ->
 http_login(Url,{Login,Pass}) ->
   http:request(get, {Url, headers(Login, Pass)}, [], []).
 
+cwiga_request(Url,Args) ->
+  case Args of
+    [] ->
+      http:request(Url);
+    _ ->
+      Body = set_params(Args),
+      http_request(post,Url, Body)
+  end.
+
+cwiga_register({Nick,Name,Email,Password}) ->
+  Args = [{"pass2",Password},{"pass1",Password},{"email",Email},{"name",Name}],
+  Body = set_params(Args),
+  http_request(post,?URL ++ "/register/" ++ Nick, Body).
+
+cwiga_login(Login,Pass) ->
+  Args = [{"pass",Pass},{"login",Login}],
+  cwiga_request(?URL ++ "/users/login",Args).
 %%--------------------------------------------------------------------
 %% @doc
 %% Sets up our HTTP headers

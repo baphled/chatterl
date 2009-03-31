@@ -11,7 +11,13 @@
 -include_lib("eunit/include/eunit.hrl").
 -include_lib("chatterl.hrl").
 
--import(test_helpers,[check_response/2,check_json/1,http_request/3,http_login/2,set_params/1]).
+-import(test_helpers,[check_response/2,
+                      check_json/1,
+                      cwiga_request/2,
+                      cwiga_register/1,
+                      http_request/3,
+                      http_login/2,
+                      set_params/1]).
 
 -define(URL,"http://127.0.0.1:9000").
 
@@ -28,63 +34,63 @@ handles_test_() ->
     end,
     [{"CWIGA response to unknown response with a 404",
       fun() ->
-          Response = http:request("http://127.0.0.1:9000/"),
+          Response = http:request(?URL),
           ?assertEqual(404, check_response(code,Response)),
           ?assertEqual("Object Not Found", check_response(status,Response)),
           ?assertEqual({"content-type","text/json"},
                        check_response(content_type,Response)),
           ?assertEqual(<<"Unknown command: /">>,
-                       check_json(mochijson2:decode(check_response(body,Response))))
+                       check_json(check_response(body,Response)))
       end},
      {"CWIGA can retrieve an empty list of users",
       fun() ->
-         Response = http:request("http://127.0.0.1:9000/users/list"),
+         Response = http:request(?URL "/users/list"),
           ?assertEqual(200,check_response(code,Response)),
-          ?assertEqual({struct,[{<<"clients">>,[]}]},check_json(mochijson2:decode(check_response(body,Response))))
+          ?assertEqual({struct,[{<<"clients">>,[]}]},check_json(check_response(body,Response)))
      end},
      {"CWIGA can list of users in a groups",
       fun() ->
-          Response =  http:request("http://127.0.0.1:9000/users/list/" ++ Group),
-          Response2 =  http:request("http://127.0.0.1:9000/users/list/" ++ "blah"),
+          Response =  http:request(?URL "/users/list/" ++ Group),
+          Response2 =  http:request(?URL "/users/list/" ++ "blah"),
           ?assertEqual(200,check_response(code,Response)),
-          ?assertEqual({struct,[{<<"clients">>,[]}]},check_json(mochijson2:decode(check_response(body,Response)))),
-          ?assertEqual(<<"Group: blah doesn't exist">>,check_json(mochijson2:decode(check_response(body,Response2))))
+          ?assertEqual({struct,[{<<"clients">>,[]}]},check_json(check_response(body,Response))),
+          ?assertEqual(<<"Group: blah doesn't exist">>,check_json(check_response(body,Response2)))
       end},
      {"CWIGA can retrieve a groups information",
       fun() ->
-          Response =  http:request("http://127.0.0.1:9000/groups/info/" ++ Group),
-          Response2 =  http:request("http://127.0.0.1:9000/groups/info/" ++ "blah"),
+          Response =  http:request(?URL "/groups/info/" ++ Group),
+          Response2 =  http:request(?URL "/groups/info/" ++ "blah"),
           ?assertEqual(200,check_response(code,Response)),
-          ?assert(is_tuple(check_json(mochijson2:decode(check_response(body,Response))))),
-          ?assertEqual(<<"Group doesn't exist!">>,check_json(mochijson2:decode(check_response(body,Response2))))
+          ?assert(is_tuple(check_json(check_response(body,Response)))),
+          ?assertEqual(<<"Group doesn't exist!">>,check_json(check_response(body,Response2)))
       end},
      {"CWIGA can retrieve a groups empty messages",
       fun() ->
-          Response =  http:request("http://127.0.0.1:9000/groups/poll/" ++ Group),
-          Response2 =  http:request("http://127.0.0.1:9000/groups/poll/" ++ "blah"),
+          Response =  http:request(?URL "/groups/poll/" ++ Group),
+          Response2 =  http:request(?URL "/groups/poll/" ++ "blah"),
           ?assertEqual(200,check_response(code,Response)),
-          ?assertEqual(<<"Group: blah doesn't exist!">>,check_json(mochijson2:decode(check_response(body,Response2))))
+          ?assertEqual(<<"Group: blah doesn't exist!">>,check_json(check_response(body,Response2)))
       end},
      {"CWIGA can retrieve responses in XML format",
       fun() ->
-         Response = http:request("http://127.0.0.1:9000/users/list.xml"),
+         Response = http:request(?URL "/users/list.xml"),
          ?assertEqual({"content-type","text/xml"},check_response(content_type,Response))
       end},
      {"CWIGA can connect clients to chatterl",
       fun() ->
-          Response = http:request("http://127.0.0.1:9000/users/connect/" ++ Client),
-          Response2 = http:request("http://127.0.0.1:9000/users/connect/" ++ Client),
+          Response = http:request(?URL "/users/connect/" ++ Client),
+          Response2 = http:request(?URL "/users/connect/" ++ Client),
           ?assertEqual(200,check_response(code,Response)),
-          ?assertEqual(<<"baph now connected">>,check_json(mochijson2:decode(check_response(body,Response)))),
-          ?assertEqual(<<"baph is already connected">>,check_json(mochijson2:decode(check_response(body,Response2))))
+          ?assertEqual(<<"baph now connected">>,check_json(check_response(body,Response))),
+          ?assertEqual(<<"baph is already connected">>,check_json(check_response(body,Response2)))
       end},
      {"CWIGA can disconnect clients from chatterl",
       fun() ->
-          Response = http:request("http://127.0.0.1:9000/users/disconnect/" ++ Client),
-          Response2 = http:request("http://127.0.0.1:9000/users/disconnect/" ++ Client),
+          Response = http:request(?URL "/users/disconnect/" ++ Client),
+          Response2 = http:request(?URL "/users/disconnect/" ++ Client),
           ?assertEqual(200,check_response(code,Response)),
-          ?assertEqual(<<"Disconnected">>,check_json(mochijson2:decode(check_response(body,Response)))),
-          ?assertEqual(<<"Not connected">>,check_json(mochijson2:decode(check_response(body,Response2))))
+          ?assertEqual(<<"Disconnected">>,check_json(check_response(body,Response))),
+          ?assertEqual(<<"Not connected">>,check_json(check_response(body,Response2)))
       end}]}].
 
 groups_handle_test_() ->
@@ -93,37 +99,37 @@ groups_handle_test_() ->
     fun() ->
         inets:start(),
         chatterl:start(),
-        http:request("http://127.0.0.1:9000/users/connect/" ++ Client)
+        http:request(?URL "/users/connect/" ++ Client)
     end,
     fun(_) ->
         chatterl:stop()
     end,
     [{"CWIGA allows clients to retrieves a list of the groups they are connected to",
       fun() ->
-          Response = http:request("http://127.0.0.1:9000/users/groups/" ++ Client),
-          Response2 = http:request("http://127.0.0.1:9000/users/groups/" ++ "blah"),
+          Response = http:request(?URL "/users/groups/" ++ Client),
+          Response2 = http:request(?URL "/users/groups/" ++ "blah"),
           ?assertEqual(200,check_response(code,Response)),
           ?assertEqual(501,check_response(code,Response2)),
-          ?assertEqual({struct,[{<<"groups">>,[]}]},check_json(mochijson2:decode(check_response(body,Response)))),
-          ?assertEqual(<<"Client: blah doesn't exist">>,check_json(mochijson2:decode(check_response(body,Response2))))
+          ?assertEqual({struct,[{<<"groups">>,[]}]},check_json(check_response(body,Response))),
+          ?assertEqual(<<"Client: blah doesn't exist">>,check_json(check_response(body,Response2)))
       end},
      {"CWIGA allows clients to poll chatterl for messages",
       fun() ->
-          Response = http:request("http://127.0.0.1:9000/users/poll/" ++ "blah"),
-          Response2 = http:request("http://127.0.0.1:9000/users/poll/" ++ Client),
+          Response = http:request(?URL "/users/poll/" ++ "blah"),
+          Response2 = http:request(?URL "/users/poll/" ++ Client),
           ?assertEqual(501,check_response(code,Response)),
           ?assertEqual(200,check_response(code,Response2)),
-          ?assertEqual(<<"Client: blah doesn't exist">>,check_json(mochijson2:decode(check_response(body,Response)))),
-          ?assertEqual({struct,[{<<"messages">>,[]}]},check_json(mochijson2:decode(check_response(body,Response2))))
+          ?assertEqual(<<"Client: blah doesn't exist">>,check_json(check_response(body,Response))),
+          ?assertEqual({struct,[{<<"messages">>,[]}]},check_json(check_response(body,Response2)))
       end},
      {"CWIGA can list the groups on chatterl",
       fun() ->
-          Response = http:request("http://127.0.0.1:9000/groups/list"),
+          Response = http:request(?URL "/groups/list"),
           chatterl_serv:create(Group,"nu room"),
-          Response2 = http:request("http://127.0.0.1:9000/groups/list"),
+          Response2 = http:request(?URL "/groups/list"),
           ?assertEqual(200,check_response(code,Response)),
           ?assertEqual(200,check_response(code,Response2)),
-          ?assertEqual({struct,[{<<"groups">>,[]}]},check_json(mochijson2:decode(check_response(body,Response)))),
+          ?assertEqual({struct,[{<<"groups">>,[]}]},check_json(check_response(body,Response))),
           ?assert(Response /= Response2)
       end}]}].
 
@@ -134,8 +140,8 @@ groups_send_message_handle_test_() ->
         inets:start(),
         chatterl:start(),
         chatterl_serv:create(Group,"nu room"),
-        http:request("http://127.0.0.1:9000/users/connect/" ++ Client),
-        http:request("http://127.0.0.1:9000/users/connect/" ++ Client2)
+        http:request(?URL "/users/connect/" ++ Client),
+        http:request(?URL "/users/connect/" ++ Client2)
     end,
     fun(_) ->
         chatterl:stop()
@@ -148,8 +154,8 @@ groups_send_message_handle_test_() ->
           Response2 = http_request(post,?URL ++ "/groups/join/" ++ Group, Body),
           ?assertEqual(200,check_response(code,Response)),
           ?assertEqual(501,check_response(code,Response2)),
-          ?assertEqual(<<"baph joined group">>,check_json(mochijson2:decode(check_response(body,Response)))),
-          ?assertEqual(<<"Unable to connect!">>,check_json(mochijson2:decode(check_response(body,Response2))))
+          ?assertEqual(<<"baph joined group">>,check_json(check_response(body,Response))),
+          ?assertEqual(<<"Unable to connect!">>,check_json(check_response(body,Response2)))
       end},
      {"CWIGA allows clients are unable to send messages a group if they are not connected to it",
       fun() ->
@@ -157,7 +163,7 @@ groups_send_message_handle_test_() ->
           Body = set_params(Args),
           Response = http_request(post,?URL ++ "/groups/send/" ++ Group, Body),
           ?assertEqual(404,check_response(code,Response)),
-          ?assertEqual(<<"Must join group first!">>,check_json(mochijson2:decode(check_response(body,Response))))
+          ?assertEqual(<<"Must join group first!">>,check_json(check_response(body,Response)))
       end},
      {"CWIGA allows clients to send messages to chatterl groups",
       fun() ->
@@ -165,7 +171,7 @@ groups_send_message_handle_test_() ->
           Body = set_params(Args),
           Response = http_request(post,?URL ++ "/groups/send/" ++ Group, Body),
           ?assertEqual(200,check_response(code,Response)),
-          ?assertEqual(<<"Message sent">>,check_json(mochijson2:decode(check_response(body,Response))))
+          ?assertEqual(<<"Message sent">>,check_json(check_response(body,Response)))
       end},
      {"CWIGA allows clients are able to leave a chatterl group",
       fun() ->
@@ -174,7 +180,7 @@ groups_send_message_handle_test_() ->
           Response = http_request(post,?URL ++ "/groups/leave/" ++ Group, Body),
           Response2 = http_request(post,?URL ++ "/groups/leave/" ++ Group, Body),
           ?assertEqual(200,check_response(code,Response)),
-          ?assertEqual(<<"baph has disconnected from nu">>,check_json(mochijson2:decode(check_response(body,Response)))),
+          ?assertEqual(<<"baph has disconnected from nu">>,check_json(check_response(body,Response))),
           ?assertEqual(501,check_response(code,Response2))
       end}]}].
 
@@ -195,7 +201,7 @@ cwiga_registeration_based_test_() ->
           Body = set_params(Args),
           Response = http_request(post,?URL ++ "/register/" ++ Nick1, Body),
           ?assertEqual(404,check_response(code,Response)),
-          ?assertEqual(<<"noobie's passwords must match">>,check_json(mochijson2:decode(check_response(body,Response))))
+          ?assertEqual(<<"noobie's passwords must match">>,check_json(check_response(body,Response)))
       end},
      {"CWIGA allows client to register if they have the correct credentials",
       fun() ->
@@ -203,7 +209,7 @@ cwiga_registeration_based_test_() ->
           Body = set_params(Args),
           Response = http_request(post,?URL ++ "/register/" ++ Nick1, Body),
           ?assertEqual(200,check_response(code,Response)),
-          ?assertEqual(<<"noobie is registered">>,check_json(mochijson2:decode(check_response(body,Response))))
+          ?assertEqual(<<"noobie is registered">>,check_json(check_response(body,Response)))
       end},
     {"CWIGA does not allows clients to register if a nick is already in use",
       fun() ->
@@ -211,7 +217,7 @@ cwiga_registeration_based_test_() ->
           Body = set_params(Args),
           Response = http_request(post,?URL ++ "/register/" ++ Nick1, Body),
           ?assertEqual(404,check_response(code,Response)),
-          ?assertEqual(<<"noobie is already registered">>,check_json(mochijson2:decode(check_response(body,Response))))
+          ?assertEqual(<<"noobie is already registered">>,check_json(check_response(body,Response)))
       end},
      {"CWIGA will not login clients if their credentials are not correct",
       fun() ->
@@ -219,7 +225,7 @@ cwiga_registeration_based_test_() ->
           Body = set_params(Args),
           Response = http_request(post,?URL ++ "/users/login", Body),
           ?assertEqual(501,check_response(code,Response)),
-          ?assertEqual(<<"Unable to login">>,check_json(mochijson2:decode(check_response(body,Response))))
+          ?assertEqual(<<"Unable to login">>,check_json(check_response(body,Response)))
       end},
      {"CWIGA allows a registered client to login to chatterl",
       fun() ->
@@ -228,9 +234,9 @@ cwiga_registeration_based_test_() ->
           Response = http_request(post,?URL ++ "/users/login", Body),
           Response2 = http_request(post,?URL ++ "/users/login", Body),
           ?assertEqual(200,check_response(code,Response)),
-          ?assertEqual(<<"noobie is logged in.">>,check_json(mochijson2:decode(check_response(body,Response)))),
+          ?assertEqual(<<"noobie is logged in.">>,check_json(check_response(body,Response))),
           ?assertEqual(501,check_response(code,Response2)),
-          ?assertEqual(<<"Already logged in">>,check_json(mochijson2:decode(check_response(body,Response2))))
+          ?assertEqual(<<"Already logged in">>,check_json(check_response(body,Response2)))
       end},
      {"CWIGA alerts clients to the fact they need to be registered to login",
       fun() ->
@@ -238,7 +244,7 @@ cwiga_registeration_based_test_() ->
           Body = set_params(Args),
           Response = http_request(post,?URL ++ "/users/login", Body),
           ?assertEqual(501,check_response(code,Response)),
-          ?assertEqual(<<"Not registered">>,check_json(mochijson2:decode(check_response(body,Response))))
+          ?assertEqual(<<"Not registered">>,check_json(check_response(body,Response)))
       end},
       {"CWIGA will not logout a client that is not already connected",
        fun() ->
@@ -246,7 +252,7 @@ cwiga_registeration_based_test_() ->
            Body = set_params(Args),
            Response = http_request(post,?URL ++ "/users/logout", Body),
            ?assertEqual(501,check_response(code,Response)),
-           ?assertEqual(<<"Not logged in">>,check_json(mochijson2:decode(check_response(body,Response))))
+           ?assertEqual(<<"Not logged in">>,check_json(check_response(body,Response)))
       end},
       {"CWIGA will logout a client that is connected to chatterl",
        fun() ->
@@ -254,8 +260,10 @@ cwiga_registeration_based_test_() ->
            Body = set_params(Args),
            Response = http_request(post,?URL ++ "/users/logout", Body),
            ?assertEqual(200,check_response(code,Response)),
-           ?assertEqual(<<"noobie is logged out.">>,check_json(mochijson2:decode(check_response(body,Response))))
+           ?assertEqual(<<"noobie is logged out.">>,check_json(check_response(body,Response)))
       end}]}].
+
+
 
 cwiga_registeration_clients_can_get_archived_messages_test_() ->
   {Nick1,Name1,Email1,Password1} = {"noobie","noobie 1","noobie@noobie.com","blahblah"},
@@ -264,9 +272,7 @@ cwiga_registeration_clients_can_get_archived_messages_test_() ->
     fun() ->
         inets:start(),
         chatterl:start(),
-        Args = [{"pass2",Password1},{"pass1","adasd"},{"email",Email1},{"name",Name1}],
-        Body = set_params(Args),
-        http_request(post,?URL ++ "/register/" ++ Nick1, Body),
+        cwiga_register({Nick1,Name1,Email1,Password1}),
         http:request(?URL ++ "/users/connect/" ++ Sender)
     end,
     fun(_) ->
@@ -279,7 +285,7 @@ cwiga_registeration_clients_can_get_archived_messages_test_() ->
           Body = set_params(Args),
           Response = http_request(post,?URL ++ "/users/send/" ++ Nick1, Body),
           ?assertEqual(501,check_response(code,Response)),
-          ?assertEqual(<<"noobie is not connected!">>,check_json(mochijson2:decode(check_response(body,Response))))
+          ?assertEqual(<<"noobie is not connected!">>,check_json(check_response(body,Response)))
       end},
     {"CWIGA does not allow clietns to send message if the sender does not exist",
       fun() ->
@@ -287,13 +293,30 @@ cwiga_registeration_clients_can_get_archived_messages_test_() ->
           Body = set_params(Args),
           Response = http_request(post,?URL ++ "/users/send/" ++ "blah", Body),
           ?assertEqual(501,check_response(code,Response)),
-          ?assertEqual(<<"blah is not connected!">>,check_json(mochijson2:decode(check_response(body,Response))))
+          ?assertEqual(<<"blah is not connected!">>,check_json(check_response(body,Response)))
       end},
     {"CWIGA allows connected clients to send messages to registered clients",
       fun() ->
           Args = [{"msg","hey"},{"client",Nick1}],
-          Body = set_params(Args),
-          Response = http_request(post,?URL ++ "/users/send/" ++ Sender, Body),
+          Response = cwiga_request(?URL ++ "/users/send/" ++ Sender,Args),
           ?assertEqual(200,check_response(code,Response)),
-          ?assertEqual(<<"Sending message to noobie...">>,check_json(mochijson2:decode(check_response(body,Response))))
+          ?assertEqual(<<"Sending message to noobie...">>,check_json(check_response(body,Response)))
+      end}]}].
+
+cwiga_allows_retrieval_of_registered_logged_in_clients_test_() ->
+  {Nick1,Name1,Email1,Password1} = {"noobie","noobie 1","noobie@noobie.com","blahblah"},
+  Sender = "baft",
+  [{setup,
+    fun() ->
+        inets:start(),
+        chatterl:start(),
+        cwiga_register({Nick1,Name1,Email1,Password1})
+    end,
+    fun(_) ->
+        chatterl:stop(),
+        mnesia:clear_table(registered_user)
+    end,
+    [{"CWIGA does not allow clients to messages to clients that are not logged in or registered",
+      fun() ->
+          ?assertEqual(1,1)
       end}]}].
