@@ -1,6 +1,20 @@
+%%%----------------------------------------------------------------
+%%% @author  Yomi Akindayini <yomi@boodah.net>
+%%% @doc Test helper functions used to help with our test cases
+%%%
+%%% @end
+%%% @copyright 2009 Yomi Akindayini <yomi@boodah.net>
+%%%----------------------------------------------------------------
 -module(test_helpers).
 
--export([start_client/3,start_group/2,check_response/2,check_json/1,set_params/1,http_request/3,http_login/2,headers/2]).
+-export([start_client/3,
+         start_group/2,
+         check_response/2,
+         check_json/1,
+         set_params/1,
+         http_request/3,
+         http_login/2,
+         headers/2]).
 
 %% Helper functions.
 %%--------------------------------------------------------------------
