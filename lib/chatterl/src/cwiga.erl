@@ -93,7 +93,7 @@ handle_call({'GET',Url,ContentType,_Post},_From,State) ->
   Reply = handle_response(handle_request('GET',Url,ContentType,_Post),ContentType),
   {reply, Reply, State};
 handle_call({_,Path,ContentType,_},_From,State) ->
-  Reply = error(unknown(Path,ContentType),ContentType),
+  Reply = send_response(error,{unknown(Path,ContentType),ContentType}),
   {reply, Reply, State};
 handle_call(_Request, _From, State) ->
   Reply = ok,
@@ -295,6 +295,7 @@ unknown(Url,ContentType) ->
 send_response(ResponseType,{Response,ContentType}) ->
   StatusCode = get_status_code(ResponseType),
   {StatusCode, [{"Content-Type", ContentType}], list_to_binary(Response)}.
+
 %%--------------------------------------------------------------------
 %% @private
 %% @doc

@@ -304,7 +304,7 @@ delete_messages(Messages) ->
 
 %%--------------------------------------------------------------------
 %% @doc
-%% Retrieves a logged in users.
+%% Retrieves a list of logged in users.
 %%
 %% @spec get_logged_in() -> RegisteredUser
 %% @end
@@ -479,6 +479,7 @@ create_tables(Copies) ->
 %% @doc
 %% Writes the given state.
 %%
+%% Used to store client & group state information.
 %% @spec write_state(StateType) -> any()
 %% @end
 %%--------------------------------------------------------------------
