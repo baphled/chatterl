@@ -293,3 +293,35 @@ registered_user_list_test_() ->
                                                                           {struct,[{<<"email">>,<<"noobie@noobie.com">>}]}]}]}
                                                  ]}]}, check_json(mochijson2:decode(chatterl_mid_man:registered_list(ContentType))))
      end}]}].
+
+logged_in_clients_test_() ->
+  {Nick1,Name1,Email1,Password1} = {"noobie","noobie 1","noobie@noobie.com","blahblah"},
+  {Nick2,Name2,Email2,Password2} = {"nerf","nerf 1","nerf@noobie.com","asfdasdf"},
+  [{setup,
+    fun() ->
+        chatterl:start(),
+        chatterl_store:register(Nick1,{Name1,Email1,Password1,Password1}),
+        chatterl_store:register(Nick2,{Name2,Email2,Password2,Password2})
+    end,
+    fun(_) ->
+        mnesia:clear_table(registered_user),
+        chatterl:stop()
+    end,
+    [{"chatterl_mid_man allows us to retrieve a list of logged in clients",
+    fun() ->
+        ?assertEqual({struct,[{<<"clients">>,[]}]},check_json(mochijson2:decode(chatterl_mid_man:logged_in(["text/json"]))))
+    end},
+     {"chatterl_mid_man can retrieve a single logged in user",
+     fun() ->
+         chatterl_serv:login(Nick1,Password1),
+         ?assertEqual({struct,[{<<"clients">>,[{struct,[{<<"client">>,<<"noobie">>}]}]}]},
+                               check_json(mochijson2:decode(chatterl_mid_man:logged_in(["text/json"]))))
+     end},
+     {"chatterl_mid_man can retrieve a multiple logged in users",
+      fun() ->
+          chatterl_serv:login(Nick2,Password2),
+          ?assertEqual({struct,[{<<"clients">>,[
+                                                {struct,[{<<"client">>,<<"nerf">>}]},
+                                                {struct,[{<<"client">>,<<"noobie">>}]}]}]},
+                               check_json(mochijson2:decode(chatterl_mid_man:logged_in(["text/json"]))))
+       end}]}].

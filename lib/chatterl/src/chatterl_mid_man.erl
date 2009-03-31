@@ -43,7 +43,7 @@
 %% Admin based calls
 -export([group_create/2,group_drop/2]).
 
--export([registered_list/1]).
+-export([registered_list/1,logged_in/1]).
 
 %% gen_server callbacks
 -export([
@@ -253,6 +253,18 @@ user_groups(ContentType,Client) ->
         end
     end,
   user_check(Client,ContentType,Fun).
+
+logged_in(ContentType) ->
+  {Type,Result} =
+    case chatterl_store:get_logged_in() of
+      [] ->
+        {"success",build_carrier("clients","")};
+          Users ->
+            UsersList = [build_carrier("client",User) || User <- Users],
+            {"success",build_carrier("clients",UsersList)}
+    end,
+  get_response_body(ContentType,build_carrier(Type,Result)).
+
 %%--------------------------------------------------------------------
 %% @doc lists the groups on Chatterl
 %%
