@@ -181,11 +181,13 @@ dispatch_requests(Req) ->
 %%--------------------------------------------------------------------
 handle_request('GET', Url, ContentType, _Post) ->
   case Url of
+    "/status/logged_in/" ->
+      chatterl_mid_man:logged_in(ContentType);
     "/users/connect/" ++ Client ->
       chatterl_mid_man:connect(ContentType,Client);
     "/users/disconnect/" ++ Client ->
       chatterl_mid_man:disconnect(ContentType,Client);
-    "/users/list" ->
+    "/users/list/" ->
       chatterl_mid_man:user_list(ContentType);
     "/users/list/" ++ Group ->
       chatterl_mid_man:user_list(ContentType,Group);
@@ -199,8 +201,6 @@ handle_request('GET', Url, ContentType, _Post) ->
       chatterl_mid_man:group_list(ContentType);
     "/groups/info/" ++ Group ->
       chatterl_mid_man:group_info(ContentType,Group);
-    "/status/logged_in/" ->
-      chatterl_mid_man:logged_in(ContentType);
     _ -> unknown(Url,ContentType)
   end;
 handle_request('POST',Url,ContentType,Post) ->

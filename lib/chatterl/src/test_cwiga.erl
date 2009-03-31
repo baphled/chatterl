@@ -44,7 +44,7 @@ handles_test_() ->
       end},
      {"CWIGA can retrieve an empty list of users",
       fun() ->
-         Response = http:request(?URL "/users/list"),
+         Response = http:request(?URL "/users/list/"),
           ?assertEqual(200,check_response(code,Response)),
           ?assertEqual({struct,[{<<"clients">>,[]}]},check_json(check_response(body,Response)))
      end},
@@ -316,8 +316,9 @@ cwiga_allows_retrieval_of_registered_logged_in_clients_test_() ->
         chatterl:stop(),
         mnesia:clear_table(registered_user)
     end,
-    [{"CWIGA does not allow clients to messages to clients that are not logged in or registered",
+    [{"CWIGA can retrieve an empty list of logged in clients",
       fun() ->
           Response = http:request(?URL ++ "/status/logged_in/"),
-          ?assertEqual(200,check_response(code,Response))
+          ?assertEqual(200,check_response(code,Response)),
+          ?assertEqual({struct,[{<<"clients">>,[]}]},check_json(check_response(body,Response)))
       end}]}].
