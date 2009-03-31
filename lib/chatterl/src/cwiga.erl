@@ -263,34 +263,15 @@ check_json_response(Json) ->
 %% @doc
 %% Wrapper method used for error responses
 %%
-%% @spec error(Response,ContentType) -> HTTPResponse
+%% @spec error(Response,ContentType) -> StatusCode
 %% @end
 %%--------------------------------------------------------------------
-error(Response,ContentType) ->
-  {404, [{"Content-Type", ContentType}], list_to_binary(Response)}.
-
-%%--------------------------------------------------------------------
-%% @private
-%% @doc
-%% Wrapper method used for failed responses
-%%
-%% @spec failure(Response,ContentType) -> HTTPResponse
-%% @end
-%%--------------------------------------------------------------------
-failure(Response,ContentType) ->
-  {501, [{"Content-Type", ContentType}], list_to_binary(Response)}.
-
-%%--------------------------------------------------------------------
-%% @private
-%% @doc
-%% Wrapper method used for successful responses
-%%
-%% @spec success(Response,ContentType) -> HTTPResponse
-%% @end
-%%--------------------------------------------------------------------
-success(Response,ContentType) ->
-  {200, [{"Content-Type", ContentType}], list_to_binary(Response)}.
-
+get_status_code(ResponseType) ->
+    case ResponseType of
+    <<"success">> -> 200;
+    <<"failure">> -> 501;
+    <<"error">> -> 404
+  end.
 %%--------------------------------------------------------------------
 %% @private
 %% @doc
@@ -306,6 +287,17 @@ unknown(Url,ContentType) ->
 %%--------------------------------------------------------------------
 %% @private
 %% @doc
+%% Wrapper method used for error responses
+%%
+%% @spec send_response(ResponseType,{Response,ContentType}) -> HTTPResponse
+%% @end
+%%--------------------------------------------------------------------
+send_response(ResponseType,{Response,ContentType}) ->
+  StatusCode = get_status_code(ResponseType),
+  {StatusCode, [{"Content-Type", ContentType}], list_to_binary(Response)}.
+%%--------------------------------------------------------------------
+%% @private
+%% @doc
 %% Sets up the needed response type for our results.
 %%
 %% @spec handle_response(Response,ContentType) -> HTTPResponse
@@ -314,11 +306,9 @@ unknown(Url,ContentType) ->
 handle_response(Response,ContentType) ->
   case ContentType of
     ["text/xml"] ->
-      success(Response,ContentType);
+      send_response(<<"success">>,{Response,ContentType});
     ["text/json"] ->
       case check_json_response(Response) of
-        {<<"success">>,_} -> success(Response,ContentType);
-        {<<"error">>,_} -> error(Response,ContentType);
-        {<<"failure">>,_} -> failure(Response,ContentType)
+        {ResponseType,_} -> send_response(ResponseType,{Response,ContentType})
       end
   end.
