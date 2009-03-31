@@ -318,5 +318,6 @@ cwiga_allows_retrieval_of_registered_logged_in_clients_test_() ->
     end,
     [{"CWIGA does not allow clients to messages to clients that are not logged in or registered",
       fun() ->
-          ?assertEqual(1,1)
+          Response = http:request(?URL ++ "/status/logged_in/"),
+          ?assertEqual(200,check_response(code,Response))
       end}]}].
