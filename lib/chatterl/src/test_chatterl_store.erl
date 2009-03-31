@@ -89,9 +89,16 @@ chatterl_registered_users_can_login_and_out_test_() ->
         mnesia:delete_table(registered_user),
         chatterl:stop()
     end,
-    [{"Do registered client login successfully & unregistered fail",
+    [{"Get an empty list if client is not registered",
       fun() ->
-          ?assertEqual([],chatterl_store:get_registered(Nick2)),
+          ?assertEqual([],chatterl_store:get_registered(Nick2))
+			end},
+		{"No clients are logged in",
+			fun() ->
+					?assertEqual([],chatterl_store:get_logged_in())
+			end},
+		{"Do registered client login successfully & unregistered fail",
+			fun() ->
           ?assertEqual([{registered_user,Nick1,Name1,Email1,erlang:md5(Password1),0}],chatterl_store:get_registered(Nick1)),
           ?assertEqual({error,"Unable to login"},chatterl_store:login(Nick1,"blah")),
           ?assertEqual({error,"Not registered"},chatterl_store:login(Nick2,Password2)),
