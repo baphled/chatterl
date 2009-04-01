@@ -109,7 +109,7 @@ groups_handle_test_() ->
           Response = http:request(?URL "/users/groups/" ++ Client),
           Response2 = http:request(?URL "/users/groups/" ++ "blah"),
           ?assertEqual(200,check_response(code,Response)),
-          ?assertEqual(501,check_response(code,Response2)),
+          ?assertEqual(500,check_response(code,Response2)),
           ?assertEqual({struct,[{<<"groups">>,[]}]},check_json(check_response(body,Response))),
           ?assertEqual(<<"Client: blah doesn't exist">>,check_json(check_response(body,Response2)))
       end},
@@ -117,7 +117,7 @@ groups_handle_test_() ->
       fun() ->
           Response = http:request(?URL "/users/poll/" ++ "blah"),
           Response2 = http:request(?URL "/users/poll/" ++ Client),
-          ?assertEqual(501,check_response(code,Response)),
+          ?assertEqual(500,check_response(code,Response)),
           ?assertEqual(200,check_response(code,Response2)),
           ?assertEqual(<<"Client: blah doesn't exist">>,check_json(check_response(body,Response))),
           ?assertEqual({struct,[{<<"messages">>,[]}]},check_json(check_response(body,Response2)))
@@ -153,7 +153,7 @@ groups_send_message_handle_test_() ->
           Response = http_request(post,?URL ++ "/groups/join/" ++ Group, Body),
           Response2 = http_request(post,?URL ++ "/groups/join/" ++ Group, Body),
           ?assertEqual(200,check_response(code,Response)),
-          ?assertEqual(501,check_response(code,Response2)),
+          ?assertEqual(500,check_response(code,Response2)),
           ?assertEqual(<<"baph joined group">>,check_json(check_response(body,Response))),
           ?assertEqual(<<"Unable to connect!">>,check_json(check_response(body,Response2)))
       end},
@@ -181,7 +181,7 @@ groups_send_message_handle_test_() ->
           Response2 = http_request(post,?URL ++ "/groups/leave/" ++ Group, Body),
           ?assertEqual(200,check_response(code,Response)),
           ?assertEqual(<<"baph has disconnected from nu">>,check_json(check_response(body,Response))),
-          ?assertEqual(501,check_response(code,Response2))
+          ?assertEqual(500,check_response(code,Response2))
       end}]}].
 
 cwiga_registeration_based_test_() ->
@@ -224,7 +224,7 @@ cwiga_registeration_based_test_() ->
           Args = [{"pass","blah"},{"login",Nick1}],
           Body = set_params(Args),
           Response = http_request(post,?URL ++ "/users/login", Body),
-          ?assertEqual(501,check_response(code,Response)),
+          ?assertEqual(500,check_response(code,Response)),
           ?assertEqual(<<"Unable to login">>,check_json(check_response(body,Response)))
       end},
      {"CWIGA allows a registered client to login to chatterl",
@@ -235,7 +235,7 @@ cwiga_registeration_based_test_() ->
           Response2 = http_request(post,?URL ++ "/users/login", Body),
           ?assertEqual(200,check_response(code,Response)),
           ?assertEqual(<<"noobie is logged in.">>,check_json(check_response(body,Response))),
-          ?assertEqual(501,check_response(code,Response2)),
+          ?assertEqual(500,check_response(code,Response2)),
           ?assertEqual(<<"Already logged in">>,check_json(check_response(body,Response2)))
       end},
      {"CWIGA alerts clients to the fact they need to be registered to login",
@@ -243,7 +243,7 @@ cwiga_registeration_based_test_() ->
           Args = [{"pass","blah"},{"login","blah"}],
           Body = set_params(Args),
           Response = http_request(post,?URL ++ "/users/login", Body),
-          ?assertEqual(501,check_response(code,Response)),
+          ?assertEqual(500,check_response(code,Response)),
           ?assertEqual(<<"Not registered">>,check_json(check_response(body,Response)))
       end},
       {"CWIGA will not logout a client that is not already connected",
@@ -251,7 +251,7 @@ cwiga_registeration_based_test_() ->
            Args = [{"client","blah"}],
            Body = set_params(Args),
            Response = http_request(post,?URL ++ "/users/logout", Body),
-           ?assertEqual(501,check_response(code,Response)),
+           ?assertEqual(500,check_response(code,Response)),
            ?assertEqual(<<"Not logged in">>,check_json(check_response(body,Response)))
       end},
       {"CWIGA will logout a client that is connected to chatterl",
@@ -284,7 +284,7 @@ cwiga_registeration_clients_can_get_archived_messages_test_() ->
           Args = [{"msg","hey"},{"client",Sender}],
           Body = set_params(Args),
           Response = http_request(post,?URL ++ "/users/send/" ++ Nick1, Body),
-          ?assertEqual(501,check_response(code,Response)),
+          ?assertEqual(500,check_response(code,Response)),
           ?assertEqual(<<"noobie is not connected!">>,check_json(check_response(body,Response)))
       end},
     {"CWIGA does not allow clietns to send message if the sender does not exist",
@@ -292,7 +292,7 @@ cwiga_registeration_clients_can_get_archived_messages_test_() ->
           Args = [{"msg","hey"},{"client",Sender}],
           Body = set_params(Args),
           Response = http_request(post,?URL ++ "/users/send/" ++ "blah", Body),
-          ?assertEqual(501,check_response(code,Response)),
+          ?assertEqual(500,check_response(code,Response)),
           ?assertEqual(<<"blah is not connected!">>,check_json(check_response(body,Response)))
       end},
     {"CWIGA allows connected clients to send messages to registered clients",
@@ -318,16 +318,22 @@ cwiga_allows_retrieval_of_registered_logged_in_clients_test_() ->
         chatterl:stop(),
         mnesia:clear_table(registered_user)
     end,
-    [{"CWIGA can retrieve an empty list of logged in clients",
+    [{"CWIGA only allows authorised client to list logged in clients",
       fun() ->
           Response = http:request(?URL ++ "/status/logged_in/"),
+          ?assertEqual(404,check_response(code,Response)),
+          ?assertEqual(<<"Need to authorize">>,check_json(check_response(body,Response)))
+      end},
+     {"CWIGA can retrieve an empty list of logged in clients",
+      fun() ->
+          Response = http_login(?URL ++ "/status/logged_in/",{Nick1,Password1}),
           ?assertEqual(200,check_response(code,Response)),
           ?assertEqual({struct,[{<<"clients">>,[]}]},check_json(check_response(body,Response)))
       end},
      {"CWIGA can retrieve a single logged in client",
       fun() ->
           chatterl_serv:login(Nick1,Password1),
-          Response = http:request(?URL ++ "/status/logged_in/"),
+          Response = http_login(?URL ++ "/status/logged_in/",{Nick1,Password1}),
           ?assertEqual(200,check_response(code,Response)),
           ?assertEqual({struct,[{<<"clients">>,[{struct,[{<<"client">>,<<"noobie">>}]}]}]},
                        check_json(check_response(body,Response)))
@@ -335,7 +341,7 @@ cwiga_allows_retrieval_of_registered_logged_in_clients_test_() ->
      {"CWIGA can retrieve a multiple list of clients",
       fun() ->
           chatterl_serv:login(Nick2,Password2),
-          Response = http:request(?URL ++ "/status/logged_in/"),
+          Response = http_login(?URL ++ "/status/logged_in/",{Nick1,Password1}),
           ?assertEqual({struct,[{<<"clients">>,[
                                                 {struct,[{<<"client">>,<<"nerf">>}]},
                                                 {struct,[{<<"client">>,<<"noobie">>}]}]}]},

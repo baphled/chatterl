@@ -86,14 +86,14 @@ init([Port]) ->
 handle_call(stop, _From, State) ->
     io:format("Processing shut down ~s~n", [?APP]),
     {stop, normal, stopped, State};
-handle_call({'POST',Url,ContentType,Post},_From,State) ->
-  Reply = handle_response(handle_request('POST',Url,ContentType,Post),ContentType),
+handle_call({'POST',Url,ContentType,Post,Req},_From,State) ->
+  Reply = handle_response(handle_request('POST',Url,ContentType,Post,Req),ContentType),
   {reply, Reply, State};
-handle_call({'GET',Url,ContentType,_Post},_From,State) ->
-  Reply = handle_response(handle_request('GET',Url,ContentType,_Post),ContentType),
+handle_call({'GET',Url,ContentType,_Post,Req},_From,State) ->
+  Reply = handle_response(handle_request('GET',Url,ContentType,Req),ContentType),
   {reply, Reply, State};
-handle_call({_,Path,ContentType,_},_From,State) ->
-  Reply = send_response(error,{unknown(Path,ContentType),ContentType}),
+handle_call({_,Url,ContentType,Path,_Req},_From,State) ->
+  Reply = send_response(error,{unknown(Url,ContentType),ContentType}),
   {reply, Reply, State};
 handle_call(_Request, _From, State) ->
   Reply = ok,
@@ -167,7 +167,7 @@ dispatch_requests(Req) ->
   Method = Req:get(method),
   Post = Req:parse_post(),
   io:format("~p request for ~p with post: ~p~n", [Method, Path, Post]),
-  Response = gen_server:call({global,?MODULE},{Method, Path, get_content_type(Ext), Post}),
+  Response = gen_server:call({global,?MODULE},{Method, Path, get_content_type(Ext), Post, Req}),
   Req:respond(Response).
 
 %%--------------------------------------------------------------------
@@ -179,10 +179,15 @@ dispatch_requests(Req) ->
 %%
 %% @end
 %%--------------------------------------------------------------------
-handle_request('GET', Url, ContentType, _Post) ->
+handle_request('GET', Url, ContentType, Req) ->
   case Url of
     "/status/logged_in/" ->
-      chatterl_mid_man:logged_in(ContentType);
+      case is_auth(Req) of
+        {error,Error} ->
+          message_handler:get_response_body(ContentType,message_handler:build_carrier("error",Error));
+        {ok,_} ->
+          chatterl_mid_man:logged_in(ContentType)
+      end;
     "/users/connect/" ++ Client ->
       chatterl_mid_man:connect(ContentType,Client);
     "/users/disconnect/" ++ Client ->
@@ -202,8 +207,9 @@ handle_request('GET', Url, ContentType, _Post) ->
     "/groups/info/" ++ Group ->
       chatterl_mid_man:group_info(ContentType,Group);
     _ -> unknown(Url,ContentType)
-  end;
-handle_request('POST',Url,ContentType,Post) ->
+  end.
+
+handle_request('POST',Url,ContentType,Post,Req) ->
   case Url of
     "/register/" ++ Nick ->
       [{"name",Name},{"email",Email},{"pass1",Pass1},{"pass2",Pass2}] = Post,
@@ -273,7 +279,7 @@ check_json_response(Json) ->
 get_status_code(ResponseType) ->
     case ResponseType of
     <<"success">> -> 200;
-    <<"failure">> -> 501;
+    <<"failure">> -> 500;
     <<"error">> -> 404
   end.
 %%--------------------------------------------------------------------
@@ -316,4 +322,29 @@ handle_response(Response,ContentType) ->
       case check_json_response(Response) of
         {ResponseType,_} -> send_response(ResponseType,{Response,ContentType})
       end
+  end.
+
+%%--------------------------------------------------------------------
+%% @private
+%% @doc
+%%
+%% Determines whether the client has successfully authenticated.
+%%
+%% Need to make this more secure.
+%% @spec is_auth(Req) -> {ok,Msg}|{error,Error}
+%%
+%% @end
+%%--------------------------------------------------------------------
+is_auth(Req) ->
+  case Req:get_header_value("authorization") of
+    "Basic "++Base64 ->
+      Str = base64:mime_decode_to_string(Base64),
+      case string:tokens(Str, ":") of
+        [User, Pass] ->
+          chatterl_store:auth(User,Pass);
+        _ ->
+          {error,"Unauthorized authorization."}
+      end;
+    _ ->
+      {error,"Need to authorize"}
   end.
