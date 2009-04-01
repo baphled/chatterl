@@ -227,7 +227,10 @@ handle_request('POST',Url,ContentType,Post,Req) ->
       chatterl_mid_man:register(ContentType,{Nick,{Name,Email,Pass1,Pass2}});
     "/groups/send/" ++ Group ->
       [{"client",Sender},{"msg",Message}] = Post,
-      chatterl_mid_man:group_send(ContentType,{Group,Sender,Message});
+      Fun = fun({CT,{G,S,M}}) ->
+                chatterl_mid_man:group_send(CT,{G,S,M})
+            end,
+      authorise(ContentType,Req,{Fun,{ContentType,{Group,Sender,Message}}});
     "/users/send/" ++ Group ->
       [{"client",Sender},{"msg",Message}] = Post,
       Fun = fun({CT,{G,S,M}}) ->
