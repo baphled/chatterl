@@ -187,7 +187,7 @@ handle_request('GET', Url, ContentType, Req) ->
       chatterl_mid_man:disconnect(ContentType,Client);
     "/users/list/" ->
       Fun = fun(CT) ->
-                chatterl_mid_man:user_list(ContentType) end,
+                chatterl_mid_man:user_list(CT) end,
       authorise(ContentType,Req,{Fun,ContentType});
     "/users/list/" ++ Group ->
       Fun = fun({CT,G}) ->
@@ -220,7 +220,7 @@ handle_request('GET', Url, ContentType, Req) ->
     _ -> unknown(Url,ContentType)
   end.
 
-handle_request('POST',Url,ContentType,Post,_Req) ->
+handle_request('POST',Url,ContentType,Post,Req) ->
   case Url of
     "/register/" ++ Nick ->
       [{"name",Name},{"email",Email},{"pass1",Pass1},{"pass2",Pass2}] = Post,
@@ -233,10 +233,16 @@ handle_request('POST',Url,ContentType,Post,_Req) ->
       chatterl_mid_man:user_msg(ContentType,{Group,Sender,Message});
     "/groups/join/" ++ Group ->
       [{"client",Client}] = Post,
-      chatterl_mid_man:group_join(ContentType,{Group,Client});
+      Fun = fun({CT,{G,C}}) ->
+                chatterl_mid_man:group_join(CT,{G,C})
+            end,
+      authorise(ContentType,Req,{Fun,{ContentType,{Group,Client}}});
     "/groups/leave/" ++ Group ->
       [{"client",Client}] = Post,
-      chatterl_mid_man:group_leave(ContentType,{Group,Client});
+      Fun = fun({CT,{G,C}}) ->
+                chatterl_mid_man:group_leave(CT,{G,C})
+            end,
+      authorise(ContentType,Req,{Fun,{ContentType,{Group,Client}}});
     "/users/login" ->
       [{"login",Login},{"pass",Pass}] = Post,
       chatterl_mid_man:login(ContentType,{Login,Pass});

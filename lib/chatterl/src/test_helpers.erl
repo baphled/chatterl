@@ -17,6 +17,7 @@
          cwiga_login/2,
          cwiga_request/2,
          http_login/2,
+         http_login/4,
          headers/2]).
 
 -define(URL,"http://127.0.0.1:9000").
@@ -159,6 +160,9 @@ http_request(post,Url,Body) ->
 
 http_login(Url,{Login,Pass}) ->
   http:request(get, {Url, headers(Login, Pass)}, [], []).
+
+http_login(post,Url,{Login,Pass},Body) ->
+  http:request(post, {Url, headers(Login, Pass),"application/x-www-form-urlencoded", Body}, [], []).
 
 cwiga_request(Url,Args) ->
   case Args of

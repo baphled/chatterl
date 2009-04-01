@@ -17,6 +17,7 @@
                       cwiga_register/1,
                       http_request/3,
                       http_login/2,
+                      http_login/4,
                       set_params/1]).
 
 -define(URL,"http://127.0.0.1:9000").
@@ -174,11 +175,13 @@ groups_handle_test_() ->
       end}]}].
 
 groups_send_message_handle_test_() ->
+  {Nick1,Name1,Email1,Password1} = {"noobie","noobie 1","noobie@noobie.com","blahblah"},
   {Client,Client2,Group} = {"baph","baphled","nu"},
   [{setup,
     fun() ->
         inets:start(),
         chatterl:start(),
+        cwiga_register({Nick1,Name1,Email1,Password1}),
         chatterl_serv:create(Group,"nu room"),
         http:request(?URL "/users/connect/" ++ Client),
         http:request(?URL "/users/connect/" ++ Client2)
@@ -187,16 +190,28 @@ groups_send_message_handle_test_() ->
         chatterl:stop(),
         mnesia:clear_table(registered_user)
     end,
-    [{"CWIGA allows a client to join a group",
+    [{"CWIGA disallows a client to join a group if they are not authorised",
       fun() ->
           Args = [{"client",Client}],
           Body = set_params(Args),
           Response = http_request(post,?URL ++ "/groups/join/" ++ Group, Body),
-          Response2 = http_request(post,?URL ++ "/groups/join/" ++ Group, Body),
+          ?assertEqual(401,check_response(code,Response))
+     end},
+     {"CWIGA allows a client to join a group",
+      fun() ->
+          Args = [{"client",Client}],
+          Body = set_params(Args),
+          Response = http_login(post,?URL ++ "/groups/join/" ++ Group, {Nick1,Password1},Body),
           ?assertEqual(200,check_response(code,Response)),
-          ?assertEqual(500,check_response(code,Response2)),
-          ?assertEqual(<<"baph joined group">>,check_json(check_response(body,Response))),
-          ?assertEqual(<<"Unable to connect!">>,check_json(check_response(body,Response2)))
+          ?assertEqual(<<"baph joined group">>,check_json(check_response(body,Response)))
+      end},
+     {"CWIGA gives an error if a client tries to login again",
+      fun() ->
+          Args = [{"client",Client}],
+          Body = set_params(Args),
+          Response = http_login(post,?URL ++ "/groups/join/" ++ Group, {Nick1,Password1},Body),
+          ?assertEqual(500,check_response(code,Response)),
+          ?assertEqual(<<"Unable to connect!">>,check_json(check_response(body,Response)))
       end},
      {"CWIGA allows clients are unable to send messages a group if they are not connected to it",
       fun() ->
@@ -214,12 +229,19 @@ groups_send_message_handle_test_() ->
           ?assertEqual(200,check_response(code,Response)),
           ?assertEqual(<<"Message sent">>,check_json(check_response(body,Response)))
       end},
-     {"CWIGA allows clients are able to leave a chatterl group",
+     {"CWIGA disallows clients from leaving a group if they are not authorised",
       fun() ->
           Args = [{"client",Client}],
           Body = set_params(Args),
           Response = http_request(post,?URL ++ "/groups/leave/" ++ Group, Body),
-          Response2 = http_request(post,?URL ++ "/groups/leave/" ++ Group, Body),
+          ?assertEqual(401,check_response(code,Response))
+          end},
+     {"CWIGA allows clients are able to leave a chatterl group",
+      fun() ->
+          Args = [{"client",Client}],
+          Body = set_params(Args),
+          Response = http_login(post,?URL ++ "/groups/leave/" ++ Group, {Nick1,Password1},Body),
+          Response2 = http_login(post,?URL ++ "/groups/leave/" ++ Group,{Nick1,Password1}, Body),
           ?assertEqual(200,check_response(code,Response)),
           ?assertEqual(<<"baph has disconnected from nu">>,check_json(check_response(body,Response))),
           ?assertEqual(500,check_response(code,Response2))
