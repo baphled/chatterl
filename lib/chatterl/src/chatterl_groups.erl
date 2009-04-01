@@ -75,7 +75,7 @@ stop(Group) ->
 %%--------------------------------------------------------------------
 init([Name,Description]) ->
     process_flag(trap_exit, true),
-    %io:format("Initialising ~s...~n", [Name]),
+    io:format("Initialising ~s...~n", [Name]),
     {ok,
      #group{
        name = Name,
@@ -193,7 +193,7 @@ handle_cast(_Msg, State) ->
 handle_info(Info, State) ->
     case Info of
 	Unknown ->
-	    io:format("Caught unhandled message: ~w\n", [Unknown])
+	    io:format("Caught unhandled message: ~s~n", [Unknown])
     end,
     {noreply, State}.
 
