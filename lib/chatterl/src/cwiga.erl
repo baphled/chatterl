@@ -255,6 +255,11 @@ handle_request('POST',Url,ContentType,Post,Req) ->
                 chatterl_mid_man:group_leave(CT,{G,C})
             end,
       authorise(ContentType,Req,{Fun,{ContentType,{Group,Client}}});
+    "/groups/create/" ++ Group ->
+      [{"description",Description}] = Post,
+      Fun = fun({CT,{G,D}}) ->
+                chatterl_mid_man:group_create(CT,{G,D}) end,
+      authorise(ContentType,Req,{Fun,{ContentType,{Group,Description}}});
     Url -> unknown(Url,ContentType)
   end.
 

@@ -424,3 +424,38 @@ cwiga_allows_retrieval_of_registered_logged_in_clients_test_() ->
                                                 {struct,[{<<"client">>,<<"noobie">>}]}]}]},
                        check_json(check_response(body,Response)))
       end}]}].
+
+cwiga_group_creation_test_() ->
+  {Nick1,Name1,Email1,Password1} = {"noobie","noobie 1","noobie@noobie.com","blahblah"},
+  {Group,Description} = {"nu","a room"},
+  [{setup,
+    fun() ->
+        inets:start(),
+        chatterl:start(),
+        cwiga_register({Nick1,Name1,Email1,Password1})
+    end,
+    fun(_) ->
+        chatterl:stop(),
+        mnesia:clear_table(registered_user)
+    end,
+    [{"CWIGA disallows clients from creating a group if they are not authorised",
+      fun() ->
+          Args = [{"description",Description}],
+          Body = set_params(Args),
+          Response = http_request(post,?URL ++ "/groups/create/" ++ Group, Body),
+          ?assertEqual(401,check_response(code,Response))
+      end},
+     {"CWIGA allows a group to be created by registered user",
+      fun() ->
+          Args = [{"description",Description}],
+          Body = set_params(Args),
+          Response = http_login(post,?URL ++ "/groups/create/" ++ Group, {Nick1,Password1},Body),
+          ?assertEqual(200,check_response(code,Response))
+      end},
+     {"CWIGA disallows a client to create the same group twice",
+      fun() ->
+          Args = [{"description",Description}],
+          Body = set_params(Args),
+          Response = http_login(post,?URL ++ "/groups/create/" ++ Group, {Nick1,Password1},Body),
+          ?assertEqual(500,check_response(code,Response))
+      end}]}].
