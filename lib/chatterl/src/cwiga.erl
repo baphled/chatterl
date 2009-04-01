@@ -260,6 +260,10 @@ handle_request('POST',Url,ContentType,Post,Req) ->
       Fun = fun({CT,{G,D}}) ->
                 chatterl_mid_man:group_create(CT,{G,D}) end,
       authorise(ContentType,Req,{Fun,{ContentType,{Group,Description}}});
+    "/groups/drop/" ++ Group ->
+      Fun = fun({CT,G}) ->
+                chatterl_mid_man:group_drop(CT,G) end,
+      authorise(ContentType,Req,{Fun,{ContentType,Group}});
     Url -> unknown(Url,ContentType)
   end.
 

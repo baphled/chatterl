@@ -458,4 +458,14 @@ cwiga_group_creation_test_() ->
           Body = set_params(Args),
           Response = http_login(post,?URL ++ "/groups/create/" ++ Group, {Nick1,Password1},Body),
           ?assertEqual(500,check_response(code,Response))
+      end},
+     {"CWIGA allows clients to drop a group",
+      fun() ->
+          Response = http_login(post,?URL ++ "/groups/drop/" ++ Group, {Nick1,Password1},[]),
+          ?assertEqual(200,check_response(code,Response))
+      end},
+      {"CWIGA clients are unable to drop a group that does not exist",
+      fun() ->
+          Response = http_login(post,?URL ++ "/groups/drop/" ++ Group, {Nick1,Password1},[]),
+          ?assertEqual(500,check_response(code,Response))
       end}]}].
