@@ -257,7 +257,9 @@ get_content_type(Type) ->
 %% @end
 %%--------------------------------------------------------------------
 check_json_response(Json) ->
-  {struct,[{<<"chatterl">>,{struct,[{<<"response">>,{struct,[Response]}}]}}]} = mochijson2:decode(Json),
+  {struct,[{<<"chatterl">>,
+            {struct,[{<<"response">>,{struct,[Response]}}]}}]} =
+    mochijson2:decode(Json),
   Response.
 
 %%--------------------------------------------------------------------
