@@ -44,16 +44,21 @@ handles_test_() ->
           ?assertEqual(<<"Unknown command: /">>,
                        check_json(check_response(body,Response)))
       end},
+     {"CWIGA disallows client to retrieve a list of users if they are not authorised",
+     fun() ->
+         Response = http:request(?URL "/users/list/"),
+         ?assertEqual(401,check_response(code,Response))
+     end},
      {"CWIGA can retrieve an empty list of users",
       fun() ->
-         Response = http:request(?URL "/users/list/"),
+          Response = http_login(?URL "/users/list/",{Nick1,Password1}),
           ?assertEqual(200,check_response(code,Response)),
           ?assertEqual({struct,[{<<"clients">>,[]}]},check_json(check_response(body,Response)))
      end},
      {"CWIGA can list of users in a groups",
       fun() ->
-          Response =  http:request(?URL "/users/list/" ++ Group),
-          Response2 =  http:request(?URL "/users/list/" ++ "blah"),
+          Response =  http_login(?URL "/users/list/" ++ Group,{Nick1,Password1}),
+          Response2 =  http_login(?URL "/users/list/" ++ "blah",{Nick1,Password1}),
           ?assertEqual(200,check_response(code,Response)),
           ?assertEqual({struct,[{<<"clients">>,[]}]},check_json(check_response(body,Response))),
           ?assertEqual(<<"Group: blah doesn't exist">>,check_json(check_response(body,Response2)))

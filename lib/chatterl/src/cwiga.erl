@@ -186,9 +186,13 @@ handle_request('GET', Url, ContentType, Req) ->
     "/users/disconnect/" ++ Client ->
       chatterl_mid_man:disconnect(ContentType,Client);
     "/users/list/" ->
-      chatterl_mid_man:user_list(ContentType);
+      Fun = fun(CT) ->
+                chatterl_mid_man:user_list(ContentType) end,
+      authorise(ContentType,Req,{Fun,ContentType});
     "/users/list/" ++ Group ->
-      chatterl_mid_man:user_list(ContentType,Group);
+      Fun = fun({CT,G}) ->
+                chatterl_mid_man:user_list(CT,G) end,
+      authorise(ContentType,Req,{Fun,{ContentType,Group}});
     "/users/poll/" ++ Client ->
       Fun = fun({CT,U}) ->
                 chatterl_mid_man:user_poll(CT,U) end,
