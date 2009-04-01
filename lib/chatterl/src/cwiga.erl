@@ -92,7 +92,7 @@ handle_call({'POST',Url,ContentType,Post,Req},_From,State) ->
 handle_call({'GET',Url,ContentType,_Post,Req},_From,State) ->
   Reply = handle_response(handle_request('GET',Url,ContentType,Req),ContentType),
   {reply, Reply, State};
-handle_call({_,Url,ContentType,Path,_Req},_From,State) ->
+handle_call({_,Url,ContentType,_Path,_Req},_From,State) ->
   Reply = send_response(error,{unknown(Url,ContentType),ContentType}),
   {reply, Reply, State};
 handle_call(_Request, _From, State) ->
@@ -237,12 +237,12 @@ handle_request('POST',Url,ContentType,Post,Req) ->
                 chatterl_mid_man:group_send(CT,{G,S,M})
             end,
       authorise(ContentType,Req,{Fun,{ContentType,{Group,Sender,Message}}});
-    "/users/send/" ++ Group ->
+    "/users/send/" ++ Client ->
       [{"client",Sender},{"msg",Message}] = Post,
-      Fun = fun({CT,{G,S,M}}) ->
-                chatterl_mid_man:user_msg(CT,{G,S,M})
+      Fun = fun({CT,{C,S,M}}) ->
+                chatterl_mid_man:user_msg(CT,{C,S,M})
             end,
-      authorise(ContentType,Req,{Fun,{ContentType,{Group,Sender,Message}}});
+      authorise(ContentType,Req,{Fun,{ContentType,{Client,Sender,Message}}});
     "/groups/join/" ++ Group ->
       [{"client",Client}] = Post,
       Fun = fun({CT,{G,C}}) ->
