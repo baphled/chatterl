@@ -208,15 +208,14 @@ group_test_() ->
                chatterl:start()
            end,
     fun(_) -> chatterl:stop() end,
-    [{timeout, 5000,
-      {"Groups can be created",
+    [{{"Groups can be created",
        fun() ->
           ?assertEqual({struct,[{<<"groups">>,[]}]},check_json(chatterl_mid_man:group_list(ContentType))),
           ?assertEqual(<<"Group: nu added">>,
                        check_json(chatterl_mid_man:group_create(ContentType,{Room,Description}))),
           ?assertEqual(<<"Unable to create group: nu">>,
                        check_json(chatterl_mid_man:group_create(ContentType,{Room,Description})))
-       end}},
+       end},
       {"Groups can group destroyed",
        fun() ->
           % abit lazy but not sure how to check the creation date dynamically atm.
@@ -281,8 +280,7 @@ registered_user_list_test_() ->
         mnesia:clear_table(registered_user),
         chatterl:stop()
     end,
-    [{timeout,5000,
-      {"Registerd clients are retrievable through chatterl_mid_man",
+    [{"Registerd clients are retrievable through chatterl_mid_man",
        fun() ->
           ?assertEqual({ok,"noobie is registered"},chatterl_store:register(Nick1,{Name1,Email1,Password1,Password1})),
           ?assertEqual([{Nick1,Name1,Email1}],chatterl_store:registered()),
@@ -292,7 +290,7 @@ registered_user_list_test_() ->
                                                          {struct,[{<<"email">>,<<"noobie@noobie.com">>}]}]}]}
                                 }]},
                        check_json(chatterl_mid_man:registered_list(ContentType)))
-      end}},
+      end},
      {"Multiple clients are listed as expected via chatterl_mid_man",
       fun() ->
          ?assertEqual({ok,"nerf is registered"},chatterl_store:register(Nick2,{Name2,Email2,Password2,Password2})),
