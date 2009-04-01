@@ -188,7 +188,8 @@ handle_request('GET', Url, ContentType, Req) ->
     "/users/list/" ->
       Fun = fun(CT) ->
                 chatterl_mid_man:user_list(CT) end,
-      authorise(ContentType,Req,{Fun,ContentType});
+      %authorise(ContentType,Req,{Fun,ContentType});
+			manage_request(ContentType,Req,user_list,[]);
     "/users/list/" ++ Group ->
       Fun = fun({CT,G}) ->
                 chatterl_mid_man:user_list(CT,G) end,
@@ -208,22 +209,30 @@ handle_request('GET', Url, ContentType, Req) ->
     "/groups/list" ->
       Fun = fun(CT) ->
                 chatterl_mid_man:group_list(CT) end,
-      authorise(ContentType,Req,{Fun,ContentType});
+      %authorise(ContentType,Req,{Fun,ContentType});
+			manage_request(ContentType,Req,group_list,[]);
     "/groups/info/" ++ Group ->
       Fun = fun({CT,G}) ->
                 chatterl_mid_man:group_info(CT,G) end,
-      authorise(ContentType,Req,{Fun,{ContentType,Group}});
+      %authorise(ContentType,Req,{Fun,{ContentType,Group}});
+			manage_request(ContentType,Req,group_info,Group);
     "/status/logged_in/" ->
       Fun = fun(CT) ->
                 chatterl_mid_man:logged_in(CT) end,
       %authorise(ContentType,Req,{Fun,ContentType});
-			manage_request(ContentType,Req,logged_in);
+			manage_request(ContentType,Req,logged_in,[]);
     _ -> unknown(Url,ContentType)
   end.
 
-manage_request(ContentType,Req,Function) ->
-	Fun = fun(CT) -> apply(chatterl_mid_man,Function,[CT]) end,
-	authorise(ContentType,Req,{Fun,ContentType}).
+manage_request(ContentType,Req,Function,Args) ->
+	case Args of
+		[] ->
+			Fun = fun(CT) -> apply(chatterl_mid_man,Function,[CT]) end,
+			authorise(ContentType,Req,{Fun,ContentType});
+		Params ->
+			Fun = fun({CT,Arg}) -> apply(chatterl_mid_man,Function,[CT,Arg]) end,
+			authorise(ContentType,Req,{Fun,{ContentType,Params}})
+	end.
 
 %%--------------------------------------------------------------------
 %% @private
