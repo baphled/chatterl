@@ -208,7 +208,7 @@ group_test_() ->
                chatterl:start()
            end,
     fun(_) -> chatterl:stop() end,
-    [{{"Groups can be created",
+    [{"Groups can be created",
        fun() ->
           ?assertEqual({struct,[{<<"groups">>,[]}]},check_json(chatterl_mid_man:group_list(ContentType))),
           ?assertEqual(<<"Group: nu added">>,
