@@ -190,7 +190,9 @@ handle_request('GET', Url, ContentType, Req) ->
     "/users/list/" ++ Group ->
       chatterl_mid_man:user_list(ContentType,Group);
     "/users/poll/" ++ Client ->
-      chatterl_mid_man:user_poll(ContentType,Client);
+      Fun = fun({CT,U}) ->
+                chatterl_mid_man:user_poll(CT,U) end,
+      authorise(ContentType,Req,{Fun,{ContentType,Client}});
     "/users/groups/" ++ Client ->
       Fun = fun({CT,U}) ->
                 chatterl_mid_man:user_groups(CT,U) end,

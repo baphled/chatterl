@@ -138,10 +138,15 @@ groups_handle_test_() ->
           ?assertEqual({struct,[{<<"groups">>,[]}]},check_json(check_response(body,Response))),
           ?assertEqual(<<"Client: blah doesn't exist">>,check_json(check_response(body,Response2)))
       end},
+     {"CWIGA disallows a client from polling for their messages",
+      fun() ->
+          Response = http:request(?URL "/users/poll/" ++ Client),
+          ?assertEqual(401,check_response(code,Response))
+          end},
      {"CWIGA allows clients to poll chatterl for messages",
       fun() ->
-          Response = http:request(?URL "/users/poll/" ++ "blah"),
-          Response2 = http:request(?URL "/users/poll/" ++ Client),
+          Response = http_login(?URL "/users/poll/" ++ "blah",{Nick1,Password1}),
+          Response2 = http_login(?URL "/users/poll/" ++ Client,{Nick1,Password1}),
           ?assertEqual(500,check_response(code,Response)),
           ?assertEqual(200,check_response(code,Response2)),
           ?assertEqual(<<"Client: blah doesn't exist">>,check_json(check_response(body,Response))),
