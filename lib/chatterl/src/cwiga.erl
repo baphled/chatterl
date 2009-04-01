@@ -315,6 +315,7 @@ get_status_code(ResponseType) ->
       <<"error">> -> 404;
       <<"unauth">> -> 401
   end.
+
 %%--------------------------------------------------------------------
 %% @private
 %% @doc
@@ -326,13 +327,29 @@ get_status_code(ResponseType) ->
 unknown(Url,ContentType) ->
   error("Unknown command: " ++Url, ContentType).
 
-
+%%--------------------------------------------------------------------
+%% @private
+%% @doc
+%% Used for generic responses
+%%
+%% @spec response_message(Type,Message,ContentType) -> HTTPResponse
+%% @end
+%%--------------------------------------------------------------------
 response_message(Type,Message,ContentType) ->
   message_handler:get_response_body(ContentType,
                                     message_handler:build_carrier(Type, Message)).
 
+%%--------------------------------------------------------------------
+%% @private
+%% @doc
+%% Wrapper method used for error responses
+%%
+%% @spec error(Message,ContentType) -> HTTPResponse
+%% @end
+%%--------------------------------------------------------------------
 error(Message,ContentType) ->
   response_message("error", Message,ContentType).
+
 %%--------------------------------------------------------------------
 %% @private
 %% @doc
