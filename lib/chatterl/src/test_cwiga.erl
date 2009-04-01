@@ -342,11 +342,18 @@ cwiga_registeration_clients_can_get_archived_messages_test_() ->
         chatterl:stop(),
         mnesia:clear_table(registered_user)
     end,
-    [{"CWIGA does not allow clients to messages to clients that are not logged in or registered",
+    [{"CWIGA disallows messages to be sent is the client is not authorised",
       fun() ->
           Args = [{"msg","hey"},{"client",Sender}],
           Body = set_params(Args),
           Response = http_request(post,?URL ++ "/users/send/" ++ Nick1, Body),
+          ?assertEqual(401,check_response(code,Response))
+      end},
+     {"CWIGA does not allow clients to messages to clients that are not logged in or registered",
+      fun() ->
+          Args = [{"msg","hey"},{"client",Sender}],
+          Body = set_params(Args),
+          Response = http_login(post,?URL ++ "/users/send/" ++ Nick1,{Nick1,Password1}, Body),
           ?assertEqual(500,check_response(code,Response)),
           ?assertEqual(<<"noobie is not connected!">>,check_json(check_response(body,Response)))
       end},
@@ -354,14 +361,15 @@ cwiga_registeration_clients_can_get_archived_messages_test_() ->
       fun() ->
           Args = [{"msg","hey"},{"client",Sender}],
           Body = set_params(Args),
-          Response = http_request(post,?URL ++ "/users/send/" ++ "blah", Body),
+          Response = http_login(post,?URL ++ "/users/send/" ++ "blah", {Nick1,Password1},Body),
           ?assertEqual(500,check_response(code,Response)),
           ?assertEqual(<<"blah is not connected!">>,check_json(check_response(body,Response)))
       end},
     {"CWIGA allows connected clients to send messages to registered clients",
       fun() ->
           Args = [{"msg","hey"},{"client",Nick1}],
-          Response = cwiga_request(?URL ++ "/users/send/" ++ Sender,Args),
+          Body = set_params(Args),
+          Response = http_login(post,?URL ++ "/users/send/" ++ Sender, {Nick1,Password1},Body),
           ?assertEqual(200,check_response(code,Response)),
           ?assertEqual(<<"Sending message to noobie...">>,check_json(check_response(body,Response)))
       end}]}].
@@ -369,7 +377,6 @@ cwiga_registeration_clients_can_get_archived_messages_test_() ->
 cwiga_allows_retrieval_of_registered_logged_in_clients_test_() ->
   {Nick1,Name1,Email1,Password1} = {"noobie","noobie 1","noobie@noobie.com","blahblah"},
   {Nick2,Name2,Email2,Password2} = {"nerf","nerf 1","nerf@noobie.com","asfdasdf"},
-  Sender = "baft",
   [{setup,
     fun() ->
         inets:start(),

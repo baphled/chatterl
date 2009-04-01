@@ -230,7 +230,10 @@ handle_request('POST',Url,ContentType,Post,Req) ->
       chatterl_mid_man:group_send(ContentType,{Group,Sender,Message});
     "/users/send/" ++ Group ->
       [{"client",Sender},{"msg",Message}] = Post,
-      chatterl_mid_man:user_msg(ContentType,{Group,Sender,Message});
+      Fun = fun({CT,{G,S,M}}) ->
+                chatterl_mid_man:user_msg(CT,{G,S,M})
+            end,
+      authorise(ContentType,Req,{Fun,{ContentType,{Group,Sender,Message}}});
     "/groups/join/" ++ Group ->
       [{"client",Client}] = Post,
       Fun = fun({CT,{G,C}}) ->
