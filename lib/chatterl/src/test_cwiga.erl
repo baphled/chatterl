@@ -102,11 +102,13 @@ handles_test_() ->
       end}]}].
 
 groups_handle_test_() ->
+  {Nick1,Name1,Email1,Password1} = {"noobie","noobie 1","noobie@noobie.com","blahblah"},
   {Client,Group} = {"baph","nu"},
   [{setup,
     fun() ->
         inets:start(),
         chatterl:start(),
+        cwiga_register({Nick1,Name1,Email1,Password1}),
         http:request(?URL "/users/connect/" ++ Client)
     end,
     fun(_) ->
@@ -130,11 +132,16 @@ groups_handle_test_() ->
           ?assertEqual(<<"Client: blah doesn't exist">>,check_json(check_response(body,Response))),
           ?assertEqual({struct,[{<<"messages">>,[]}]},check_json(check_response(body,Response2)))
       end},
-     {"CWIGA can list the groups on chatterl",
+     {"CWIGA clients unable to retrieve groups list if not authorised",
       fun() ->
           Response = http:request(?URL "/groups/list"),
+          ?assertEqual(401,check_response(code,Response))
+          end},
+     {"CWIGA can list the groups on chatterl",
+      fun() ->
+          Response = http_login(?URL "/groups/list",{Nick1,Password1}),
           chatterl_serv:create(Group,"nu room"),
-          Response2 = http:request(?URL "/groups/list"),
+          Response2 = http_login(?URL "/groups/list",{Nick1,Password1}),
           ?assertEqual(200,check_response(code,Response)),
           ?assertEqual(200,check_response(code,Response2)),
           ?assertEqual({struct,[{<<"groups">>,[]}]},check_json(check_response(body,Response))),

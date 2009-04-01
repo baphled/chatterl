@@ -196,14 +196,16 @@ handle_request('GET', Url, ContentType, Req) ->
     "/groups/poll/" ++ Group ->
       chatterl_mid_man:group_poll(ContentType,Group);
     "/groups/list" ->
-      chatterl_mid_man:group_list(ContentType);
+      Fun = fun(CT) ->
+                chatterl_mid_man:group_list(CT) end,
+      authorise(ContentType,Req,{Fun,ContentType});
     "/groups/info/" ++ Group ->
       Fun = fun({CT,G}) ->
                 chatterl_mid_man:group_info(CT,G) end,
       authorise(ContentType,Req,{Fun,{ContentType,Group}});
     "/status/logged_in/" ->
-      Fun = fun(Params) ->
-                chatterl_mid_man:logged_in(Params) end,
+      Fun = fun(CT) ->
+                chatterl_mid_man:logged_in(CT) end,
       authorise(ContentType,Req,{Fun,ContentType});
     _ -> unknown(Url,ContentType)
   end.
