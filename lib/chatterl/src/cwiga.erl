@@ -181,13 +181,6 @@ dispatch_requests(Req) ->
 %%--------------------------------------------------------------------
 handle_request('GET', Url, ContentType, Req) ->
   case Url of
-    "/status/logged_in/" ->
-      case is_auth(Req) of
-        {error,Error} ->
-          message_handler:get_response_body(ContentType,message_handler:build_carrier("error",Error));
-        {ok,_} ->
-          chatterl_mid_man:logged_in(ContentType)
-      end;
     "/users/connect/" ++ Client ->
       chatterl_mid_man:connect(ContentType,Client);
     "/users/disconnect/" ++ Client ->
@@ -206,6 +199,10 @@ handle_request('GET', Url, ContentType, Req) ->
       chatterl_mid_man:group_list(ContentType);
     "/groups/info/" ++ Group ->
       chatterl_mid_man:group_info(ContentType,Group);
+    "/status/logged_in/" ->
+      Fun = fun(Params) ->
+                chatterl_mid_man:logged_in(Params) end,
+      authorise(ContentType,Req,{Fun,ContentType});
     _ -> unknown(Url,ContentType)
   end.
 
@@ -291,9 +288,11 @@ get_status_code(ResponseType) ->
 %% @end
 %%--------------------------------------------------------------------
 unknown(Url,ContentType) ->
-  message_handler:get_response_body(ContentType,
-                                    message_handler:build_carrier("error", "Unknown command: " ++Url)).
+  error("Unknown command: " ++Url, ContentType).
 
+error(Message,ContentType) ->
+  message_handler:get_response_body(ContentType,
+                                    message_handler:build_carrier("error", Message)).
 %%--------------------------------------------------------------------
 %% @private
 %% @doc
@@ -347,4 +346,23 @@ is_auth(Req) ->
       end;
     _ ->
       {error,"Need to authorize"}
+  end.
+
+%%--------------------------------------------------------------------
+%% @private
+%% @doc
+%%
+%% Authorises a client and then carries out an action.
+%%
+%% Basic wrapper used to pass parameters to an anonymouse function.
+%% @spec is_auth(Req) -> {ok,Msg}|{error,Error}
+%%
+%% @end
+%%--------------------------------------------------------------------
+authorise(ContentType,Req,{Fun,Params}) ->
+  case is_auth(Req) of
+    {error,Error} ->
+      error(Error,ContentType);
+    {ok,_} ->
+      Fun(Params)
   end.
