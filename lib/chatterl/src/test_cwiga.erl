@@ -77,13 +77,17 @@ handles_test_() ->
           Response =  http:request(?URL "/groups/poll/" ++ Group),
           ?assertEqual(401,check_response(code,Response))
       end},
+      {"CWIGA will give an error if the group does not exist",
+       fun() ->
+           Response = http_login(?URL "/groups/poll/" ++ "blah",{Nick1,Password1}),
+           ?assertEqual(404,check_response(code,Response)),
+           ?assertEqual(<<"Group: blah doesn't exist!">>,check_json(check_response(body,Response)))
+      end},
      {"CWIGA can retrieve a groups empty messages",
       fun() ->
           Response = http_login(?URL "/groups/poll/" ++ Group,{Nick1,Password1}),
-          Response2 = http_login(?URL "/groups/poll/" ++ "blah",{Nick1,Password1}),
           ?assertEqual(200,check_response(code,Response)),
-          ?assertEqual(404,check_response(code,Response2)),
-          ?assertEqual(<<"Group: blah doesn't exist!">>,check_json(check_response(body,Response2)))
+          ?assertEqual({struct,[{<<"messages">>,[]}]},check_json(check_response(body,Response)))
       end},
      {"CWIGA can retrieve responses in XML format",
       fun() ->
