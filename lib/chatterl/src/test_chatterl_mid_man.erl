@@ -31,18 +31,33 @@ chatterl_group_messages_test_() ->
                chatterl_mid_man:group_join(ContentType,{Group,Client})
            end,
     fun(_) -> chatterl:stop() end,
-    [{timeout, 5000,
+    [{"Client can poll groups for empty messages",
       fun() ->
-          Result = {struct,[{<<"messages">>,[]}]},
-          ?assertEqual(Result,
-                       check_json(chatterl_mid_man:group_poll(["text/json"],Group))),
+          ?assertEqual({struct,[{<<"messages">>,[]}]},
+                       check_json(chatterl_mid_man:group_poll(["text/json"],Group)))
+			end},
+		{"Client must join a group before sending messages",
+			fun() ->
           ?assertEqual(<<"Must join group first!">>,
-                       check_json(chatterl_mid_man:group_send(["text/json"],{Group,"blah","hey"}))),
+                       check_json(chatterl_mid_man:group_send(["text/json"],{Group,"blah","hey"})))
+			end},
+		{"Client can not send message to a group that doesn't exist",
+			fun() ->
           ?assertEqual(<<"Group does not exist">>,
-                       check_json(chatterl_mid_man:group_send(["text/json"],{"blah",Client,"hey"}))),
+                       check_json(chatterl_mid_man:group_send(["text/json"],{"blah",Client,"hey"})))
+			end},
+		{"Client can send a message to a group they are joined to",
+			fun() ->
           ?assertEqual(<<"Message sent">>,
-                       check_json(chatterl_mid_man:group_send(["text/json"],{Group,Client,"hey"}))),
-          ?assert(Result /=  check_json(chatterl_mid_man:group_poll(["text/json"],Group))),
+                       check_json(chatterl_mid_man:group_send(["text/json"],{Group,Client,"hey"})))
+			end},
+		{"Group messages are not the same a before",
+			fun() ->
+          ?assert({struct,[{<<"messages">>,[]}]}
+ 						/=  check_json(chatterl_mid_man:group_poll(["text/json"],Group)))
+			end},
+		{"Client can not send a message to a group that does not exist",
+			fun() ->
           ?assertEqual(<<"Group: blah doesn't exist!">>,
                        check_json(chatterl_mid_man:group_poll(["text/json"],"blah")))
       end}]}].
@@ -83,8 +98,7 @@ chatterl_mid_man_registered_client_test_() ->
         chatterl:stop(),
         mnesia:delete_table(registered_user)
     end,
-    [{timeout,5000,
-      {"Client can register via chatterl_mid_man",
+    [{"Client can register via chatterl_mid_man",
        fun() ->
            ?assertEqual(<<"noobie's passwords must match">>,
                         check_json(chatterl_mid_man:register(["text/json"],{Nick1,{Name1,Email1,Password1,Password2}}))),
@@ -92,8 +106,7 @@ chatterl_mid_man_registered_client_test_() ->
                         check_json(chatterl_mid_man:register(["text/json"],{Nick1,{Name1,Email1,Password1,Password1}}))),
            ?assertEqual(<<"noobie is already registered">>,
                         check_json(chatterl_mid_man:register(["text/json"],{Nick1,{Name1,Email1,Password1,Password1}})))
-       end}},
-     {timeout,5000,
+       end},
       {"Client can login via chatterl_mid_man",
        fun() ->
            ?assertEqual(<<"Unable to login">>,
@@ -102,7 +115,7 @@ chatterl_mid_man_registered_client_test_() ->
                         check_json(chatterl_mid_man:login(["text/json"],{Nick1,Password1}))),
            ?assertEqual(<<"Already logged in">>,
                         check_json(chatterl_mid_man:login(["text/json"],{Nick1,Password1})))
-       end}},
+       end},
      {"Client can logout via chatterl_mid_man",
       fun() ->
           ?assertEqual(<<"Not logged in">>,check_json(chatterl_mid_man:logout(["text/json"],"blah"))),
