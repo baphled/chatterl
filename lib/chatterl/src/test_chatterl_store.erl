@@ -20,11 +20,7 @@ chatterl_store_test_() ->
         mnesia:clear_table(registered_user),
         chatterl:stop()
     end,
-    [{timeout, 5000,
-      fun() ->
-          ?assertEqual([registered_user,messages,client,group,schema],mnesia:system_info(tables))
-      end},
-    fun() ->
+    [fun() ->
         GroupState = gen_server:call({global,Group},get_state),
         ?assertEqual(Group,GroupState#group.name),
         ?assertEqual(Description,GroupState#group.description),
@@ -164,22 +160,22 @@ chatterl_registered_users_archive_messages_test_() ->
         mnesia:delete_table(registered_user),
         mnesia:delete_table(messages)
     end,
-    [{timeout,50000,{"Client send archived messages as expected",
+    [{"Client send archived messages as expected",
       fun() ->
           ?assertEqual({error,lists:append(Nick1," not logged in")},chatterl_store:archive_msg(Nick1,{erlang:localtime(),Nick2,"hey"})),
           ?assertEqual({error,"blah is not registered"},chatterl_store:archive_msg(Nick2,{erlang:localtime(),"blah","hey"})),
           ?assertEqual({ok,"Sent message to noobie"},chatterl_store:archive_msg(Nick2,{CreatedOn1,Nick1,"hey"})),
           ?assertEqual([],chatterl_store:get_messages(Nick2))
-      end}},
+      end},
      {"Client has access to archived messages",
       fun() ->
           ?assertEqual([],gen_server:call({global,Nick2},poll_messages)),
           ?assertEqual({ok,no_messages},chatterl_client:get_messages(Nick2))
       end},
-     {timeout,50000,{"Client can send a private message to an logged out registered user.",
+     {"Client can send a private message to an logged out registered user.",
       fun() ->
           ?assertEqual({ok,"Sent message to noobie"},chatterl_client:private_msg(Nick2,Nick1,"sup"))
-      end}},
+      end},
      {"Client can retrieve archived messages once they log on",
       fun() ->
           chatterl_serv:login(Nick1,Password1),
