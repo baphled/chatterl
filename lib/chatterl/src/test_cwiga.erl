@@ -305,12 +305,14 @@ cwiga_registeration_clients_can_get_archived_messages_test_() ->
 
 cwiga_allows_retrieval_of_registered_logged_in_clients_test_() ->
   {Nick1,Name1,Email1,Password1} = {"noobie","noobie 1","noobie@noobie.com","blahblah"},
+  {Nick2,Name2,Email2,Password2} = {"nerf","nerf 1","nerf@noobie.com","asfdasdf"},
   Sender = "baft",
   [{setup,
     fun() ->
         inets:start(),
         chatterl:start(),
-        cwiga_register({Nick1,Name1,Email1,Password1})
+        cwiga_register({Nick1,Name1,Email1,Password1}),
+        cwiga_register({Nick2,Name2,Email2,Password2})
     end,
     fun(_) ->
         chatterl:stop(),
@@ -321,4 +323,21 @@ cwiga_allows_retrieval_of_registered_logged_in_clients_test_() ->
           Response = http:request(?URL ++ "/status/logged_in/"),
           ?assertEqual(200,check_response(code,Response)),
           ?assertEqual({struct,[{<<"clients">>,[]}]},check_json(check_response(body,Response)))
+      end},
+     {"CWIGA can retrieve a single logged in client",
+      fun() ->
+          chatterl_serv:login(Nick1,Password1),
+          Response = http:request(?URL ++ "/status/logged_in/"),
+          ?assertEqual(200,check_response(code,Response)),
+          ?assertEqual({struct,[{<<"clients">>,[{struct,[{<<"client">>,<<"noobie">>}]}]}]},
+                       check_json(check_response(body,Response)))
+      end},
+     {"CWIGA can retrieve a multiple list of clients",
+      fun() ->
+          chatterl_serv:login(Nick2,Password2),
+          Response = http:request(?URL ++ "/status/logged_in/"),
+          ?assertEqual({struct,[{<<"clients">>,[
+                                                {struct,[{<<"client">>,<<"nerf">>}]},
+                                                {struct,[{<<"client">>,<<"noobie">>}]}]}]},
+                       check_json(check_response(body,Response)))
       end}]}].
