@@ -225,6 +225,12 @@ handle_request('POST',Url,ContentType,Post,Req) ->
     "/register/" ++ Nick ->
       [{"name",Name},{"email",Email},{"pass1",Pass1},{"pass2",Pass2}] = Post,
       chatterl_mid_man:register(ContentType,{Nick,{Name,Email,Pass1,Pass2}});
+    "/users/login" ->
+      [{"login",Login},{"pass",Pass}] = Post,
+      chatterl_mid_man:login(ContentType,{Login,Pass});
+    "/users/logout" ->
+      [{"client",Client}] = Post,
+      chatterl_mid_man:logout(ContentType,Client);
     "/groups/send/" ++ Group ->
       [{"client",Sender},{"msg",Message}] = Post,
       Fun = fun({CT,{G,S,M}}) ->
@@ -249,13 +255,7 @@ handle_request('POST',Url,ContentType,Post,Req) ->
                 chatterl_mid_man:group_leave(CT,{G,C})
             end,
       authorise(ContentType,Req,{Fun,{ContentType,{Group,Client}}});
-    "/users/login" ->
-      [{"login",Login},{"pass",Pass}] = Post,
-      chatterl_mid_man:login(ContentType,{Login,Pass});
-    "/users/logout" ->
-      [{"client",Client}] = Post,
-      chatterl_mid_man:logout(ContentType,Client);
-     Url -> unknown(Url,ContentType)
+    Url -> unknown(Url,ContentType)
   end.
 
 %%--------------------------------------------------------------------
