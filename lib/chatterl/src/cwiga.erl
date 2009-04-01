@@ -186,21 +186,21 @@ handle_request('GET', Url, ContentType, Req) ->
     "/users/disconnect/" ++ Client ->
       chatterl_mid_man:disconnect(ContentType,Client);
     "/users/list/" ->
-			manage_request(ContentType,Req,user_list,[]);
+			manage_request(ContentType,Req,{user_list,[]});
     "/users/list/" ++ Group ->
-			manage_request(ContentType,Req,user_list,Group);
+			manage_request(ContentType,Req,{user_list,Group});
     "/users/poll/" ++ Client ->
-			manage_request(ContentType,Req,user_poll,Client);
+			manage_request(ContentType,Req,{user_poll,Client});
     "/users/groups/" ++ Client ->
-			manage_request(ContentType,Req,user_groups,Client);
+			manage_request(ContentType,Req,{user_groups,Client});
     "/groups/poll/" ++ Group ->
-			manage_request(ContentType,Req,group_poll,Group);
+			manage_request(ContentType,Req,{group_poll,Group});
     "/groups/list" ->
-			manage_request(ContentType,Req,group_list,[]);
+			manage_request(ContentType,Req,{group_list,[]});
     "/groups/info/" ++ Group ->
-			manage_request(ContentType,Req,group_info,Group);
+			manage_request(ContentType,Req,{group_info,Group});
     "/status/logged_in/" ->
-			manage_request(ContentType,Req,logged_in,[]);
+			manage_request(ContentType,Req,{logged_in,[]});
     _ -> unknown(Url,ContentType)
   end.
 
@@ -226,38 +226,23 @@ handle_request('POST',Url,ContentType,Post,Req) ->
       chatterl_mid_man:logout(ContentType,Client);
     "/groups/send/" ++ Group ->
       [{"client",Sender},{"msg",Message}] = Post,
-      Fun = fun({CT,{G,S,M}}) ->
-                chatterl_mid_man:group_send(CT,{G,S,M})
-            end,
-      %authorise(ContentType,Req,{Fun,{ContentType,{Group,Sender,Message}}});
-			manage_request(ContentType,Req,group_send,{Group,Sender,Message});
+			manage_request(ContentType,Req,{group_send,{Group,Sender,Message}});
     "/users/send/" ++ Client ->
       [{"client",Sender},{"msg",Message}] = Post,
-			manage_request(ContentType,Req,user_msg,{Client,Sender,Message});
+			manage_request(ContentType,Req,{user_msg,{Client,Sender,Message}});
     "/groups/join/" ++ Group ->
       [{"client",Client}] = Post,
-			manage_request(ContentType,Req,group_join,{Group,Client});
+			manage_request(ContentType,Req,{group_join,{Group,Client}});
     "/groups/leave/" ++ Group ->
       [{"client",Client}] = Post,
-			manage_request(ContentType,Req,group_leave,{Group,Client});
+			manage_request(ContentType,Req,{group_leave,{Group,Client}});
     "/groups/create/" ++ Group ->
       [{"description",Description}] = Post,
-			manage_request(ContentType,Req,group_create,{Group,Description});
+			manage_request(ContentType,Req,{group_create,{Group,Description}});
     "/groups/drop/" ++ Group ->
-			manage_request(ContentType,Req,group_drop,Group);
+			manage_request(ContentType,Req,{group_drop,Group});
     Url -> unknown(Url,ContentType)
   end.
-
-
-manage_request(ContentType,Req,Function,Args) ->
-	case Args of
-		[] ->
-			Fun = fun(CT) -> apply(chatterl_mid_man,Function,[CT]) end,
-			authorise(ContentType,Req,{Fun,ContentType});
-		Params ->
-			Fun = fun({CT,Arg}) -> apply(chatterl_mid_man,Function,[CT,Arg]) end,
-			authorise(ContentType,Req,{Fun,{ContentType,Params}})
-	end.
 	
 %%--------------------------------------------------------------------
 %% @private
@@ -396,6 +381,26 @@ is_auth(Req) ->
     _ ->
       {error,"Need to authorize"}
   end.
+
+%%--------------------------------------------------------------------
+%% @private
+%% @doc
+%%
+%% Manages all our authorisational based calls
+%%
+%% @spec manage_request(ContentType,Req,{Function,Args}) -> {ok,Msg}|{error,Error}
+%%
+%% @end
+%%--------------------------------------------------------------------
+manage_request(ContentType,Req,{Function,Args}) ->
+	case Args of
+		[] ->
+			Fun = fun(CT) -> apply(chatterl_mid_man,Function,[CT]) end,
+			authorise(ContentType,Req,{Fun,ContentType});
+		Params ->
+			Fun = fun({CT,Arg}) -> apply(chatterl_mid_man,Function,[CT,Arg]) end,
+			authorise(ContentType,Req,{Fun,{ContentType,Params}})
+	end.
 
 %%--------------------------------------------------------------------
 %% @private
