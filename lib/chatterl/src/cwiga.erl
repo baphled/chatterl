@@ -174,8 +174,8 @@ dispatch_requests(Req) ->
 %% @private
 %% @doc
 %%
-%% Handles CWIGA's requests
-%% @spec handle_request('GET', Url, ContentType, _Post) -> HTTPResponse
+%% Handles CWIGA's GET requests
+%% @spec handle_request('GET', Url, ContentType, Req) -> HTTPResponse
 %%
 %% @end
 %%--------------------------------------------------------------------
@@ -220,6 +220,15 @@ handle_request('GET', Url, ContentType, Req) ->
     _ -> unknown(Url,ContentType)
   end.
 
+%%--------------------------------------------------------------------
+%% @private
+%% @doc
+%%
+%% Handles CWIGA's POST requests
+%% @spec handle_request('POST', Url, ContentType, Path, Req) -> HTTPResponse
+%%
+%% @end
+%%--------------------------------------------------------------------
 handle_request('POST',Url,ContentType,Post,Req) ->
   case Url of
     "/register/" ++ Nick ->
