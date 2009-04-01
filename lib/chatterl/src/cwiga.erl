@@ -193,19 +193,23 @@ handle_request('GET', Url, ContentType, Req) ->
     "/users/list/" ++ Group ->
       Fun = fun({CT,G}) ->
                 chatterl_mid_man:user_list(CT,G) end,
-      authorise(ContentType,Req,{Fun,{ContentType,Group}});
+      %authorise(ContentType,Req,{Fun,{ContentType,Group}});
+			manage_request(ContentType,Req,user_list,Group);
     "/users/poll/" ++ Client ->
       Fun = fun({CT,U}) ->
                 chatterl_mid_man:user_poll(CT,U) end,
-      authorise(ContentType,Req,{Fun,{ContentType,Client}});
+      %authorise(ContentType,Req,{Fun,{ContentType,Client}});
+			manage_request(ContentType,Req,user_poll,Client);
     "/users/groups/" ++ Client ->
       Fun = fun({CT,U}) ->
                 chatterl_mid_man:user_groups(CT,U) end,
-      authorise(ContentType,Req,{Fun,{ContentType,Client}});
+      %authorise(ContentType,Req,{Fun,{ContentType,Client}});
+			manage_request(ContentType,Req,user_groups,Client);
     "/groups/poll/" ++ Group ->
       Fun = fun({CT,G}) ->
                 chatterl_mid_man:group_poll(CT,G) end,
-      authorise(ContentType,Req,{Fun,{ContentType,Group}});
+      %authorise(ContentType,Req,{Fun,{ContentType,Group}});
+			manage_request(ContentType,Req,group_poll,Group);
     "/groups/list" ->
       Fun = fun(CT) ->
                 chatterl_mid_man:group_list(CT) end,
