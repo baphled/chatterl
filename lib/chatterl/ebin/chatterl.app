@@ -2,7 +2,7 @@
 %% application.
 {application, chatterl,
 	      [{description, "Erlang based chat system."},
-   {vsn, "0.1.1.8"},
+   {vsn, "0.1.2.0"},
    {modules, [chatterl,
    	     message_handler,
 	     chatterl_mid_man,
