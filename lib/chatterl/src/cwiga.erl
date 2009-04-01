@@ -393,14 +393,16 @@ is_auth(Req) ->
 %% @end
 %%--------------------------------------------------------------------
 manage_request(ContentType,Req,{Function,Args}) ->
-	case Args of
-		[] ->
-			Fun = fun(CT) -> apply(chatterl_mid_man,Function,[CT]) end,
-			authorise(ContentType,Req,{Fun,ContentType});
-		Params ->
-			Fun = fun({CT,Arg}) -> apply(chatterl_mid_man,Function,[CT,Arg]) end,
-			authorise(ContentType,Req,{Fun,{ContentType,Params}})
-	end.
+	Parameters =
+		case Args of
+			[] ->
+				Fun = fun(CT) -> apply(chatterl_mid_man,Function,[CT]) end,
+				ContentType;
+				Params ->
+					Fun = fun({CT,Arg}) -> apply(chatterl_mid_man,Function,[CT,Arg]) end,
+					{ContentType,Params}
+		end,
+		authorise(ContentType,Req,{Fun,Parameters}).
 
 %%--------------------------------------------------------------------
 %% @private
