@@ -229,25 +229,17 @@ handle_request('POST',Url,ContentType,Post,Req) ->
       Fun = fun({CT,{G,S,M}}) ->
                 chatterl_mid_man:group_send(CT,{G,S,M})
             end,
-      authorise(ContentType,Req,{Fun,{ContentType,{Group,Sender,Message}}});
+      %authorise(ContentType,Req,{Fun,{ContentType,{Group,Sender,Message}}});
+			manage_request(ContentType,Req,group_send,{Group,Sender,Message});
     "/users/send/" ++ Client ->
       [{"client",Sender},{"msg",Message}] = Post,
-      Fun = fun({CT,{C,S,M}}) ->
-                chatterl_mid_man:user_msg(CT,{C,S,M})
-            end,
-      authorise(ContentType,Req,{Fun,{ContentType,{Client,Sender,Message}}});
+			manage_request(ContentType,Req,user_msg,{Client,Sender,Message});
     "/groups/join/" ++ Group ->
       [{"client",Client}] = Post,
-      Fun = fun({CT,{G,C}}) ->
-                chatterl_mid_man:group_join(CT,{G,C})
-            end,
-      authorise(ContentType,Req,{Fun,{ContentType,{Group,Client}}});
+			manage_request(ContentType,Req,group_join,{Group,Client});
     "/groups/leave/" ++ Group ->
       [{"client",Client}] = Post,
-      Fun = fun({CT,{G,C}}) ->
-                chatterl_mid_man:group_leave(CT,{G,C})
-            end,
-      authorise(ContentType,Req,{Fun,{ContentType,{Group,Client}}});
+			manage_request(ContentType,Req,group_leave,{Group,Client});
     "/groups/create/" ++ Group ->
       [{"description",Description}] = Post,
 			manage_request(ContentType,Req,group_create,{Group,Description});
