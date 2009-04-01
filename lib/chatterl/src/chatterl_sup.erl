@@ -60,7 +60,7 @@ init([{port,Port},{copy,Copies}]) ->
     Shutdown = infinity,
     Type = supervisor,
 
-    Server = {server_sup, {server_sup, start_link, [ram_copies]},
+    Server = {server_sup, {server_sup, start_link, [Copies]},
               Restart, Shutdown, Type, [server_sup]},
     CWIGA = {cwiga_sup, {cwiga_sup, start_link, [Port]},
               Restart, Shutdown, Type, [cwiga_sup]},
