@@ -216,9 +216,14 @@ handle_request('GET', Url, ContentType, Req) ->
     "/status/logged_in/" ->
       Fun = fun(CT) ->
                 chatterl_mid_man:logged_in(CT) end,
-      authorise(ContentType,Req,{Fun,ContentType});
+      %authorise(ContentType,Req,{Fun,ContentType});
+			manage_request(ContentType,Req,logged_in);
     _ -> unknown(Url,ContentType)
   end.
+
+manage_request(ContentType,Req,Function) ->
+	Fun = fun(CT) -> apply(chatterl_mid_man,Function,[CT]) end,
+	authorise(ContentType,Req,{Fun,ContentType}).
 
 %%--------------------------------------------------------------------
 %% @private
