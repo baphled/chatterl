@@ -198,7 +198,9 @@ handle_request('GET', Url, ContentType, Req) ->
     "/groups/list" ->
       chatterl_mid_man:group_list(ContentType);
     "/groups/info/" ++ Group ->
-      chatterl_mid_man:group_info(ContentType,Group);
+      Fun = fun({CT,G}) ->
+                chatterl_mid_man:group_info(CT,G) end,
+      authorise(ContentType,Req,{Fun,{ContentType,Group}});
     "/status/logged_in/" ->
       Fun = fun(Params) ->
                 chatterl_mid_man:logged_in(Params) end,
@@ -206,7 +208,7 @@ handle_request('GET', Url, ContentType, Req) ->
     _ -> unknown(Url,ContentType)
   end.
 
-handle_request('POST',Url,ContentType,Post,Req) ->
+handle_request('POST',Url,ContentType,Post,_Req) ->
   case Url of
     "/register/" ++ Nick ->
       [{"name",Name},{"email",Email},{"pass1",Pass1},{"pass2",Pass2}] = Post,
@@ -275,9 +277,10 @@ check_json_response(Json) ->
 %%--------------------------------------------------------------------
 get_status_code(ResponseType) ->
     case ResponseType of
-    <<"success">> -> 200;
-    <<"failure">> -> 500;
-    <<"error">> -> 404
+      <<"success">> -> 200;
+      <<"failure">> -> 500;
+      <<"error">> -> 404;
+      <<"unauth">> -> 401
   end.
 %%--------------------------------------------------------------------
 %% @private
@@ -290,9 +293,13 @@ get_status_code(ResponseType) ->
 unknown(Url,ContentType) ->
   error("Unknown command: " ++Url, ContentType).
 
-error(Message,ContentType) ->
+
+response_message(Type,Message,ContentType) ->
   message_handler:get_response_body(ContentType,
-                                    message_handler:build_carrier("error", Message)).
+                                    message_handler:build_carrier(Type, Message)).
+
+error(Message,ContentType) ->
+  response_message("error", Message,ContentType).
 %%--------------------------------------------------------------------
 %% @private
 %% @doc
@@ -362,7 +369,7 @@ is_auth(Req) ->
 authorise(ContentType,Req,{Fun,Params}) ->
   case is_auth(Req) of
     {error,Error} ->
-      error(Error,ContentType);
+      response_message('unauth',Error,ContentType);
     {ok,_} ->
       Fun(Params)
   end.

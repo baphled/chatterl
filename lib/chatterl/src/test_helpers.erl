@@ -80,6 +80,8 @@ check_json(Json) ->
     {<<"failure">>,Result} ->
       Result;
     {<<"error">>,Result} ->
+      Result;
+    {<<"unauth">>,Result} ->
       Result
   end.
 

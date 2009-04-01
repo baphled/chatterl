@@ -22,11 +22,13 @@
 -define(URL,"http://127.0.0.1:9000").
 
 handles_test_() ->
+  {Nick1,Name1,Email1,Password1} = {"noobie","noobie 1","noobie@noobie.com","blahblah"},
   {Client,Group} = {"baph","nu"},
   [{setup,
     fun() ->
         inets:start(),
         chatterl:start(),
+        cwiga_register({Nick1,Name1,Email1,Password1}),
         chatterl_serv:create(Group,"nu room")
     end,
     fun(_) ->
@@ -56,13 +58,19 @@ handles_test_() ->
           ?assertEqual({struct,[{<<"clients">>,[]}]},check_json(check_response(body,Response))),
           ?assertEqual(<<"Group: blah doesn't exist">>,check_json(check_response(body,Response2)))
       end},
-     {"CWIGA can retrieve a groups information",
+     {"CWIGA disallows retrieving group information if the client is not authorised",
       fun() ->
           Response =  http:request(?URL "/groups/info/" ++ Group),
-          Response2 =  http:request(?URL "/groups/info/" ++ "blah"),
-          ?assertEqual(200,check_response(code,Response)),
-          ?assert(is_tuple(check_json(check_response(body,Response)))),
-          ?assertEqual(<<"Group doesn't exist!">>,check_json(check_response(body,Response2)))
+          ?assertEqual(401,check_response(code,Response)),
+          ?assertEqual(<<"Need to authorize">>,check_json(check_response(body,Response)))
+      end},
+     {"CWIGA can retrieve a groups information",
+      fun() ->
+          Response =  http_login(?URL "/groups/info/" ++ "blah",{Nick1,Password1}),
+          Response2 =  http_login(?URL "/groups/info/" ++ Group,{Nick1,Password1}),
+          ?assertEqual(200,check_response(code,Response2)),
+          ?assertEqual(<<"Group doesn't exist!">>,check_json(check_response(body,Response))),
+          ?assert(is_tuple(check_json(check_response(body,Response2))))
       end},
      {"CWIGA can retrieve a groups empty messages",
       fun() ->
@@ -144,7 +152,8 @@ groups_send_message_handle_test_() ->
         http:request(?URL "/users/connect/" ++ Client2)
     end,
     fun(_) ->
-        chatterl:stop()
+        chatterl:stop(),
+        mnesia:clear_table(registered_user)
     end,
     [{"CWIGA allows a client to join a group",
       fun() ->
@@ -321,7 +330,7 @@ cwiga_allows_retrieval_of_registered_logged_in_clients_test_() ->
     [{"CWIGA only allows authorised client to list logged in clients",
       fun() ->
           Response = http:request(?URL ++ "/status/logged_in/"),
-          ?assertEqual(404,check_response(code,Response)),
+          ?assertEqual(401,check_response(code,Response)),
           ?assertEqual(<<"Need to authorize">>,check_json(check_response(body,Response)))
       end},
      {"CWIGA can retrieve an empty list of logged in clients",
