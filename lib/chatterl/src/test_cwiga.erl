@@ -72,11 +72,17 @@ handles_test_() ->
           ?assertEqual(<<"Group doesn't exist!">>,check_json(check_response(body,Response))),
           ?assert(is_tuple(check_json(check_response(body,Response2))))
       end},
-     {"CWIGA can retrieve a groups empty messages",
+     {"CWIGA disallows clients from polling groups unless they are authorised",
       fun() ->
           Response =  http:request(?URL "/groups/poll/" ++ Group),
-          Response2 =  http:request(?URL "/groups/poll/" ++ "blah"),
+          ?assertEqual(401,check_response(code,Response))
+      end},
+     {"CWIGA can retrieve a groups empty messages",
+      fun() ->
+          Response = http_login(?URL "/groups/poll/" ++ Group,{Nick1,Password1}),
+          Response2 = http_login(?URL "/groups/poll/" ++ "blah",{Nick1,Password1}),
           ?assertEqual(200,check_response(code,Response)),
+          ?assertEqual(404,check_response(code,Response2)),
           ?assertEqual(<<"Group: blah doesn't exist!">>,check_json(check_response(body,Response2)))
       end},
      {"CWIGA can retrieve responses in XML format",
