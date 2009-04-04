@@ -103,8 +103,8 @@ handles_test_() ->
       end},
      {"CWIGA can connect clients to chatterl",
       fun() ->
-          Response = http:request(?URL "/users/connect/" ++ Client),
-          Response2 = http:request(?URL "/users/connect/" ++ Client),
+          Response = http:request(?URL "/users/" ++ Client ++ "/connect/"),
+          Response2 = http:request(?URL "/users/" ++ Client ++ "/connect/"),
           ?assertEqual(200,check_response(code,Response)),
           ?assertEqual(<<"baph now connected">>,check_json(check_response(body,Response))),
           ?assertEqual(<<"baph is already connected">>,check_json(check_response(body,Response2)))
@@ -126,7 +126,7 @@ groups_handle_test_() ->
         inets:start(),
         chatterl:start(),
         cwiga_register({Nick1,Name1,Email1,Password1}),
-        http:request(?URL "/users/connect/" ++ Client)
+        http:request(?URL "/users/" ++ Client ++ "/connect/")
     end,
     fun(_) ->
         chatterl:stop()
@@ -184,8 +184,8 @@ groups_send_message_handle_test_() ->
         chatterl:start(),
         cwiga_register({Nick1,Name1,Email1,Password1}),
         chatterl_serv:create(Group,"nu room"),
-        http:request(?URL "/users/connect/" ++ Client),
-        http:request(?URL "/users/connect/" ++ Client2)
+        http:request(?URL "/users/" ++ Client ++ "/connect/"),
+        http:request(?URL "/users/" ++ Client ++ "/connect/")
     end,
     fun(_) ->
         chatterl:stop(),
@@ -344,7 +344,7 @@ cwiga_registeration_clients_can_get_archived_messages_test_() ->
         inets:start(),
         chatterl:start(),
         cwiga_register({Nick1,Name1,Email1,Password1}),
-        http:request(?URL ++ "/users/connect/" ++ Sender)
+        http:request(?URL ++ "/users/" ++ Sender ++ "/connect/")
     end,
     fun(_) ->
         chatterl:stop(),
