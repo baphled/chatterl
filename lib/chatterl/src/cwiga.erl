@@ -386,7 +386,7 @@ is_auth(Req) ->
 %% @private
 %% @doc
 %%
-%% Manages all our authorisational based calls
+%% Manages the calls that need to be passed to manage_auth
 %%
 %% @spec manage_request(ContentType,Req,{Function,Args}) -> {ok,Msg}|{error,Error}
 %%
@@ -402,13 +402,27 @@ manage_request(ContentType,Req,{Function,Args},Auth) ->
 				Fun = fun({CT,Arg}) -> apply(chatterl_mid_man,Function,[CT,Arg]) end,
 				{ContentType,Params}
 		end,
-		case Auth of
-			true ->
-				authorise(ContentType,Req,{Fun,Parameters});
-			false ->
-				Fun(Parameters)
-		end.
+		manage_auth(Auth,{ContentType,Req,{Fun,Parameters}}).
 
+%%--------------------------------------------------------------------
+%% @private
+%% @doc
+%%
+%% Manages all our authorisational based calls
+%%
+%% @spec manage_auth(Auth,{ContentType,Req,{Fun,Parameters}}) ->
+%%																							{ok,Msg}|{error,Error}
+%%
+%% @end
+%%--------------------------------------------------------------------
+manage_auth(Auth,{ContentType,Req,{Fun,Parameters}}) ->
+	case Auth of
+		true ->
+			authorise(ContentType,Req,{Fun,Parameters});
+		false ->
+			Fun(Parameters)
+	end.
+	
 %%--------------------------------------------------------------------
 %% @private
 %% @doc
