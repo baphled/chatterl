@@ -133,13 +133,13 @@ groups_handle_test_() ->
     end,
     [{"CWIGA disallows unauthorised clients to list groups a user is connect to",
       fun() ->
-          Response = http:request(?URL "/users/groups/" ++ Client),
+          Response = http:request(?URL "/users/" ++ Client ++ "/groups/"),
           ?assertEqual(401,check_response(code,Response))
       end},
      {"CWIGA allows clients to retrieves a list of the groups they are connected to",
       fun() ->
-          Response = http_login(?URL "/users/groups/" ++ Client,{Nick1,Password1}),
-          Response2 = http_login(?URL "/users/groups/" ++ "blah",{Nick1,Password1}),
+          Response = http_login(?URL "/users/" ++ Client ++ "/groups/",{Nick1,Password1}),
+          Response2 = http_login(?URL "/users/blah/groups/",{Nick1,Password1}),
           ?assertEqual(200,check_response(code,Response)),
           ?assertEqual(500,check_response(code,Response2)),
           ?assertEqual({struct,[{<<"groups">>,[]}]},check_json(check_response(body,Response))),
