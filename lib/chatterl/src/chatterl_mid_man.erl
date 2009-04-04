@@ -15,8 +15,7 @@
 
 %% API
 %% Client based calls
--export([
-         start/0,
+-export([start/0,
          stop/0,
          register/2,
          login/2,
@@ -27,18 +26,15 @@
          user_list/2,
          user_msg/2,
          user_poll/2,
-         user_groups/2
-        ]).
+         user_groups/2]).
 
 %% Group based calls
--export([
-         group_join/2,
+-export([group_join/2,
          group_leave/2,
          group_info/2,
          group_send/2,
          group_poll/2,
-         group_list/1
-        ]).
+         group_list/1]).
 
 %% Admin based calls
 -export([group_create/2,group_drop/2]).
@@ -46,21 +42,17 @@
 -export([registered_list/1,logged_in/1]).
 
 %% gen_server callbacks
--export([
-         init/1,
+-export([init/1,
          handle_call/3,
          handle_cast/2,
          handle_info/2,
-	 terminate/2,
-         code_change/3
-        ]).
+	 			 terminate/2,
+         code_change/3]).
 
 %% Message handler methods used to handle our API calls
--import(message_handler, [
-                          get_response_body/2,
+-import(message_handler, [get_response_body/2,
                           build_carrier/2,
-                          format_messages/1
-                         ]).
+                          format_messages/1]).
 
 -define(SERVER, ?MODULE).
 
