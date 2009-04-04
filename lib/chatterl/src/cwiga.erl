@@ -192,7 +192,7 @@ handle_request('GET', Url, ContentType, Req) ->
 			chatterl_mid_man:disconnect(ContentType,Client);
 		["users",Group,"list"] ->
 			manage_request(ContentType,Req,{user_list,Group},true);
-		["users","poll",Client] ->
+		["users",Client,"poll"] ->
 			manage_request(ContentType,Req,{user_poll,Client},true);
 		["users","groups",Client] ->
 			manage_request(ContentType,Req,{user_groups,Client},true);

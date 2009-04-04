@@ -147,13 +147,13 @@ groups_handle_test_() ->
       end},
      {"CWIGA disallows a client from polling for their messages",
       fun() ->
-          Response = http:request(?URL "/users/poll/" ++ Client),
+          Response = http:request(?URL "/users/" ++ Client ++ "/poll/"),
           ?assertEqual(401,check_response(code,Response))
           end},
      {"CWIGA allows clients to poll chatterl for messages",
       fun() ->
-          Response = http_login(?URL "/users/poll/" ++ "blah",{Nick1,Password1}),
-          Response2 = http_login(?URL "/users/poll/" ++ Client,{Nick1,Password1}),
+          Response = http_login(?URL "/users/blah/poll/",{Nick1,Password1}),
+          Response2 = http_login(?URL "/users/" ++ Client ++ "/poll/",{Nick1,Password1}),
           ?assertEqual(500,check_response(code,Response)),
           ?assertEqual(200,check_response(code,Response2)),
           ?assertEqual(<<"Client: blah doesn't exist">>,check_json(check_response(body,Response))),
