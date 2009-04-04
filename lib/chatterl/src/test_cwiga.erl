@@ -81,18 +81,18 @@ handles_test_() ->
       end},
      {"CWIGA disallows clients from polling groups unless they are authorised",
       fun() ->
-          Response =  http:request(?URL "/groups/poll/" ++ Group),
+          Response =  http:request(?URL "/groups/" ++ Group ++ "/poll/"),
           ?assertEqual(401,check_response(code,Response))
       end},
       {"CWIGA will give an error if the group does not exist",
        fun() ->
-           Response = http_login(?URL "/groups/poll/" ++ "blah",{Nick1,Password1}),
+           Response = http_login(?URL "/groups/blah/poll/",{Nick1,Password1}),
            ?assertEqual(404,check_response(code,Response)),
            ?assertEqual(<<"Group: blah doesn't exist!">>,check_json(check_response(body,Response)))
       end},
      {"CWIGA can retrieve a groups empty messages",
       fun() ->
-          Response = http_login(?URL "/groups/poll/" ++ Group,{Nick1,Password1}),
+          Response = http_login(?URL "/groups/" ++ Group ++ "/poll/",{Nick1,Password1}),
           ?assertEqual(200,check_response(code,Response)),
           ?assertEqual({struct,[{<<"messages">>,[]}]},check_json(check_response(body,Response)))
       end},

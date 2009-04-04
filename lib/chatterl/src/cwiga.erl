@@ -196,7 +196,7 @@ handle_request('GET', Url, ContentType, Req) ->
 			manage_request(ContentType,Req,{user_poll,Client},true);
 		["users",Client,"groups"] ->
 			manage_request(ContentType,Req,{user_groups,Client},true);
-		["groups","poll",Group] ->
+		["groups",Group,"poll"] ->
 			manage_request(ContentType,Req,{group_poll,Group},true);
 		["groups"] ->
 			manage_request(ContentType,Req,{group_list,[]},true);
