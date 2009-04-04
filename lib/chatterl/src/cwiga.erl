@@ -182,30 +182,30 @@ dispatch_requests(Req) ->
 %% @end
 %%--------------------------------------------------------------------
 handle_request('GET', Url, ContentType, Req) ->
-  case Url of
-    "/users/connect/" ++ Client ->
-      chatterl_mid_man:connect(ContentType,Client);
-    "/users/disconnect/" ++ Client ->
-      chatterl_mid_man:disconnect(ContentType,Client);
-    "/users/" ->
+	Path = string:tokens(Url, "/"),
+	case Path of
+		["users"] ->
 			manage_request(ContentType,Req,{user_list,[]},false);
-    "/users/list/" ++ Group ->
+		["users","connect",Client] ->
+			chatterl_mid_man:connect(ContentType,Client);
+		["users","disconnect",Client] ->
+			chatterl_mid_man:disconnect(ContentType,Client);
+		["users","list",Group] ->
 			manage_request(ContentType,Req,{user_list,Group},true);
-    "/users/poll/" ++ Client ->
+		["users","poll",Client] ->
 			manage_request(ContentType,Req,{user_poll,Client},true);
-    "/users/groups/" ++ Client ->
+		["users","groups",Client] ->
 			manage_request(ContentType,Req,{user_groups,Client},true);
-    "/groups/poll/" ++ Group ->
+		["groups","poll",Group] ->
 			manage_request(ContentType,Req,{group_poll,Group},true);
-    "/groups/list" ->
+		["groups","list"] ->
 			manage_request(ContentType,Req,{group_list,[]},true);
-    "/groups/info/" ++ Group ->
+		["groups","info",Group] ->
 			manage_request(ContentType,Req,{group_info,Group},true);
-    "/status/logged_in/" ->
+		["status","logged_in"] ->
 			manage_request(ContentType,Req,{logged_in,[]},true);
-    _ -> unknown(Url,ContentType)
-  end.
-
+		_ -> unknown(Url,ContentType)
+	end.
 %%--------------------------------------------------------------------
 %% @private
 %% @doc
