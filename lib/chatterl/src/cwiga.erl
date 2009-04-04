@@ -230,7 +230,7 @@ handle_request('POST',Url,ContentType,Post,Req) ->
 		["groups",Group,"send"] ->
 			[{"client",Sender},{"msg",Message}] = Post,
 			manage_request(ContentType,Req,{group_send,{Group,Sender,Message}},true);
-		["users","send",Client] ->
+		["users",Client,"send"] ->
 			[{"client",Sender},{"msg",Message}] = Post,
 			manage_request(ContentType,Req,{user_msg,{Client,Sender,Message}},true);
 		["groups","join",Group] ->

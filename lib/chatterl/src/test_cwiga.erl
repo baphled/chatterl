@@ -354,14 +354,14 @@ cwiga_registeration_clients_can_get_archived_messages_test_() ->
       fun() ->
           Args = [{"msg","hey"},{"client",Sender}],
           Body = set_params(Args),
-          Response = http_request(post,?URL ++ "/users/send/" ++ Nick1, Body),
+          Response = http_request(post,?URL ++ "/users/" ++Nick1 ++ "/send/", Body),
           ?assertEqual(401,check_response(code,Response))
       end},
      {"CWIGA does not allow clients to messages to clients that are not logged in or registered",
       fun() ->
           Args = [{"msg","hey"},{"client",Sender}],
           Body = set_params(Args),
-          Response = http_login(post,?URL ++ "/users/send/" ++ Nick1,{Nick1,Password1}, Body),
+          Response = http_login(post,?URL ++ "/users/" ++Nick1 ++ "/send/",{Nick1,Password1}, Body),
           ?assertEqual(500,check_response(code,Response)),
           ?assertEqual(<<"noobie is not connected!">>,check_json(check_response(body,Response)))
       end},
@@ -369,7 +369,7 @@ cwiga_registeration_clients_can_get_archived_messages_test_() ->
       fun() ->
           Args = [{"msg","hey"},{"client",Sender}],
           Body = set_params(Args),
-          Response = http_login(post,?URL ++ "/users/send/" ++ "blah", {Nick1,Password1},Body),
+          Response = http_login(post,?URL ++ "/users/blah/send/", {Nick1,Password1},Body),
           ?assertEqual(500,check_response(code,Response)),
           ?assertEqual(<<"blah is not connected!">>,check_json(check_response(body,Response)))
       end},
@@ -377,7 +377,7 @@ cwiga_registeration_clients_can_get_archived_messages_test_() ->
       fun() ->
           Args = [{"msg","hey"},{"client",Nick1}],
           Body = set_params(Args),
-          Response = http_login(post,?URL ++ "/users/send/" ++ Sender, {Nick1,Password1},Body),
+          Response = http_login(post,?URL ++ "/users/" ++ Sender ++ "/send/", {Nick1,Password1},Body),
           ?assertEqual(200,check_response(code,Response)),
           ?assertEqual(<<"Sending message to noobie...">>,check_json(check_response(body,Response)))
       end}]}].
