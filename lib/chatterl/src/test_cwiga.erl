@@ -47,8 +47,9 @@ handles_test_() ->
       end},
      {"CWIGA disallows client to retrieve a list of users if they are not authorised",
      fun() ->
-         Response = http:request(?URL "/users/list/"),
-         ?assertEqual(401,check_response(code,Response))
+        Response = http:request(?URL "/users/list/"),
+        ?assertEqual(200,check_response(code,Response)),
+				?assertEqual({struct,[{<<"clients">>,[]}]},check_json(check_response(body,Response)))
      end},
      {"CWIGA can retrieve an empty list of users",
       fun() ->

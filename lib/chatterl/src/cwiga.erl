@@ -21,12 +21,13 @@
 %% API
 -export([start/1,stop/0]).
 
--define(APP, "CWIGA").
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
          terminate/2, code_change/3]).
 
+-define(APP, "CWIGA").
 -define(SERVER, ?MODULE).
+
 -record(state, {}).
 
 %%====================================================================
@@ -98,6 +99,7 @@ handle_call({_,Url,ContentType,_Path,_Req},_From,State) ->
 handle_call(_Request, _From, State) ->
   Reply = ok,
   {reply, Reply, State}.
+
 %%--------------------------------------------------------------------
 %% @doc
 %% Handling cast messages
@@ -186,21 +188,21 @@ handle_request('GET', Url, ContentType, Req) ->
     "/users/disconnect/" ++ Client ->
       chatterl_mid_man:disconnect(ContentType,Client);
     "/users/list/" ->
-			manage_request(ContentType,Req,{user_list,[]});
+			manage_request(ContentType,Req,{user_list,[]},false);
     "/users/list/" ++ Group ->
-			manage_request(ContentType,Req,{user_list,Group});
+			manage_request(ContentType,Req,{user_list,Group},true);
     "/users/poll/" ++ Client ->
-			manage_request(ContentType,Req,{user_poll,Client});
+			manage_request(ContentType,Req,{user_poll,Client},true);
     "/users/groups/" ++ Client ->
-			manage_request(ContentType,Req,{user_groups,Client});
+			manage_request(ContentType,Req,{user_groups,Client},true);
     "/groups/poll/" ++ Group ->
-			manage_request(ContentType,Req,{group_poll,Group});
+			manage_request(ContentType,Req,{group_poll,Group},true);
     "/groups/list" ->
-			manage_request(ContentType,Req,{group_list,[]});
+			manage_request(ContentType,Req,{group_list,[]},true);
     "/groups/info/" ++ Group ->
-			manage_request(ContentType,Req,{group_info,Group});
+			manage_request(ContentType,Req,{group_info,Group},true);
     "/status/logged_in/" ->
-			manage_request(ContentType,Req,{logged_in,[]});
+			manage_request(ContentType,Req,{logged_in,[]},true);
     _ -> unknown(Url,ContentType)
   end.
 
@@ -226,21 +228,21 @@ handle_request('POST',Url,ContentType,Post,Req) ->
       chatterl_mid_man:logout(ContentType,Client);
     "/groups/send/" ++ Group ->
       [{"client",Sender},{"msg",Message}] = Post,
-			manage_request(ContentType,Req,{group_send,{Group,Sender,Message}});
+			manage_request(ContentType,Req,{group_send,{Group,Sender,Message}},true);
     "/users/send/" ++ Client ->
       [{"client",Sender},{"msg",Message}] = Post,
-			manage_request(ContentType,Req,{user_msg,{Client,Sender,Message}});
+			manage_request(ContentType,Req,{user_msg,{Client,Sender,Message}},true);
     "/groups/join/" ++ Group ->
       [{"client",Client}] = Post,
-			manage_request(ContentType,Req,{group_join,{Group,Client}});
+			manage_request(ContentType,Req,{group_join,{Group,Client}},true);
     "/groups/leave/" ++ Group ->
       [{"client",Client}] = Post,
-			manage_request(ContentType,Req,{group_leave,{Group,Client}});
+			manage_request(ContentType,Req,{group_leave,{Group,Client}},true);
     "/groups/create/" ++ Group ->
       [{"description",Description}] = Post,
-			manage_request(ContentType,Req,{group_create,{Group,Description}});
+			manage_request(ContentType,Req,{group_create,{Group,Description}},true);
     "/groups/drop/" ++ Group ->
-			manage_request(ContentType,Req,{group_drop,Group});
+			manage_request(ContentType,Req,{group_drop,Group},true);
     Url -> unknown(Url,ContentType)
   end.
 	
@@ -255,13 +257,11 @@ handle_request('POST',Url,ContentType,Post,Req) ->
 %% @end
 %%--------------------------------------------------------------------
 get_content_type(Type) ->
-    case Type of
-	["json"] ->
-	    ["text/json"];
-	["xml"] ->
-	    ["text/xml"];
-	_ -> ["text/json"]
-    end.
+	case Type of
+		["json"] -> ["text/json"];
+		["xml"] -> ["text/xml"];
+		_ -> ["text/json"]
+ end.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -286,11 +286,11 @@ check_json_response(Json) ->
 %% @end
 %%--------------------------------------------------------------------
 get_status_code(ResponseType) ->
-    case ResponseType of
-      <<"success">> -> 200;
-      <<"failure">> -> 500;
-      <<"error">> -> 404;
-      <<"unauth">> -> 401
+  case ResponseType of
+  	<<"success">> -> 200;
+    <<"unauth">> -> 401;
+		<<"error">> -> 404;
+		<<"failure">> -> 500
   end.
 
 %%--------------------------------------------------------------------
@@ -392,17 +392,22 @@ is_auth(Req) ->
 %%
 %% @end
 %%--------------------------------------------------------------------
-manage_request(ContentType,Req,{Function,Args}) ->
+manage_request(ContentType,Req,{Function,Args},Auth) ->
 	Parameters =
 		case Args of
 			[] ->
 				Fun = fun(CT) -> apply(chatterl_mid_man,Function,[CT]) end,
 				ContentType;
-				Params ->
-					Fun = fun({CT,Arg}) -> apply(chatterl_mid_man,Function,[CT,Arg]) end,
-					{ContentType,Params}
+			Params ->
+				Fun = fun({CT,Arg}) -> apply(chatterl_mid_man,Function,[CT,Arg]) end,
+				{ContentType,Params}
 		end,
-		authorise(ContentType,Req,{Fun,Parameters}).
+		case Auth of
+			true ->
+				authorise(ContentType,Req,{Fun,Parameters});
+			false ->
+				Fun(Parameters)
+		end.
 
 %%--------------------------------------------------------------------
 %% @private
