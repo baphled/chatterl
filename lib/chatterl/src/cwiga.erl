@@ -216,35 +216,36 @@ handle_request('GET', Url, ContentType, Req) ->
 %% @end
 %%--------------------------------------------------------------------
 handle_request('POST',Url,ContentType,Post,Req) ->
-  case Url of
-    "/register/" ++ Nick ->
-      [{"name",Name},{"email",Email},{"pass1",Pass1},{"pass2",Pass2}] = Post,
+	Path = string:tokens(Url, "/"),
+	case Path of
+		["register",Nick] ->
+			[{"name",Name},{"email",Email},{"pass1",Pass1},{"pass2",Pass2}] = Post,
       chatterl_mid_man:register(ContentType,{Nick,{Name,Email,Pass1,Pass2}});
-    "/users/login" ->
-      [{"login",Login},{"pass",Pass}] = Post,
-      chatterl_mid_man:login(ContentType,{Login,Pass});
-    "/users/logout" ->
-      [{"client",Client}] = Post,
+		["users","login"] ->
+	    	[{"login",Login},{"pass",Pass}] = Post,
+	    	chatterl_mid_man:login(ContentType,{Login,Pass});
+		["users","logout"] ->
+			[{"client",Client}] = Post,
       chatterl_mid_man:logout(ContentType,Client);
-    "/groups/send/" ++ Group ->
-      [{"client",Sender},{"msg",Message}] = Post,
+		["groups","send",Group] ->
+			[{"client",Sender},{"msg",Message}] = Post,
 			manage_request(ContentType,Req,{group_send,{Group,Sender,Message}},true);
-    "/users/send/" ++ Client ->
-      [{"client",Sender},{"msg",Message}] = Post,
+		["users","send",Client] ->
+			[{"client",Sender},{"msg",Message}] = Post,
 			manage_request(ContentType,Req,{user_msg,{Client,Sender,Message}},true);
-    "/groups/join/" ++ Group ->
-      [{"client",Client}] = Post,
+		["groups","join",Group] ->
+			[{"client",Client}] = Post,
 			manage_request(ContentType,Req,{group_join,{Group,Client}},true);
-    "/groups/leave/" ++ Group ->
-      [{"client",Client}] = Post,
+		["groups","leave",Group] ->
+			[{"client",Client}] = Post,
 			manage_request(ContentType,Req,{group_leave,{Group,Client}},true);
-    "/groups/create/" ++ Group ->
-      [{"description",Description}] = Post,
+		["groups","create",Group] ->
+			[{"description",Description}] = Post,
 			manage_request(ContentType,Req,{group_create,{Group,Description}},true);
-    "/groups/drop/" ++ Group ->
+		["groups","drop",Group] ->
 			manage_request(ContentType,Req,{group_drop,Group},true);
-    Url -> unknown(Url,ContentType)
-  end.
+		_ -> unknown(Url,ContentType)
+	end.
 	
 %%--------------------------------------------------------------------
 %% @private
