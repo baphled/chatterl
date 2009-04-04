@@ -161,14 +161,14 @@ groups_handle_test_() ->
       end},
      {"CWIGA clients unable to retrieve groups list if not authorised",
       fun() ->
-          Response = http:request(?URL "/groups/list"),
+          Response = http:request(?URL "/groups/"),
           ?assertEqual(401,check_response(code,Response))
           end},
      {"CWIGA can list the groups on chatterl",
       fun() ->
-          Response = http_login(?URL "/groups/list",{Nick1,Password1}),
+          Response = http_login(?URL "/groups/",{Nick1,Password1}),
           chatterl_serv:create(Group,"nu room"),
-          Response2 = http_login(?URL "/groups/list",{Nick1,Password1}),
+          Response2 = http_login(?URL "/groups/",{Nick1,Password1}),
           ?assertEqual(200,check_response(code,Response)),
           ?assertEqual(200,check_response(code,Response2)),
           ?assertEqual({struct,[{<<"groups">>,[]}]},check_json(check_response(body,Response))),
