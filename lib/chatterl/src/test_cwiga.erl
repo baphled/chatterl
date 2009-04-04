@@ -218,7 +218,7 @@ groups_send_message_handle_test_() ->
       fun() ->
           Args = [{"msg","hey"},{"client",Client2}],
           Body = set_params(Args),
-          Response = http_login(post,?URL ++ "/groups/send/" ++ Group, {Nick1,Password1},Body),
+          Response = http_login(post,?URL ++ "/groups/" ++Group ++ "/send/", {Nick1,Password1},Body),
           ?assertEqual(404,check_response(code,Response)),
           ?assertEqual(<<"Must join group first!">>,check_json(check_response(body,Response)))
       end},
@@ -226,14 +226,14 @@ groups_send_message_handle_test_() ->
       fun() ->
           Args = [{"msg","hey"},{"client",Client}],
           Body = set_params(Args),
-          Response = http_request(post,?URL ++ "/groups/send/" ++ Group, Body),
+          Response = http_request(post,?URL ++ "/groups/" ++Group ++ "/send/", Body),
           ?assertEqual(401,check_response(code,Response))
       end},
      {"CWIGA allows clients to send messages to chatterl groups",
       fun() ->
           Args = [{"msg","hey"},{"client",Client}],
           Body = set_params(Args),
-          Response = http_login(post,?URL ++ "/groups/send/" ++ Group, {Nick1,Password1},Body),
+          Response = http_login(post,?URL ++ "/groups/" ++Group ++ "/send/", {Nick1,Password1},Body),
           ?assertEqual(200,check_response(code,Response)),
           ?assertEqual(<<"Message sent">>,check_json(check_response(body,Response)))
       end},
