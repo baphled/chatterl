@@ -188,7 +188,7 @@ handle_request('GET', Url, ContentType, Req) ->
 			manage_request(ContentType,Req,{user_list,[]},false);
 		["users",Client,"connect"] ->
 			chatterl_mid_man:connect(ContentType,Client);
-		["users","disconnect",Client] ->
+		["users",Client,"disconnect"] ->
 			chatterl_mid_man:disconnect(ContentType,Client);
 		["users","list",Group] ->
 			manage_request(ContentType,Req,{user_list,Group},true);
