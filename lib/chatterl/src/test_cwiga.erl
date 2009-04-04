@@ -67,14 +67,14 @@ handles_test_() ->
       end},
      {"CWIGA disallows retrieving group information if the client is not authorised",
       fun() ->
-          Response =  http:request(?URL "/groups/info/" ++ Group),
+          Response =  http:request(?URL "/groups/" ++ Group ++ "/info/"),
           ?assertEqual(401,check_response(code,Response)),
           ?assertEqual(<<"Need to authorize">>,check_json(check_response(body,Response)))
       end},
      {"CWIGA can retrieve a groups information",
       fun() ->
-          Response =  http_login(?URL "/groups/info/" ++ "blah",{Nick1,Password1}),
-          Response2 =  http_login(?URL "/groups/info/" ++ Group,{Nick1,Password1}),
+          Response =  http_login(?URL "/groups/blah/info/",{Nick1,Password1}),
+          Response2 =  http_login(?URL "/groups/" ++ Group ++ "/info/",{Nick1,Password1}),
           ?assertEqual(200,check_response(code,Response2)),
           ?assertEqual(<<"Group doesn't exist!">>,check_json(check_response(body,Response))),
           ?assert(is_tuple(check_json(check_response(body,Response2))))

@@ -200,7 +200,7 @@ handle_request('GET', Url, ContentType, Req) ->
 			manage_request(ContentType,Req,{group_poll,Group},true);
 		["groups"] ->
 			manage_request(ContentType,Req,{group_list,[]},true);
-		["groups","info",Group] ->
+		["groups",Group,"info"] ->
 			manage_request(ContentType,Req,{group_info,Group},true);
 		["status","logged_in"] ->
 			manage_request(ContentType,Req,{logged_in,[]},true);
