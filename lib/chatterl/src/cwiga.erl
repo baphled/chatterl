@@ -242,7 +242,7 @@ handle_request('POST',Url,ContentType,Post,Req) ->
 		["groups",Group,"create"] ->
 			[{"description",Description}] = Post,
 			manage_request(ContentType,Req,{group_create,{Group,Description}},true);
-		["groups","drop",Group] ->
+		["groups",Group,"drop"] ->
 			manage_request(ContentType,Req,{group_drop,Group},true);
 		_ -> unknown(Url,ContentType)
 	end.
