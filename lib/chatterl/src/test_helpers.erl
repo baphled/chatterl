@@ -176,7 +176,7 @@ cwiga_request(Url,Args) ->
 cwiga_register({Nick,Name,Email,Password}) ->
   Args = [{"pass2",Password},{"pass1",Password},{"email",Email},{"name",Name}],
   Body = set_params(Args),
-  http_request(post,?URL ++ "/register/" ++ Nick, Body).
+  http_request(post,?URL ++ "/users/new/" ++ Nick, Body).
 
 cwiga_login(Login,Pass) ->
   Args = [{"pass",Pass},{"login",Login}],

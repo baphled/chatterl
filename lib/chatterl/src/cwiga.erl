@@ -218,7 +218,7 @@ handle_request('GET', Url, ContentType, Req) ->
 handle_request('POST',Url,ContentType,Post,Req) ->
 	Path = string:tokens(Url, "/"),
 	case Path of
-		["register",Nick] ->
+		["users","new",Nick] ->
 			[{"name",Name},{"email",Email},{"pass1",Pass1},{"pass2",Pass2}] = Post,
       chatterl_mid_man:register(ContentType,{Nick,{Name,Email,Pass1,Pass2}});
 		["users","login"] ->

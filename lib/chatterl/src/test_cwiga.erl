@@ -270,7 +270,7 @@ cwiga_registeration_based_test_() ->
       fun() ->
           Args = [{"pass2",Password1},{"pass1","adasd"},{"email",Email1},{"name",Name1}],
           Body = set_params(Args),
-          Response = http_request(post,?URL ++ "/register/" ++ Nick1, Body),
+          Response = http_request(post,?URL ++ "/users/new/" ++ Nick1, Body),
           ?assertEqual(404,check_response(code,Response)),
           ?assertEqual(<<"noobie's passwords must match">>,check_json(check_response(body,Response)))
       end},
@@ -278,7 +278,7 @@ cwiga_registeration_based_test_() ->
       fun() ->
           Args = [{"pass2",Password1},{"pass1",Password1},{"email",Email1},{"name",Name1}],
           Body = set_params(Args),
-          Response = http_request(post,?URL ++ "/register/" ++ Nick1, Body),
+          Response = http_request(post,?URL ++ "/users/new/" ++ Nick1, Body),
           ?assertEqual(200,check_response(code,Response)),
           ?assertEqual(<<"noobie is registered">>,check_json(check_response(body,Response)))
       end},
@@ -286,7 +286,7 @@ cwiga_registeration_based_test_() ->
       fun() ->
           Args = [{"pass2",Password1},{"pass1",Password1},{"email",Email1},{"name",Name1}],
           Body = set_params(Args),
-          Response = http_request(post,?URL ++ "/register/" ++ Nick1, Body),
+          Response = http_request(post,?URL ++ "/users/new/" ++ Nick1, Body),
           ?assertEqual(404,check_response(code,Response)),
           ?assertEqual(<<"noobie is already registered">>,check_json(check_response(body,Response)))
       end},
