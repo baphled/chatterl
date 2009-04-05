@@ -443,21 +443,21 @@ cwiga_group_creation_test_() ->
       fun() ->
           Args = [{"description",Description}],
           Body = set_params(Args),
-          Response = http_request(post,?URL ++ "/groups/create/" ++ Group, Body),
+          Response = http_request(post,?URL ++ "/groups/" ++ Group ++ "/create/", Body),
           ?assertEqual(401,check_response(code,Response))
       end},
      {"CWIGA allows a group to be created by registered user",
       fun() ->
           Args = [{"description",Description}],
           Body = set_params(Args),
-          Response = http_login(post,?URL ++ "/groups/create/" ++ Group, {Nick1,Password1},Body),
+          Response = http_login(post,?URL ++ "/groups/" ++ Group ++ "/create/", {Nick1,Password1},Body),
           ?assertEqual(200,check_response(code,Response))
       end},
      {"CWIGA disallows a client to create the same group twice",
       fun() ->
           Args = [{"description",Description}],
           Body = set_params(Args),
-          Response = http_login(post,?URL ++ "/groups/create/" ++ Group, {Nick1,Password1},Body),
+          Response = http_login(post,?URL ++ "/groups/" ++ Group ++ "/create/", {Nick1,Password1},Body),
           ?assertEqual(500,check_response(code,Response))
       end},
      {"CWIGA allows clients to drop a group",
