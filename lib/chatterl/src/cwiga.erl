@@ -236,7 +236,7 @@ handle_request('POST',Url,ContentType,Post,Req) ->
 		["groups",Group,"join"] ->
 			[{"client",Client}] = Post,
 			manage_request(ContentType,Req,{group_join,{Group,Client}},true);
-		["groups","leave",Group] ->
+		["groups",Group,"leave"] ->
 			[{"client",Client}] = Post,
 			manage_request(ContentType,Req,{group_leave,{Group,Client}},true);
 		["groups",Group,"create"] ->
