@@ -53,6 +53,22 @@ start(Port) ->
 stop() ->
     gen_server:call({global, ?SERVER}, stop, infinity).
 
+%%--------------------------------------------------------------------
+%% @doc
+%% Dispatches our requests to the relevant handle.
+%%
+%% Uses clean_path to determine what the action is.
+%% @spec dispatch_requests(Request) -> void()
+%% @end
+%%--------------------------------------------------------------------
+dispatch_requests(Req) ->
+	[Path|Ext] = string:tokens(Req:get(path),"."),
+	Method = Req:get(method),
+	Post = Req:parse_post(),
+	io:format("~p request for ~p with post: ~p~n", [Method, Path, Post]),
+	Response = gen_server:call({global,?MODULE},{Method, Path, get_content_type(Ext), Post, Req}),
+	Req:respond(Response).
+
 %%====================================================================
 %% gen_server callbacks
 %%====================================================================
@@ -158,23 +174,6 @@ code_change(_OldVsn, State, _Extra) ->
 %%--------------------------------------------------------------------
 %% @private
 %% @doc
-%% Dispatches our requests to the relevant handle.
-%%
-%% Uses clean_path to determine what the action is.
-%% @spec dispatch_requests(Request) -> void()
-%% @end
-%%--------------------------------------------------------------------
-dispatch_requests(Req) ->
-  [Path|Ext] = string:tokens(Req:get(path),"."),
-  Method = Req:get(method),
-  Post = Req:parse_post(),
-  io:format("~p request for ~p with post: ~p~n", [Method, Path, Post]),
-  Response = gen_server:call({global,?MODULE},{Method, Path, get_content_type(Ext), Post, Req}),
-  Req:respond(Response).
-
-%%--------------------------------------------------------------------
-%% @private
-%% @doc
 %%
 %% Handles CWIGA's GET requests
 %% @spec handle_request('GET', Url, ContentType, Req) -> HTTPResponse
@@ -246,7 +245,7 @@ handle_request('POST',Url,ContentType,Post,Req) ->
 			manage_request(ContentType,Req,{group_drop,Group},true);
 		_ -> unknown(Url,ContentType)
 	end.
-	
+
 %%--------------------------------------------------------------------
 %% @private
 %% @doc
