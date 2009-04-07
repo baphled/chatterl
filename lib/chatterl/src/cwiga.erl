@@ -109,6 +109,9 @@ handle_call({'POST',Url,ContentType,Post,Req},_From,State) ->
 handle_call({'GET',Url,ContentType,_Post,Req},_From,State) ->
   Reply = handle_response(handle_request('GET',Url,ContentType,Req),ContentType),
   {reply, Reply, State};
+handle_call({'DELETE',Url,ContentType,_Post,Req},_From,State) ->
+  Reply = handle_response(handle_request('DELETE',Url,ContentType,Req),ContentType),
+  {reply, Reply, State};
 handle_call({_,Url,ContentType,_Path,_Req},_From,State) ->
   Reply = send_response(error,{unknown(Url,ContentType),ContentType}),
   {reply, Reply, State};
@@ -204,7 +207,14 @@ handle_request('GET', Url, ContentType, Req) ->
     ["status","logged_in"] ->
       manage_request(ContentType,Req,{logged_in,[]},true);
     _ -> unknown(Url,ContentType)
-  end.
+  end;
+handle_request('DELETE',Url,ContentType,Req) ->
+  Path = string:tokens(Url, "/"),
+  case Path of
+		["groups",Group,"drop"] ->
+      manage_request(ContentType,Req,{group_drop,Group},true);
+    _ -> unknown(Url,ContentType)
+	end.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -236,8 +246,6 @@ handle_request('POST',Url,ContentType,Post,Req) ->
       manage_request(ContentType,Req,{group_leave,{Group,proplists:get_value("client",Post)}},true);
     ["groups",Group,"create"] ->
       manage_request(ContentType,Req,{group_create,{Group,proplists:get_value("description",Post)}},true);
-    ["groups",Group,"drop"] ->
-      manage_request(ContentType,Req,{group_drop,Group},true);
     _ -> unknown(Url,ContentType)
   end.
 

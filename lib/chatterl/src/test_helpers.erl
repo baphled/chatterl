@@ -161,6 +161,8 @@ http_request(post,Url,Body) ->
 http_login(Url,{Login,Pass}) ->
   http:request(get, {Url, headers(Login, Pass)}, [], []).
 
+http_login(delete,Url,{Login,Pass},[]) ->
+  http:request(delete, {Url, headers(Login, Pass)}, [], []);
 http_login(post,Url,{Login,Pass},Body) ->
   http:request(post, {Url, headers(Login, Pass),"application/x-www-form-urlencoded", Body}, [], []).
 
