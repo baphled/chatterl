@@ -19,7 +19,7 @@
 -behaviour(gen_server).
 
 %% API
--export([start/1,stop/0]).
+-export([start/1,stop/0,get_params/2]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -181,30 +181,31 @@ code_change(_OldVsn, State, _Extra) ->
 %% @end
 %%--------------------------------------------------------------------
 handle_request('GET', Url, ContentType, Req) ->
-	Path = string:tokens(Url, "/"),
-	case Path of
-		["users"] ->
-			manage_request(ContentType,Req,{user_list,[]},false);
-		["users",Client,"connect"] ->
-			chatterl_mid_man:connect(ContentType,Client);
-		["users",Client,"disconnect"] ->
-			chatterl_mid_man:disconnect(ContentType,Client);
-		["users",Group,"list"] ->
-			manage_request(ContentType,Req,{user_list,Group},true);
-		["users",Client,"poll"] ->
-			manage_request(ContentType,Req,{user_poll,Client},false);
-		["users",Client,"groups"] ->
-			manage_request(ContentType,Req,{user_groups,Client},true);
-		["groups"] ->
-			manage_request(ContentType,Req,{group_list,[]},true);
-		["groups",Group,"info"] ->
-			manage_request(ContentType,Req,{group_info,Group},true);
-		["groups",Group,"poll"] ->
-			manage_request(ContentType,Req,{group_poll,Group},true);
-		["status","logged_in"] ->
-			manage_request(ContentType,Req,{logged_in,[]},true);
-		_ -> unknown(Url,ContentType)
-	end.
+  Path = string:tokens(Url, "/"),
+  case Path of
+    ["users"] ->
+      manage_request(ContentType,Req,{user_list,[]},false);
+    ["users",Client,"connect"] ->
+      chatterl_mid_man:connect(ContentType,Client);
+    ["users",Client,"disconnect"] ->
+      chatterl_mid_man:disconnect(ContentType,Client);
+    ["users",Group,"list"] ->
+      manage_request(ContentType,Req,{user_list,Group},false);
+    ["users",Client,"poll"] ->
+      manage_request(ContentType,Req,{user_poll,Client},false);
+    ["users",Client,"groups"] ->
+      manage_request(ContentType,Req,{user_groups,Client},true);
+    ["groups"] ->
+      manage_request(ContentType,Req,{group_list,[]},true);
+    ["groups",Group,"info"] ->
+      manage_request(ContentType,Req,{group_info,Group},true);
+    ["groups",Group,"poll"] ->
+      manage_request(ContentType,Req,{group_poll,Group},true);
+    ["status","logged_in"] ->
+      manage_request(ContentType,Req,{logged_in,[]},true);
+    _ -> unknown(Url,ContentType)
+  end.
+
 %%--------------------------------------------------------------------
 %% @private
 %% @doc
@@ -215,37 +216,40 @@ handle_request('GET', Url, ContentType, Req) ->
 %% @end
 %%--------------------------------------------------------------------
 handle_request('POST',Url,ContentType,Post,Req) ->
-	Path = string:tokens(Url, "/"),
-	case Path of
-		["users","new",Nick] ->
-			[{"name",Name},{"email",Email},{"pass1",Pass1},{"pass2",Pass2}] = Post,
+  Path = string:tokens(Url, "/"),
+  case Path of
+    ["users","new",Nick] ->
+      {Name,Email,Pass1,Pass2} = get_params(["name","email","pass1","pass2"],Post),
       chatterl_mid_man:register(ContentType,{Nick,{Name,Email,Pass1,Pass2}});
-		["users","login"] ->
-	    	[{"login",Login},{"pass",Pass}] = Post,
-	    	chatterl_mid_man:login(ContentType,{Login,Pass});
-		["users","logout"] ->
-			[{"client",Client}] = Post,
+    ["users","login"] ->
+      [{"login",Login},{"pass",Pass}] = Post,
+      chatterl_mid_man:login(ContentType,{Login,Pass});
+    ["users","logout"] ->
+      [{"client",Client}] = Post,
       chatterl_mid_man:logout(ContentType,Client);
-		["groups",Group,"send"] ->
-			[{"client",Sender},{"msg",Message}] = Post,
-			manage_request(ContentType,Req,{group_send,{Group,Sender,Message}},true);
-		["users",Client,"send"] ->
-			[{"client",Sender},{"msg",Message}] = Post,
-			manage_request(ContentType,Req,{user_msg,{Client,Sender,Message}},true);
-		["groups",Group,"join"] ->
-			[{"client",Client}] = Post,
-			manage_request(ContentType,Req,{group_join,{Group,Client}},true);
-		["groups",Group,"leave"] ->
-			[{"client",Client}] = Post,
-			manage_request(ContentType,Req,{group_leave,{Group,Client}},true);
-		["groups",Group,"create"] ->
-			[{"description",Description}] = Post,
-			manage_request(ContentType,Req,{group_create,{Group,Description}},true);
-		["groups",Group,"drop"] ->
-			manage_request(ContentType,Req,{group_drop,Group},true);
-		_ -> unknown(Url,ContentType)
-	end.
+    ["groups",Group,"send"] ->
+      [{"client",Sender},{"msg",Message}] = Post,
+      manage_request(ContentType,Req,{group_send,{Group,Sender,Message}},true);
+    ["users",Client,"send"] ->
+      [{"client",Sender},{"msg",Message}] = Post,
+      manage_request(ContentType,Req,{user_msg,{Client,Sender,Message}},true);
+    ["groups",Group,"join"] ->
+      [{"client",Client}] = Post,
+      manage_request(ContentType,Req,{group_join,{Group,Client}},true);
+    ["groups",Group,"leave"] ->
+      [{"client",Client}] = Post,
+      manage_request(ContentType,Req,{group_leave,{Group,Client}},true);
+    ["groups",Group,"create"] ->
+      [{"description",Description}] = Post,
+      manage_request(ContentType,Req,{group_create,{Group,Description}},true);
+    ["groups",Group,"drop"] ->
+      manage_request(ContentType,Req,{group_drop,Group},true);
+    _ -> unknown(Url,ContentType)
+  end.
 
+get_params(Params,Post) ->
+	list_to_tuple([proplists:get_value(Param,Post) || Param <- Params]).
+		
 %%--------------------------------------------------------------------
 %% @private
 %% @doc
@@ -257,10 +261,10 @@ handle_request('POST',Url,ContentType,Post,Req) ->
 %% @end
 %%--------------------------------------------------------------------
 get_content_type(Type) ->
-	case Type of
-		["json"] -> ["text/json"];
-		["xml"] -> ["text/xml"];
-		_ -> ["text/json"]
+  case Type of
+    ["json"] -> ["text/json"];
+    ["xml"] -> ["text/xml"];
+    _ -> ["text/json"]
  end.
 
 %%--------------------------------------------------------------------
@@ -287,10 +291,10 @@ check_json_response(Json) ->
 %%--------------------------------------------------------------------
 get_status_code(ResponseType) ->
   case ResponseType of
-  	<<"success">> -> 200;
+    <<"success">> -> 200;
     <<"unauth">> -> 401;
-		<<"error">> -> 404;
-		<<"failure">> -> 500
+    <<"error">> -> 404;
+    <<"failure">> -> 500
   end.
 
 %%--------------------------------------------------------------------
@@ -393,16 +397,16 @@ is_auth(Req) ->
 %% @end
 %%--------------------------------------------------------------------
 manage_request(ContentType,Req,{Function,Args},Auth) ->
-	Parameters =
-		case Args of
-			[] ->
-				Fun = fun(CT) -> apply(chatterl_mid_man,Function,[CT]) end,
-				ContentType;
-			Params ->
-				Fun = fun({CT,Arg}) -> apply(chatterl_mid_man,Function,[CT,Arg]) end,
-				{ContentType,Params}
-		end,
-		manage_auth(Auth,{ContentType,Req,{Fun,Parameters}}).
+  Parameters =
+    case Args of
+      [] ->
+        Fun = fun(CT) -> apply(chatterl_mid_man,Function,[CT]) end,
+        ContentType;
+      Params ->
+        Fun = fun({CT,Arg}) -> apply(chatterl_mid_man,Function,[CT,Arg]) end,
+        {ContentType,Params}
+    end,
+  manage_auth(Auth,{ContentType,Req,{Fun,Parameters}}).
 
 %%--------------------------------------------------------------------
 %% @private
@@ -416,12 +420,12 @@ manage_request(ContentType,Req,{Function,Args},Auth) ->
 %% @end
 %%--------------------------------------------------------------------
 manage_auth(Auth,{ContentType,Req,{Fun,Parameters}}) ->
-	case Auth of
-		true ->
-			authorise(ContentType,Req,{Fun,Parameters});
-		false ->
-			Fun(Parameters)
-	end.
+  case Auth of
+    true ->
+      authorise(ContentType,Req,{Fun,Parameters});
+    false ->
+      Fun(Parameters)
+  end.
 
 %%--------------------------------------------------------------------
 %% @private
