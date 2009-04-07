@@ -219,29 +219,23 @@ handle_request('POST',Url,ContentType,Post,Req) ->
   Path = string:tokens(Url, "/"),
   case Path of
     ["users","new",Nick] ->
-      {Name,Email,Pass1,Pass2} = get_params(["name","email","pass1","pass2"],Post),
-      chatterl_mid_man:register(ContentType,{Nick,{Name,Email,Pass1,Pass2}});
+      chatterl_mid_man:register(ContentType,{Nick,get_params(["name","email","pass1","pass2"],Post)});
     ["users","login"] ->
-      [{"login",Login},{"pass",Pass}] = Post,
-      chatterl_mid_man:login(ContentType,{Login,Pass});
+      chatterl_mid_man:login(ContentType,get_params(["login","pass"],Post));
     ["users","logout"] ->
-      [{"client",Client}] = Post,
-      chatterl_mid_man:logout(ContentType,Client);
+      chatterl_mid_man:logout(ContentType,proplists:get_value("client",Post));
     ["groups",Group,"send"] ->
-      [{"client",Sender},{"msg",Message}] = Post,
+      {Sender,Message} = get_params(["client","msg"],Post),
       manage_request(ContentType,Req,{group_send,{Group,Sender,Message}},true);
     ["users",Client,"send"] ->
-      [{"client",Sender},{"msg",Message}] = Post,
+      {Sender,Message} = get_params(["client","msg"],Post),
       manage_request(ContentType,Req,{user_msg,{Client,Sender,Message}},true);
     ["groups",Group,"join"] ->
-      [{"client",Client}] = Post,
-      manage_request(ContentType,Req,{group_join,{Group,Client}},true);
+      manage_request(ContentType,Req,{group_join,{Group,proplists:get_value("client",Post)}},true);
     ["groups",Group,"leave"] ->
-      [{"client",Client}] = Post,
-      manage_request(ContentType,Req,{group_leave,{Group,Client}},true);
+      manage_request(ContentType,Req,{group_leave,{Group,proplists:get_value("client",Post)}},true);
     ["groups",Group,"create"] ->
-      [{"description",Description}] = Post,
-      manage_request(ContentType,Req,{group_create,{Group,Description}},true);
+      manage_request(ContentType,Req,{group_create,{Group,proplists:get_value("description",Post)}},true);
     ["groups",Group,"drop"] ->
       manage_request(ContentType,Req,{group_drop,Group},true);
     _ -> unknown(Url,ContentType)
