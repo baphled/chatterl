@@ -86,7 +86,7 @@ stop() ->
 login(ContentType,{Client,Password}) ->
   {Type,Reply} =
     case chatterl_serv:login(Client,Password) of
-      {error,Error} -> {"failure",Error};
+      {error,_Error} -> {"failure","Unable to login"};
       {ok,Msg} -> {"success",Msg}
     end,
   get_response_body(ContentType,build_carrier(Type,Reply)).
@@ -406,7 +406,7 @@ group_poll(ContentType,Group) ->
           Messages ->
             MessagesList = [build_carrier("message",format_messages(Message))||Message <- Messages],
             {"success",build_carrier("messages",MessagesList)}
-	end
+				end
     end,
   group_check(Group,ContentType,Fun).
 
