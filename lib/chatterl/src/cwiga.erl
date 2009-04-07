@@ -190,8 +190,6 @@ handle_request('GET', Url, ContentType, Req) ->
       manage_request(ContentType,Req,{user_list,[]},false);
     ["users",Client,"connect"] ->
       chatterl_mid_man:connect(ContentType,Client);
-    ["users",Client,"disconnect"] ->
-      chatterl_mid_man:disconnect(ContentType,Client);
     ["users",Group,"list"] ->
       manage_request(ContentType,Req,{user_list,Group},false);
     ["users",Client,"poll"] ->
@@ -211,6 +209,8 @@ handle_request('GET', Url, ContentType, Req) ->
 handle_request('DELETE',Url,ContentType,Req) ->
   Path = string:tokens(Url, "/"),
   case Path of
+  	["users",Client,"disconnect"] ->
+    	chatterl_mid_man:disconnect(ContentType,Client);
 		["groups",Group,"drop"] ->
       manage_request(ContentType,Req,{group_drop,Group},true);
     _ -> unknown(Url,ContentType)

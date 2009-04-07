@@ -111,8 +111,8 @@ handles_test_() ->
       end},
      {"CWIGA can disconnect clients from chatterl",
       fun() ->
-          Response = http:request(?URL "/users/" ++ Client ++"/disconnect/"),
-          Response2 = http:request(?URL "/users/" ++ Client ++"/disconnect/"),
+          Response = http_login(delete,?URL "/users/" ++ Client ++"/disconnect/",{Nick1,Password1},[]),
+          Response2 = http_login(delete,?URL "/users/" ++ Client ++"/disconnect/",{Nick1,Password1},[]),
           ?assertEqual(200,check_response(code,Response)),
           ?assertEqual(<<"Disconnected">>,check_json(check_response(body,Response))),
           ?assertEqual(<<"Not connected">>,check_json(check_response(body,Response2)))
