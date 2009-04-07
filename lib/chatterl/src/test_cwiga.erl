@@ -148,7 +148,7 @@ groups_handle_test_() ->
      {"CWIGA disallows a client from polling for their messages",
       fun() ->
           Response = http:request(?URL "/users/" ++ Client ++ "/poll/"),
-          ?assertEqual(401,check_response(code,Response))
+          ?assertEqual(200,check_response(code,Response))
           end},
      {"CWIGA allows clients to poll chatterl for messages",
       fun() ->

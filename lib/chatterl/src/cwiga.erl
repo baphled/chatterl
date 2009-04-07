@@ -62,12 +62,12 @@ stop() ->
 %% @end
 %%--------------------------------------------------------------------
 dispatch_requests(Req) ->
-	[Path|Ext] = string:tokens(Req:get(path),"."),
-	Method = Req:get(method),
-	Post = Req:parse_post(),
-	io:format("~p request for ~p with post: ~p~n", [Method, Path, Post]),
-	Response = gen_server:call({global,?MODULE},{Method, Path, get_content_type(Ext), Post, Req}),
-	Req:respond(Response).
+  [Path|Ext] = string:tokens(Req:get(path),"."),
+  Method = Req:get(method),
+  Post = Req:parse_post(),
+  io:format("~p request for ~p with post: ~p~n", [Method, Path, Post]),
+  Response = gen_server:call({global,?MODULE},{Method, Path, get_content_type(Ext), Post, Req}),
+  Req:respond(Response).
 
 %%====================================================================
 %% gen_server callbacks
@@ -153,9 +153,9 @@ handle_info(_Info, State) ->
 %% @end
 %%--------------------------------------------------------------------
 terminate(_Reason, _State) ->
-    io:format("Shutting down ChatterlWeb on: ~s...~n",[node(self())]),
-    mochiweb_http:stop(),
-    ok.
+	io:format("Shutting down ChatterlWeb on: ~s...~n",[node(self())]),
+  mochiweb_http:stop(),
+	ok.
 
 %%--------------------------------------------------------------------
 %% @doc
@@ -192,7 +192,7 @@ handle_request('GET', Url, ContentType, Req) ->
 		["users",Group,"list"] ->
 			manage_request(ContentType,Req,{user_list,Group},true);
 		["users",Client,"poll"] ->
-			manage_request(ContentType,Req,{user_poll,Client},true);
+			manage_request(ContentType,Req,{user_poll,Client},false);
 		["users",Client,"groups"] ->
 			manage_request(ContentType,Req,{user_groups,Client},true);
 		["groups"] ->
@@ -422,7 +422,7 @@ manage_auth(Auth,{ContentType,Req,{Fun,Parameters}}) ->
 		false ->
 			Fun(Parameters)
 	end.
-	
+
 %%--------------------------------------------------------------------
 %% @private
 %% @doc
