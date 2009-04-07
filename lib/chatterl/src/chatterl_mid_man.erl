@@ -86,7 +86,7 @@ stop() ->
 login(ContentType,{Client,Password}) ->
   {Type,Reply} =
     case chatterl_serv:login(Client,Password) of
-      {error,_Error} -> {"failure","Unable to login"};
+      {error,Error} -> {"failure",Error};
       {ok,Msg} -> {"success",Msg}
     end,
   get_response_body(ContentType,build_carrier(Type,Reply)).

@@ -352,10 +352,10 @@ cwiga_registeration_clients_can_get_archived_messages_test_() ->
     end,
     [{"CWIGA disallows messages to be sent is the client is not authorised",
       fun() ->
-          Args = [{"msg","hey"},{"client",Sender}],
+          Args = [{"msg","hey"},{"client",Nick1}],
           Body = set_params(Args),
-          Response = http_request(post,?URL ++ "/users/" ++Nick1 ++ "/send/", Body),
-          ?assertEqual(401,check_response(code,Response))
+          Response = http_request(post,?URL ++ "/users/" ++ Sender ++ "/send/", Body),
+          ?assertEqual(200,check_response(code,Response))
       end},
      {"CWIGA does not allow clients to messages to clients that are not logged in or registered",
       fun() ->
