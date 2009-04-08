@@ -199,7 +199,7 @@ handle_request('GET', Url, ContentType, Req) ->
     ["groups"] ->
       manage_request(ContentType,Req,{group_list,[]},false);
     ["groups",Group,"info"] ->
-      manage_request(ContentType,Req,{group_info,Group},true);
+      manage_request(ContentType,Req,{group_info,Group},false);
     ["groups",Group,"poll"] ->
       manage_request(ContentType,Req,{group_poll,Group},false);
     ["status","logged_in"] ->

@@ -65,12 +65,6 @@ handles_test_() ->
           ?assertEqual({struct,[{<<"clients">>,[]}]},check_json(check_response(body,Response))),
           ?assertEqual(<<"Group: blah doesn't exist">>,check_json(check_response(body,Response2)))
       end},
-     {"CWIGA disallows retrieving group information if the client is not authorised",
-      fun() ->
-          Response =  http:request(?URL "/groups/" ++ Group ++ "/info/"),
-          ?assertEqual(401,check_response(code,Response)),
-          ?assertEqual(<<"Need to authorize">>,check_json(check_response(body,Response)))
-      end},
      {"CWIGA can retrieve a groups information",
       fun() ->
           Response =  http_login(?URL "/groups/blah/info/",{Nick1,Password1}),
