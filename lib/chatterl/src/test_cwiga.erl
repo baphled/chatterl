@@ -59,8 +59,8 @@ handles_test_() ->
      end},
      {"CWIGA can list of users in a groups",
       fun() ->
-          Response =  http_login(?URL "/users/" ++ Group ++ "/list",{Nick1,Password1}),
-          Response2 =  http_login(?URL "/users/blah/list/",{Nick1,Password1}),
+          Response =  http_login(?URL "/users/" ++ Group ++ "/users",{Nick1,Password1}),
+          Response2 =  http_login(?URL "/users/blah/users/",{Nick1,Password1}),
           ?assertEqual(200,check_response(code,Response)),
           ?assertEqual({struct,[{<<"clients">>,[]}]},check_json(check_response(body,Response))),
           ?assertEqual(<<"Group: blah doesn't exist">>,check_json(check_response(body,Response2)))
