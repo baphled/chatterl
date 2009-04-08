@@ -191,18 +191,11 @@ groups_send_message_handle_test_() ->
         chatterl:stop(),
         mnesia:clear_table(registered_user)
     end,
-    [{"CWIGA disallows a client to join a group if they are not authorised",
+    [{"CWIGA allows a client to join a group",
       fun() ->
           Args = [{"client",Client}],
           Body = set_params(Args),
           Response = http_request(post,?URL ++ "/groups/" ++ Group ++ "/join/", Body),
-          ?assertEqual(401,check_response(code,Response))
-     end},
-     {"CWIGA allows a client to join a group",
-      fun() ->
-          Args = [{"client",Client}],
-          Body = set_params(Args),
-          Response = http_login(post,?URL ++ "/groups/" ++ Group ++ "/join/", {Nick1,Password1},Body),
           ?assertEqual(200,check_response(code,Response)),
           ?assertEqual(<<"baph joined group">>,check_json(check_response(body,Response)))
       end},

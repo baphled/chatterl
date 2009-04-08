@@ -241,7 +241,7 @@ handle_request('POST',Url,ContentType,Post,Req) ->
       {Sender,Message} = get_params(["client","msg"],Post),
       manage_request(ContentType,Req,{user_msg,{Client,Sender,Message}},false);
     ["groups",Group,"join"] ->
-      manage_request(ContentType,Req,{group_join,{Group,proplists:get_value("client",Post)}},true);
+      manage_request(ContentType,Req,{group_join,{Group,proplists:get_value("client",Post)}},false);
     ["groups",Group,"leave"] ->
       manage_request(ContentType,Req,{group_leave,{Group,proplists:get_value("client",Post)}},true);
     ["groups",Group,"create"] ->
