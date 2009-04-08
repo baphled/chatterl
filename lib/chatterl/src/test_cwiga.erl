@@ -159,10 +159,10 @@ groups_handle_test_() ->
           ?assertEqual(<<"Client: blah doesn't exist">>,check_json(check_response(body,Response))),
           ?assertEqual({struct,[{<<"messages">>,[]}]},check_json(check_response(body,Response2)))
       end},
-     {"CWIGA clients unable to retrieve groups list if not authorised",
+     {"CWIGA clients able to retrieve groups list if not authorised",
       fun() ->
           Response = http:request(?URL "/groups/"),
-          ?assertEqual(401,check_response(code,Response))
+          ?assertEqual(200,check_response(code,Response))
           end},
      {"CWIGA can list the groups on chatterl",
       fun() ->
