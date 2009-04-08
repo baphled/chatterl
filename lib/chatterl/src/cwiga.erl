@@ -188,16 +188,16 @@ handle_request('GET', Url, ContentType, Req) ->
   case Path of
     ["users"] ->
       manage_request(ContentType,Req,{user_list,[]},false);
-    ["users",Client,"connect"] ->
-      chatterl_mid_man:connect(ContentType,Client);
+    ["groups"] ->
+      manage_request(ContentType,Req,{group_list,[]},false);
     ["users",Group,"users"] ->
       manage_request(ContentType,Req,{user_list,Group},false);
+    ["users",Client,"connect"] ->
+      chatterl_mid_man:connect(ContentType,Client);
     ["users",Client,"poll"] ->
       manage_request(ContentType,Req,{user_poll,Client},false);
     ["users",Client,"groups"] ->
       manage_request(ContentType,Req,{user_groups,Client},true);
-    ["groups"] ->
-      manage_request(ContentType,Req,{group_list,[]},false);
     ["groups",Group,"info"] ->
       manage_request(ContentType,Req,{group_info,Group},false);
     ["groups",Group,"poll"] ->

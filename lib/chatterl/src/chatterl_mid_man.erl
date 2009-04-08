@@ -87,7 +87,9 @@ login(ContentType,{Client,Password}) ->
   {Type,Reply} =
     case chatterl_serv:login(Client,Password) of
       {error,Error} -> {"failure",Error};
-      {ok,Msg} -> {"success",Msg}
+      {ok,Msg} -> 
+				gen_server:call({global, ?SERVER}, {connect, Client},infinity),
+				{"success",Msg}
     end,
   get_response_body(ContentType,build_carrier(Type,Reply)).
 
@@ -101,7 +103,9 @@ logout(ContentType,Client) ->
   {Type,Reply} =
     case chatterl_serv:logout(Client) of
       {error,Error} -> {"failure",Error};
-      {ok,Msg} -> {"success",Msg}
+      {ok,Msg} -> 
+				gen_server:call({global, ?SERVER}, {disconnect, Client},infinity),
+				{"success",Msg}
     end,
   get_response_body(ContentType,build_carrier(Type,Reply)).
 
