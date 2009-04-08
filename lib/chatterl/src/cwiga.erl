@@ -113,7 +113,7 @@ handle_call({'DELETE',Url,ContentType,_Post,Req},_From,State) ->
   Reply = handle_response(handle_request('DELETE',Url,ContentType,Req),ContentType),
   {reply, Reply, State};
 handle_call({_,Url,ContentType,_Path,_Req},_From,State) ->
-  Reply = send_response(error,{unknown(Url,ContentType),ContentType}),
+  Reply = send_response(error,{error("Unknown command: " ++Url, ContentType),ContentType}),
   {reply, Reply, State};
 handle_call(_Request, _From, State) ->
   Reply = ok,
@@ -204,7 +204,7 @@ handle_request('GET', Url, ContentType, Req) ->
       manage_request(ContentType,Req,{group_poll,Group},false);
     ["status","logged_in"] ->
       manage_request(ContentType,Req,{logged_in,[]},true);
-    _ -> unknown(Url,ContentType)
+    _ -> error("Unknown command: " ++Url, ContentType)
   end;
 handle_request('DELETE',Url,ContentType,Req) ->
   Path = string:tokens(Url, "/"),
@@ -213,7 +213,7 @@ handle_request('DELETE',Url,ContentType,Req) ->
     	chatterl_mid_man:disconnect(ContentType,Client);
 		["groups",Group,"drop"] ->
       manage_request(ContentType,Req,{group_drop,Group},true);
-    _ -> unknown(Url,ContentType)
+    _ -> error("Unknown command: " ++Url, ContentType)
 	end.
 
 %%--------------------------------------------------------------------
@@ -228,7 +228,7 @@ handle_request('DELETE',Url,ContentType,Req) ->
 handle_request('POST',Url,ContentType,Post,Req) ->
   Path = string:tokens(Url, "/"),
   case Path of
-    ["users","new",Nick] ->
+    ["users","register",Nick] ->
       chatterl_mid_man:register(ContentType,{Nick,get_params(["name","email","pass1","pass2"],Post)});
     ["users","login"] ->
       chatterl_mid_man:login(ContentType,get_params(["login","pass"],Post));
@@ -246,7 +246,7 @@ handle_request('POST',Url,ContentType,Post,Req) ->
       manage_request(ContentType,Req,{group_leave,{Group,proplists:get_value("client",Post)}},true);
     ["groups",Group,"create"] ->
       manage_request(ContentType,Req,{group_create,{Group,proplists:get_value("description",Post)}},true);
-    _ -> unknown(Url,ContentType)
+    _ -> error("Unknown command: " ++Url, ContentType)
   end.
 
 %%--------------------------------------------------------------------
@@ -310,17 +310,6 @@ get_status_code(ResponseType) ->
     <<"error">> -> 404;
     <<"failure">> -> 500
   end.
-
-%%--------------------------------------------------------------------
-%% @private
-%% @doc
-%% Wrapper method used for unknown commands
-%%
-%% @spec unknown(Url,ContentType) -> HTTPResponse
-%% @end
-%%--------------------------------------------------------------------
-unknown(Url,ContentType) ->
-  error("Unknown command: " ++Url, ContentType).
 
 %%--------------------------------------------------------------------
 %% @private
