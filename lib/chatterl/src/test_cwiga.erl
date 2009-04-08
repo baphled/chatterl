@@ -220,7 +220,7 @@ groups_send_message_handle_test_() ->
           Args = [{"msg","hey"},{"client",Client}],
           Body = set_params(Args),
           Response = http_request(post,?URL ++ "/groups/" ++Group ++ "/send/", Body),
-          ?assertEqual(401,check_response(code,Response))
+          ?assertEqual(200,check_response(code,Response))
       end},
      {"CWIGA allows clients to send messages to chatterl groups",
       fun() ->

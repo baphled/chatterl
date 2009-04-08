@@ -236,7 +236,7 @@ handle_request('POST',Url,ContentType,Post,Req) ->
       chatterl_mid_man:logout(ContentType,proplists:get_value("client",Post));
     ["groups",Group,"send"] ->
       {Sender,Message} = get_params(["client","msg"],Post),
-      manage_request(ContentType,Req,{group_send,{Group,Sender,Message}},true);
+      manage_request(ContentType,Req,{group_send,{Group,Sender,Message}},false);
     ["users",Client,"send"] ->
       {Sender,Message} = get_params(["client","msg"],Post),
       manage_request(ContentType,Req,{user_msg,{Client,Sender,Message}},false);
