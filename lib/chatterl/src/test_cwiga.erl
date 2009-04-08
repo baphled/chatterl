@@ -79,10 +79,10 @@ handles_test_() ->
           ?assertEqual(<<"Group doesn't exist!">>,check_json(check_response(body,Response))),
           ?assert(is_tuple(check_json(check_response(body,Response2))))
       end},
-     {"CWIGA disallows clients from polling groups unless they are authorised",
+     {"CWIGA allows clients from polling groups unless they are authorised",
       fun() ->
           Response =  http:request(?URL "/groups/" ++ Group ++ "/poll/"),
-          ?assertEqual(401,check_response(code,Response))
+          ?assertEqual(200,check_response(code,Response))
       end},
       {"CWIGA will give an error if the group does not exist",
        fun() ->

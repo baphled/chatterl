@@ -201,7 +201,7 @@ handle_request('GET', Url, ContentType, Req) ->
     ["groups",Group,"info"] ->
       manage_request(ContentType,Req,{group_info,Group},true);
     ["groups",Group,"poll"] ->
-      manage_request(ContentType,Req,{group_poll,Group},true);
+      manage_request(ContentType,Req,{group_poll,Group},false);
     ["status","logged_in"] ->
       manage_request(ContentType,Req,{logged_in,[]},true);
     _ -> unknown(Url,ContentType)
