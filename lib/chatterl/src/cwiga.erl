@@ -249,6 +249,18 @@ handle_request('POST',Url,ContentType,Post,Req) ->
     _ -> unknown(Url,ContentType)
   end.
 
+%%--------------------------------------------------------------------
+%% @private
+%% @doc
+%%
+%% Gets our porameters
+%%
+%% Takes a list of parameters keys used to retrieve their values in the
+%% same order.
+%% @spec get_params(Params,Post) -> Parameters
+%%
+%% @end
+%%--------------------------------------------------------------------
 get_params(Params,Post) ->
 	list_to_tuple([proplists:get_value(Param,Post) || Param <- Params]).
 		
