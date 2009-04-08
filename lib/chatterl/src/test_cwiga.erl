@@ -212,7 +212,7 @@ groups_send_message_handle_test_() ->
           Body = set_params(Args),
           Response = http_login(post,?URL ++ "/groups/" ++ Group ++ "/join/", {Nick1,Password1},Body),
           ?assertEqual(500,check_response(code,Response)),
-          ?assertEqual(<<"Unable to connect!">>,check_json(check_response(body,Response)))
+          ?assertEqual(<<"Already joined">>,check_json(check_response(body,Response)))
       end},
      {"CWIGA allows clients are unable to send messages a group if they are not connected to it",
       fun() ->

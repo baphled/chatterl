@@ -151,7 +151,7 @@ handle_call({join_group, Group}, _From, State) ->
           {ok, _Msg} ->
             {gb_trees:insert(Group, {Group, erlang:localtime(), GroupPid}, State#client.groups),
              {ok, joined_group}};
-          _ -> {State#client.groups,{error, "Unable to connect!"}}
+          {error,Error} -> {State#client.groups,{error, Error}}
         end;
       _ ->
         {State#client.groups,{error, "Unknown error!"}}
