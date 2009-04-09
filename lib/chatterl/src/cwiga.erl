@@ -80,7 +80,6 @@ dispatch_requests(Req) ->
 %%                         {ok, State, Timeout} |
 %%                         ignore               |
 %%                         {stop, Reason}
-
 %%--------------------------------------------------------------------
 init([Port]) ->
   process_flag(trap_exit, true),
@@ -190,14 +189,14 @@ handle_request('GET', Url, ContentType, Req) ->
       manage_request(ContentType,Req,{user_list,[]},false);
     ["groups"] ->
       manage_request(ContentType,Req,{group_list,[]},false);
-    ["users",Group,"users"] ->
-      manage_request(ContentType,Req,{user_list,Group},false);
     ["users",Client,"connect"] ->
-      chatterl_mid_man:connect(ContentType,Client);
-    ["users",Client,"poll"] ->
-      manage_request(ContentType,Req,{user_poll,Client},false);
+    	chatterl_mid_man:connect(ContentType,Client);
+		["users",Group,"users"] ->
+      manage_request(ContentType,Req,{user_list,Group},false);
     ["users",Client,"groups"] ->
       manage_request(ContentType,Req,{user_groups,Client},true);
+    ["users",Client,"poll"] ->
+      manage_request(ContentType,Req,{user_poll,Client},false);
     ["groups",Group,"info"] ->
       manage_request(ContentType,Req,{group_info,Group},false);
     ["groups",Group,"poll"] ->
@@ -300,7 +299,7 @@ check_json_response(Json) ->
 %% @doc
 %% Wrapper method used for error responses
 %%
-%% @spec error(Response,ContentType) -> StatusCode
+%% @spec get_status_code(ResponseType) -> StatusCode
 %% @end
 %%--------------------------------------------------------------------
 get_status_code(ResponseType) ->
@@ -395,7 +394,8 @@ is_auth(Req) ->
 %%
 %% Manages the calls that need to be passed to manage_auth
 %%
-%% @spec manage_request(ContentType,Req,{Function,Args}) -> {ok,Msg}|{error,Error}
+%% @spec manage_request(ContentType,Req,{Function,Args}) -> 
+%%																							{ok,Msg} | {error,Error}
 %%
 %% @end
 %%--------------------------------------------------------------------
@@ -437,7 +437,7 @@ manage_auth(Auth,{ContentType,Req,{Fun,Parameters}}) ->
 %% Authorises a client and then carries out an action.
 %%
 %% Basic wrapper used to pass parameters to an anonymouse function.
-%% @spec is_auth(Req) -> {ok,Msg}|{error,Error}
+%% @spec authorise(ContentType,Req,{Fun,Params}) -> {ok,Msg}|{error,Error}
 %%
 %% @end
 %%--------------------------------------------------------------------
