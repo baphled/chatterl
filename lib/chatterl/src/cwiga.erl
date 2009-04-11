@@ -206,7 +206,7 @@ handle_request('GET', Url, ContentType, Req) ->
       manage_request(ContentType,Req,{group_poll,Group},false);
     ["status","logged_in"] ->
       manage_request(ContentType,Req,{logged_in,[]},true);
-    _ -> error("Unknown command: " ++Url, ContentType)
+    _ -> error("Unknown command: " ++ get_path(Req), ContentType)
   end;
 handle_request('DELETE',Url,ContentType,Req) ->
   Path = string:tokens(Url, "/"),
@@ -215,7 +215,7 @@ handle_request('DELETE',Url,ContentType,Req) ->
     	chatterl_mid_man:disconnect(ContentType,Client);
 		["groups",Group,"drop"] ->
       manage_request(ContentType,Req,{group_drop,Group},true);
-    _ -> error("Unknown command: " ++Url, ContentType)
+    _ -> error("Unknown command: " ++ get_path(Req), ContentType)
 	end.
 
 %%--------------------------------------------------------------------
@@ -248,7 +248,7 @@ handle_request('POST',Url,ContentType,Post,Req) ->
       manage_request(ContentType,Req,{group_leave,{Group,proplists:get_value("client",Post)}},true);
     ["groups",Group,"create"] ->
       manage_request(ContentType,Req,{group_create,{Group,proplists:get_value("description",Post)}},true);
-    _ -> error("Unknown command: " ++Url, ContentType)
+    _ -> error("Unknown command: " ++ get_path(Req), ContentType)
   end.
 
 %%--------------------------------------------------------------------
