@@ -62,10 +62,11 @@ stop() ->
 %% @end
 %%--------------------------------------------------------------------
 dispatch_requests(Req) ->
-  [Path|Ext] = string:tokens(Req:get(path),"."),
+  [Url|Ext] = string:tokens(Req:get(path),"."),
   Method = Req:get(method),
   Post = Req:parse_post(),
-  io:format("~p request for ~p with post: ~p~n", [Method, Path, Post]),
+  io:format("~p request for ~p with post: ~p~n", [Method, Url, Post]),
+	Path = string:tokens(Url, "/"),
   Response = gen_server:call({global,?MODULE},{Method, Path, get_content_type(Ext), Post, Req}),
   Req:respond(Response).
 
@@ -105,16 +106,16 @@ init([Port]) ->
 handle_call(stop, _From, State) ->
     io:format("Processing shut down ~s~n", [?APP]),
     {stop, normal, stopped, State};
-handle_call({'POST',Url,ContentType,Post,Req},_From,State) ->
-  Reply = handle_response(handle_request('POST',Url,ContentType,Post,Req),ContentType),
+handle_call({'POST',Path,ContentType,Post,Req},_From,State) ->
+  Reply = handle_response(handle_request('POST',Path,ContentType,Post,Req),ContentType),
   {reply, Reply, State};
-handle_call({'GET',Url,ContentType,_Post,Req},_From,State) ->
-  Reply = handle_response(handle_request('GET',Url,ContentType,Req),ContentType),
+handle_call({'GET',Path,ContentType,_Post,Req},_From,State) ->
+  Reply = handle_response(handle_request('GET',Path,ContentType,Req),ContentType),
   {reply, Reply, State};
-handle_call({'DELETE',Url,ContentType,_Post,Req},_From,State) ->
-  Reply = handle_response(handle_request('DELETE',Url,ContentType,Req),ContentType),
+handle_call({'DELETE',Path,ContentType,_Post,Req},_From,State) ->
+  Reply = handle_response(handle_request('DELETE',Path,ContentType,Req),ContentType),
   {reply, Reply, State};
-handle_call({_,_Url,ContentType,_Path,Req},_From,State) ->
+handle_call({_,_Path,ContentType,_Path,Req},_From,State) ->
   Reply = send_response(error,{error("Unknown command: " ++ get_path(Req), ContentType),ContentType}),
   {reply, Reply, State};
 handle_call(_Request, _From, State) ->
@@ -185,8 +186,7 @@ code_change(_OldVsn, State, _Extra) ->
 %%
 %% @end
 %%--------------------------------------------------------------------
-handle_request('GET', Url, ContentType, Req) ->
-  Path = string:tokens(Url, "/"),
+handle_request('GET', Path, ContentType, Req) ->
   case Path of
     ["users"] ->
       manage_request(ContentType,Req,{user_list,[]},false);
@@ -208,8 +208,7 @@ handle_request('GET', Url, ContentType, Req) ->
       manage_request(ContentType,Req,{logged_in,[]},true);
     _ -> error("Unknown command: " ++ get_path(Req), ContentType)
   end;
-handle_request('DELETE',Url,ContentType,Req) ->
-  Path = string:tokens(Url, "/"),
+handle_request('DELETE',Path,ContentType,Req) ->
   case Path of
   	["users",Client,"disconnect"] ->
     	chatterl_mid_man:disconnect(ContentType,Client);
@@ -227,8 +226,7 @@ handle_request('DELETE',Url,ContentType,Req) ->
 %%
 %% @end
 %%--------------------------------------------------------------------
-handle_request('POST',Url,ContentType,Post,Req) ->
-  Path = string:tokens(Url, "/"),
+handle_request('POST',Path,ContentType,Post,Req) ->
   case Path of
     ["users","register",Nick] ->
       chatterl_mid_man:register(ContentType,{Nick,get_params(["name","email","pass1","pass2"],Post)});
