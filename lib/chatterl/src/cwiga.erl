@@ -69,6 +69,9 @@ dispatch_requests(Req) ->
   Response = gen_server:call({global,?MODULE},{Method, Path, get_content_type(Ext), Post, Req}),
   Req:respond(Response).
 
+get_path(Req) ->
+	[Path|_Ext] = string:tokens(Req:get(path),"."),
+	Path.
 %%====================================================================
 %% gen_server callbacks
 %%====================================================================
@@ -111,8 +114,8 @@ handle_call({'GET',Url,ContentType,_Post,Req},_From,State) ->
 handle_call({'DELETE',Url,ContentType,_Post,Req},_From,State) ->
   Reply = handle_response(handle_request('DELETE',Url,ContentType,Req),ContentType),
   {reply, Reply, State};
-handle_call({_,Url,ContentType,_Path,_Req},_From,State) ->
-  Reply = send_response(error,{error("Unknown command: " ++Url, ContentType),ContentType}),
+handle_call({_,_Url,ContentType,_Path,Req},_From,State) ->
+  Reply = send_response(error,{error("Unknown command: " ++ get_path(Req), ContentType),ContentType}),
   {reply, Reply, State};
 handle_call(_Request, _From, State) ->
   Reply = ok,
