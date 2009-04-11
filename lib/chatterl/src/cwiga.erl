@@ -208,14 +208,12 @@ handle_request('GET', Path, ContentType, Req) ->
       manage_request(ContentType,Req,{logged_in,[]},true);
     _ -> error("Unknown command: " ++ get_path(Req), ContentType)
   end;
-handle_request('DELETE',Path,ContentType,Req) ->
-  case Path of
-  	["users",Client,"disconnect"] ->
-    	chatterl_mid_man:disconnect(ContentType,Client);
-		["groups",Group,"drop"] ->
-      manage_request(ContentType,Req,{group_drop,Group},true);
-    _ -> error("Unknown command: " ++ get_path(Req), ContentType)
-	end.
+handle_request('DELETE',["users",Client,"disconnect"],ContentType,_Req) ->
+  chatterl_mid_man:disconnect(ContentType,Client);
+handle_request('DELETE',["groups",Group,"drop"],ContentType,Req) ->
+	manage_request(ContentType,Req,{group_drop,Group},true);
+handle_request('DELETE',_,ContentType,Req) ->
+	error("Unknown command: " ++ get_path(Req), ContentType).
 
 %%--------------------------------------------------------------------
 %% @private
