@@ -224,28 +224,26 @@ handle_request('DELETE',_,ContentType,Req) ->
 %%
 %% @end
 %%--------------------------------------------------------------------
-handle_request('POST',Path,ContentType,Post,Req) ->
-  case Path of
-    ["users","register",Nick] ->
-      chatterl_mid_man:register(ContentType,{Nick,get_params(["name","email","pass1","pass2"],Post)});
-    ["users","login"] ->
-      chatterl_mid_man:login(ContentType,get_params(["login","pass"],Post));
-    ["users","logout"] ->
-      chatterl_mid_man:logout(ContentType,proplists:get_value("client",Post));
-    ["groups",Group,"send"] ->
-      {Sender,Message} = get_params(["client","msg"],Post),
-      manage_request(ContentType,Req,{group_send,{Group,Sender,Message}},false);
-    ["users",Client,"send"] ->
-      {Sender,Message} = get_params(["client","msg"],Post),
-      manage_request(ContentType,Req,{user_msg,{Client,Sender,Message}},false);
-    ["groups",Group,"join"] ->
-      manage_request(ContentType,Req,{group_join,{Group,proplists:get_value("client",Post)}},false);
-    ["groups",Group,"leave"] ->
-      manage_request(ContentType,Req,{group_leave,{Group,proplists:get_value("client",Post)}},true);
-    ["groups",Group,"create"] ->
-      manage_request(ContentType,Req,{group_create,{Group,proplists:get_value("description",Post)}},true);
-    _ -> error("Unknown command: " ++ get_path(Req), ContentType)
-  end.
+handle_request('POST',["users","register",Nick],ContentType,Post,Req) ->
+	chatterl_mid_man:register(ContentType,{Nick,get_params(["name","email","pass1","pass2"],Post)});
+handle_request('POST',["users","login"],ContentType,Post,Req) ->
+	chatterl_mid_man:login(ContentType,get_params(["login","pass"],Post));
+handle_request('POST',["users","logout"],ContentType,Post,Req) ->
+	chatterl_mid_man:logout(ContentType,proplists:get_value("client",Post));
+handle_request('POST',["groups",Group,"send"],ContentType,Post,Req) ->	
+    {Sender,Message} = get_params(["client","msg"],Post),
+		manage_request(ContentType,Req,{group_send,{Group,Sender,Message}},false);
+handle_request('POST',["users",Client,"send"],ContentType,Post,Req) ->
+	{Sender,Message} = get_params(["client","msg"],Post),
+  manage_request(ContentType,Req,{user_msg,{Client,Sender,Message}},false);
+handle_request('POST',["groups",Group,"join"],ContentType,Post,Req) ->
+	manage_request(ContentType,Req,{group_join,{Group,proplists:get_value("client",Post)}},false);
+handle_request('POST',["groups",Group,"leave"],ContentType,Post,Req) ->
+	manage_request(ContentType,Req,{group_leave,{Group,proplists:get_value("client",Post)}},true);
+handle_request('POST',["groups",Group,"create"],ContentType,Post,Req) ->
+	manage_request(ContentType,Req,{group_create,{Group,proplists:get_value("description",Post)}},true);
+handle_request('POST',_Path,ContentType,Post,Req) ->
+	error("Unknown command: " ++ get_path(Req), ContentType).
 
 %%--------------------------------------------------------------------
 %% @private
