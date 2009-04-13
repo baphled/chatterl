@@ -186,33 +186,31 @@ code_change(_OldVsn, State, _Extra) ->
 %%
 %% @end
 %%--------------------------------------------------------------------
-handle_request('GET', Path, ContentType, Req) ->
-  case Path of
-    ["users"] ->
-      manage_request(ContentType,Req,{user_list,[]},false);
-    ["groups"] ->
-      manage_request(ContentType,Req,{group_list,[]},false);
-    ["users",Client,"connect"] ->
-    	chatterl_mid_man:connect(ContentType,Client);
-		["users",Group,"users"] ->
-      manage_request(ContentType,Req,{user_list,Group},false);
-    ["users",Client,"groups"] ->
-      manage_request(ContentType,Req,{user_groups,Client},true);
-    ["users",Client,"poll"] ->
-      manage_request(ContentType,Req,{user_poll,Client},false);
-    ["groups",Group,"info"] ->
-      manage_request(ContentType,Req,{group_info,Group},false);
-    ["groups",Group,"poll"] ->
-      manage_request(ContentType,Req,{group_poll,Group},false);
-    ["status","logged_in"] ->
-      manage_request(ContentType,Req,{logged_in,[]},true);
-    _ -> error("Unknown command: " ++ get_path(Req), ContentType)
-  end;
+handle_request('GET',["users"],ContentType,_Req) ->
+	manage_request(ContentType,Req,{user_list,[]},false);
+handle_request('GET',["groups"],ContentType,_Req) ->
+	manage_request(ContentType,Req,{group_list,[]},false);
+handle_request('GET',["users",Client,"connect"],ContentType,_Req) ->
+	chatterl_mid_man:connect(ContentType,Client);
+handle_request('GET',["users",Group,"users"],ContentType,_Req) ->
+	manage_request(ContentType,Req,{user_list,Group},false);
+handle_request('GET',["users",Client,"groups"],ContentType,_Req) ->
+	manage_request(ContentType,Req,{user_groups,Client},true);
+handle_request('GET',["users",Client,"poll"],ContentType,_Req) ->
+	manage_request(ContentType,Req,{user_poll,Client},false);
+handle_request('GET',["groups",Group,"info"],ContentType,_Req) ->
+	manage_request(ContentType,Req,{group_info,Group},false);
+handle_request('GET',["groups",Group,"poll"],ContentType,_Req) ->
+	manage_request(ContentType,Req,{group_poll,Group},false);
+handle_request('GET',["status","logged_in"],ContentType,_Req) ->
+	manage_request(ContentType,Req,{logged_in,[]},true);
+handle_request('GET', _Path, ContentType, Req) ->
+	error("Unknown command: " ++ get_path(Req), ContentType);
 handle_request('DELETE',["users",Client,"disconnect"],ContentType,_Req) ->
   chatterl_mid_man:disconnect(ContentType,Client);
-handle_request('DELETE',["groups",Group,"drop"],ContentType,Req) ->
+handle_request('DELETE',["groups",Group,"drop"],ContentType,_Req) ->
 	manage_request(ContentType,Req,{group_drop,Group},true);
-handle_request('DELETE',_,ContentType,Req) ->
+handle_request('DELETE',_Path,ContentType,Req) ->
 	error("Unknown command: " ++ get_path(Req), ContentType).
 
 %%--------------------------------------------------------------------
@@ -231,8 +229,8 @@ handle_request('POST',["users","login"],ContentType,Post,Req) ->
 handle_request('POST',["users","logout"],ContentType,Post,Req) ->
 	chatterl_mid_man:logout(ContentType,proplists:get_value("client",Post));
 handle_request('POST',["groups",Group,"send"],ContentType,Post,Req) ->	
-    {Sender,Message} = get_params(["client","msg"],Post),
-		manage_request(ContentType,Req,{group_send,{Group,Sender,Message}},false);
+  {Sender,Message} = get_params(["client","msg"],Post),
+	manage_request(ContentType,Req,{group_send,{Group,Sender,Message}},false);
 handle_request('POST',["users",Client,"send"],ContentType,Post,Req) ->
 	{Sender,Message} = get_params(["client","msg"],Post),
   manage_request(ContentType,Req,{user_msg,{Client,Sender,Message}},false);
