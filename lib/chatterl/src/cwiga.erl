@@ -186,31 +186,31 @@ code_change(_OldVsn, State, _Extra) ->
 %%
 %% @end
 %%--------------------------------------------------------------------
-handle_request('GET',["users"],ContentType,_Req) ->
+handle_request('GET',["users"],ContentType,Req) ->
 	manage_request(ContentType,Req,{user_list,[]},false);
-handle_request('GET',["groups"],ContentType,_Req) ->
+handle_request('GET',["groups"],ContentType,Req) ->
 	manage_request(ContentType,Req,{group_list,[]},false);
-handle_request('GET',["users",Client,"connect"],ContentType,_Req) ->
+handle_request('GET',["users",Client,"connect"],ContentType,Req) ->
 	chatterl_mid_man:connect(ContentType,Client);
-handle_request('GET',["users",Group,"users"],ContentType,_Req) ->
+handle_request('GET',["users",Group,"users"],ContentType,Req) ->
 	manage_request(ContentType,Req,{user_list,Group},false);
-handle_request('GET',["users",Client,"groups"],ContentType,_Req) ->
+handle_request('GET',["users",Client,"groups"],ContentType,Req) ->
 	manage_request(ContentType,Req,{user_groups,Client},true);
-handle_request('GET',["users",Client,"poll"],ContentType,_Req) ->
+handle_request('GET',["users",Client,"poll"],ContentType,Req) ->
 	manage_request(ContentType,Req,{user_poll,Client},false);
-handle_request('GET',["groups",Group,"info"],ContentType,_Req) ->
+handle_request('GET',["groups",Group,"info"],ContentType,Req) ->
 	manage_request(ContentType,Req,{group_info,Group},false);
-handle_request('GET',["groups",Group,"poll"],ContentType,_Req) ->
+handle_request('GET',["groups",Group,"poll"],ContentType,Req) ->
 	manage_request(ContentType,Req,{group_poll,Group},false);
-handle_request('GET',["status","logged_in"],ContentType,_Req) ->
+handle_request('GET',["status","logged_in"],ContentType,Req) ->
 	manage_request(ContentType,Req,{logged_in,[]},true);
 handle_request('GET', _Path, ContentType, Req) ->
 	error("Unknown command: " ++ get_path(Req), ContentType);
 handle_request('DELETE',["users",Client,"disconnect"],ContentType,_Req) ->
   chatterl_mid_man:disconnect(ContentType,Client);
-handle_request('DELETE',["groups",Group,"drop"],ContentType,_Req) ->
+handle_request('DELETE',["groups",Group,"drop"],ContentType,Req) ->
 	manage_request(ContentType,Req,{group_drop,Group},true);
-handle_request('DELETE',_Path,ContentType,Req) ->
+handle_request('DELETE',_,ContentType,Req) ->
 	error("Unknown command: " ++ get_path(Req), ContentType).
 
 %%--------------------------------------------------------------------
