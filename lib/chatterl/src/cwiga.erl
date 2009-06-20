@@ -190,7 +190,7 @@ handle_request('GET',["users"],ContentType,Req) ->
 	manage_request(ContentType,Req,{user_list,[]},false);
 handle_request('GET',["groups"],ContentType,Req) ->
 	manage_request(ContentType,Req,{group_list,[]},false);
-handle_request('GET',["users",Client,"connect"],ContentType,Req) ->
+handle_request('GET',["users",Client,"connect"],ContentType,_Req) ->
 	chatterl_mid_man:connect(ContentType,Client);
 handle_request('GET',["users",Group,"users"],ContentType,Req) ->
 	manage_request(ContentType,Req,{user_list,Group},false);
@@ -222,11 +222,11 @@ handle_request('DELETE',_,ContentType,Req) ->
 %%
 %% @end
 %%--------------------------------------------------------------------
-handle_request('POST',["users","register",Nick],ContentType,Post,Req) ->
+handle_request('POST',["users","register",Nick],ContentType,Post,_Req) ->
 	chatterl_mid_man:register(ContentType,{Nick,get_params(["name","email","pass1","pass2"],Post)});
-handle_request('POST',["users","login"],ContentType,Post,Req) ->
+handle_request('POST',["users","login"],ContentType,Post,_Req) ->
 	chatterl_mid_man:login(ContentType,get_params(["login","pass"],Post));
-handle_request('POST',["users","logout"],ContentType,Post,Req) ->
+handle_request('POST',["users","logout"],ContentType,Post,_Req) ->
 	chatterl_mid_man:logout(ContentType,proplists:get_value("client",Post));
 handle_request('POST',["groups",Group,"send"],ContentType,Post,Req) ->
   {Sender,Message} = get_params(["client","msg"],Post),
@@ -240,7 +240,7 @@ handle_request('POST',["groups",Group,"leave"],ContentType,Post,Req) ->
 	manage_request(ContentType,Req,{group_leave,{Group,proplists:get_value("client",Post)}},true);
 handle_request('POST',["groups",Group,"create"],ContentType,Post,Req) ->
 	manage_request(ContentType,Req,{group_create,{Group,proplists:get_value("description",Post)}},true);
-handle_request('POST',_Path,ContentType,Post,Req) ->
+handle_request('POST',_Path,ContentType,_Post,Req) ->
 	error("Unknown command: " ++ get_path(Req), ContentType).
 
 %%--------------------------------------------------------------------
