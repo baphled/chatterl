@@ -24,7 +24,7 @@
 %% Helper functions.
 %%--------------------------------------------------------------------
 %% @doc
-%% Sets up a clients & group process
+%% Sets up a clients &amp; group process
 %%
 %% @spec start_client(Client,Group,Description) -> ok
 %% @end
