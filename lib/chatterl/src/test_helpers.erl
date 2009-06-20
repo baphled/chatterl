@@ -46,7 +46,7 @@ start_group(Group,Description) ->
 
 %%--------------------------------------------------------------------
 %% @doc
-%% Sets up a clients & group process
+%% Sets up a clients &amp; group process
 %%
 %% @spec check_response(Check,Response) -> HTMLBody
 %% @end
