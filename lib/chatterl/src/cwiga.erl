@@ -228,7 +228,7 @@ handle_request('POST',["users","login"],ContentType,Post,Req) ->
 	chatterl_mid_man:login(ContentType,get_params(["login","pass"],Post));
 handle_request('POST',["users","logout"],ContentType,Post,Req) ->
 	chatterl_mid_man:logout(ContentType,proplists:get_value("client",Post));
-handle_request('POST',["groups",Group,"send"],ContentType,Post,Req) ->	
+handle_request('POST',["groups",Group,"send"],ContentType,Post,Req) ->
   {Sender,Message} = get_params(["client","msg"],Post),
 	manage_request(ContentType,Req,{group_send,{Group,Sender,Message}},false);
 handle_request('POST',["users",Client,"send"],ContentType,Post,Req) ->
@@ -257,7 +257,7 @@ handle_request('POST',_Path,ContentType,Post,Req) ->
 %%--------------------------------------------------------------------
 get_params(Params,Post) ->
 	list_to_tuple([proplists:get_value(Param,Post) || Param <- Params]).
-		
+
 %%--------------------------------------------------------------------
 %% @private
 %% @doc
@@ -389,7 +389,7 @@ is_auth(Req) ->
 %%
 %% Manages the calls that need to be passed to manage_auth
 %%
-%% @spec manage_request(ContentType,Req,{Function,Args}) -> 
+%% @spec manage_request(ContentType,Req,{Function,Args},Auth) ->
 %%																							{ok,Msg} | {error,Error}
 %%
 %% @end
