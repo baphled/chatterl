@@ -17,7 +17,7 @@
 %% API
 -export([start/0,stop/0,login/2,logout/1,connect/1,disconnect/1,create/2,drop/1]).
 %% User specific
--export([list_users/0,register/2]).
+-export([list_users/0,register/2, join_group/2, leave_group/2]).
 %% Group specific
 -export([group_description/1,list_groups/0,list_users/1]).
 %% gen_server callbacks
@@ -94,6 +94,26 @@ logout(User) ->
     {error,Error} -> {error,Error}
   end.
 
+
+%%--------------------------------------------------------------------
+%% @doc
+%% Allows a user to join a group
+%%
+%% @spec join_group(User, Group) -> {ok,Msg} | {error,Error}
+%% @end
+%%--------------------------------------------------------------------
+join_group(User, Group) ->
+  gen_server:call({global, User}, {join_group, Group}).
+
+%%--------------------------------------------------------------------
+%% @doc
+%% Allows a user to leave a group
+%%
+%% @spec leave_group(User, Group) -> {ok,Msg} | {error,Error}
+%% @end
+%%--------------------------------------------------------------------
+leave_group(User, Group) ->
+  gen_server:call({global, User}, {leave_group, Group}).
 %%--------------------------------------------------------------------
 %% @doc
 %% Register a client to chatterl
