@@ -22,7 +22,7 @@
 
 %% API
 %% Client based
--export([start/1,stop/1,private_msg/3,get_messages/1]).
+-export([start/1,stop/1, join_group/2, leave_group/2, private_msg/3,get_messages/1]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -60,6 +60,12 @@ stop(Client) ->
     _ -> {error,"Unable to stop"}
   end.
 
+join_group(User, Group) ->
+  gen_server:call({global, User}, {join_group, Group}).
+
+leave_group(User, Group) ->
+  gen_server:call({global, User}, {leave_group, Group}).
+  
 %%--------------------------------------------------------------------
 %% @doc
 %% Retrieves all archived messages to a registered client
